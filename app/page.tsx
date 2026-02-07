@@ -1,116 +1,163 @@
-import Image from "next/image";
+import Image from 'next/image';
+import Link from 'next/link';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
+import Button from '@/components/ui/Button';
+import styles from './page.module.css';
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    <>
+      <Navbar />
+      
+      <main className={styles.main}>
+        {/* Hero Section */}
+        <section className={styles.hero}>
+          <div className={styles.heroContent}>
+            <h1 className={styles.heroTitle}>
+              chào mừng đến với<br/>
+              một kỷ nguyên <em>học tập</em><br/>
+              mới
+            </h1>
+            <p className={styles.heroSubtitle}>
+              Nền tảng giáo dục thông minh với gia sư AI 24/7. Được thiết kế tinh tế, tập<br/>
+              trung vào sự riêng tư và cá nhân hóa trải nghiệm học tập của bạn.
+            </p>
+            <div className={styles.heroButtons}>
+              <Link href="/register">
+                <Button variant="primary" size="lg">Bắt đầu ngay →</Button>
+              </Link>
+              <Link href="/about">
+                <Button variant="secondary" size="lg">Tìm hiểu thêm 💛</Button>
+              </Link>
+            </div>
+            
+            {/* Icons */}
+            <div className={styles.heroIcons}>
+              <span>💬</span>
+              <span>📚</span>
+              <span>📖</span>
+              <span>🧠</span>
+              <span>💡</span>
+            </div>
+          </div>
 
-      <div className="relative z-[-1] flex flex-col gap-3 place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-        <div>
-          on GitLab Pages
-        </div>
-      </div>
+          {/* Browser Mockup */}
+          <div className={styles.mockupWrapper}>
+            <div className={styles.mockup}>
+              <div className={styles.mockupHeader}>
+                <div className={styles.mockupDots}>
+                  <span className={styles.dotRed}></span>
+                  <span className={styles.dotYellow}></span>
+                  <span className={styles.dotGreen}></span>
+                </div>
+                <span className={styles.mockupUrl}>thinkai.edu.vn/dashboard</span>
+              </div>
+              <div className={styles.mockupContent}>
+                <div className={styles.mockupSidebar}>
+                  {/* Sidebar placeholder */}
+                </div>
+                <div className={styles.mockupMain}>
+                  <p className={styles.mockupGreeting}>XIN CHÀO, ALEX</p>
+                  <h3 className={styles.mockupTitle}>Tiếp tục hành trình học tập</h3>
+                  
+                  <div className={styles.mockupCards}>
+                    <div className={styles.mockupCard}>
+                      <div className={styles.mockupCardHeader}>
+                        <span>Toán cao cấp II</span>
+                        <span className={styles.mathIcon}>∑</span>
+                      </div>
+                      <p className={styles.mockupProgress}>Tiến độ: 75%</p>
+                      <div className={styles.progressBar}>
+                        <div className={styles.progressFill}></div>
+                      </div>
+                      <Button variant="secondary" size="sm">Tiếp tục</Button>
+                    </div>
+                    <div className={styles.mockupCard}>
+                      <div className={styles.successBadge}>✓</div>
+                      <p className={styles.completedNumber}>12</p>
+                      <p className={styles.completedText}>Bài tập hoàn thành</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* AI Tutor Button */}
+              <div className={styles.aiTutorButton}>
+                <span>💬</span> Hỏi AI Tutor
+              </div>
+            </div>
+          </div>
+        </section>
 
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+        {/* Features Section */}
+        <section className={styles.features}>
+          <div className={styles.container}>
+            <div className={styles.featuresHeader}>
+              <h2>Hiệu suất <em>tối đa</em>.</h2>
+              <p>
+                ThinkAI được tích hợp các tính năng giúp bạn tập trung và học tập hiệu quả.<br/>
+                Không xao nhãng, chỉ có kiến thức.
+              </p>
+            </div>
+            
+            <div className={styles.featuresGrid}>
+              <div className={styles.featuresList}>
+                <div className={styles.featureItem}>
+                  <h4>Không gian làm việc</h4>
+                  <p>Tổ chức các môn học vào các Workspace riêng biệt để giữ cho dự án học tập của bạn ngăn nắp.</p>
+                </div>
+                <div className={styles.featureItem}>
+                  <h4>Chế độ tập trung</h4>
+                  <p>Ẩn các thanh công cụ không cần thiết khi bạn đang làm bài kiểm tra hoặc đọc tài liệu.</p>
+                </div>
+                <div className={styles.featureItem}>
+                  <h4>Split View</h4>
+                  <p>Xem bài giảng video và ghi chú cùng lúc trên một màn hình chia đôi tiện lợi.</p>
+                </div>
+              </div>
+              
+              <div className={styles.featuresImage}>
+                <div className={styles.notesCard}>
+                  <div className={styles.noteHeader}></div>
+                  <div className={styles.noteLine}></div>
+                  <div className={styles.noteLine}></div>
+                  <div className={styles.noteLineShort}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+        {/* Partners Section */}
+        <section className={styles.partners}>
+          <p className={styles.partnersTitle}>ĐƯỢC TIN DÙNG BỞI CÁC TỔ CHỨC GIÁO DỤC</p>
+          <div className={styles.partnersLogos}>
+            <span>🎓 UNI<strong>VERSITY</strong></span>
+            <span>📚 EDU<strong>TECH</strong></span>
+            <span>🌐 GLO<strong>BAL</strong></span>
+            <span>🚀 FUTURE<strong>LAB</strong></span>
+          </div>
+        </section>
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
+        {/* Values Section */}
+        <section className={styles.values}>
+          <div className={styles.container}>
+            <h2>Giá trị <em>cốt lõi</em></h2>
+            <p className={styles.valuesSubtitle}>
+              Chúng tôi tạo ra ThinkAI không chỉ là một ứa tiện, mà là một sự cân thiết để đảm bảo việc học luôn đạt được sự cân<br/>
+              bằng giữa hiệu quả, sáng tạo và quyền riêng tư.
+            </p>
+            <div className={styles.valuesTags}>
+              <span className={styles.valueTag}>🔒 Riêng tư và an toàn</span>
+              <span className={styles.valueTag}>✓ Đơn giản nhưng mạnh mẽ</span>
+              <span className={styles.valueTag}>✓ Mã nguồn mở (một phần)</span>
+            </div>
+          </div>
+        </section>
+      </main>
 
-        <a
-          href="https://docs.gitlab.com/ee/user/project/pages/"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Learn more about deploying your site with GitLab Pages.
-          </p>
-        </a>
-      </div>
-    </main>
+      <Footer />
+    </>
   );
 }

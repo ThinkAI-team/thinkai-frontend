@@ -1,0 +1,274 @@
+.container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ==================== LEFT SIDE - FORM ==================== */
+.formSide {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  background-color: var(--bg-primary);
+}
+
+.formContent {
+  width: 100%;
+  max-width: 420px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  margin-bottom: 48px;
+}
+
+.logoIcon {
+  font-size: 24px;
+}
+
+.logoText {
+  font-family: var(--font-body);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.welcome {
+  margin-bottom: 40px;
+}
+
+.welcome h1 {
+  font-family: var(--font-heading);
+  font-size: 40px;
+  font-weight: 400;
+  margin-bottom: 12px;
+}
+
+.welcome h1 em {
+  font-style: italic;
+  color: var(--text-primary);
+}
+
+.highlight {
+  color: var(--accent);
+}
+
+.welcome p {
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+/* Form */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inputGroup label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.forgotLink {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.forgotLink:hover {
+  color: var(--accent);
+}
+
+.input {
+  width: 100%;
+  padding: 16px 20px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  background-color: var(--bg-surface);
+  border: 1px solid #E5E7EB;
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.submitBtn {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* Divider */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #E5E7EB;
+}
+
+.divider span {
+  padding: 0 16px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Google Button */
+.googleBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 24px;
+  background-color: var(--bg-surface);
+  border: 1px solid #E5E7EB;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 16px;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.googleBtn:hover {
+  border-color: var(--accent);
+}
+
+/* Register Link */
+.registerLink {
+  text-align: center;
+  margin-top: 24px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.registerLink strong {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+/* Footer Links */
+.footerLinks {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 48px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.footerLinks a {
+  color: var(--text-muted);
+}
+
+.footerLinks a:hover {
+  color: var(--accent);
+}
+
+/* ==================== RIGHT SIDE - IMAGE ==================== */
+.imageSide {
+  flex: 1;
+  position: relative;
+  background: linear-gradient(135deg, #2D1B14 0%, #1A1212 100%);
+  overflow: hidden;
+}
+
+.imageSide::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/images/philosopher.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.9;
+}
+
+.imageContent {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 32px;
+}
+
+.assistantBadge {
+  align-self: flex-end;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 14px;
+}
+
+.quote {
+  padding: 24px;
+}
+
+.quoteLine {
+  width: 48px;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 2px;
+  margin-bottom: 16px;
+}
+
+.quoteText {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: 32px;
+  color: white;
+  line-height: 1.3;
+  margin-bottom: 12px;
+}
+
+.quoteSubtext {
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 968px) {
+  .imageSide {
+    display: none;
+  }
+  
+  .formSide {
+    padding: 24px;
+  }
+}
