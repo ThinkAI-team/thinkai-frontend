@@ -1,0 +1,388 @@
+.main {
+  padding-top: 80px; /* Navbar height */
+}
+
+/* ==================== HERO SECTION ==================== */
+.hero {
+  text-align: center;
+  padding: 80px 24px 0;
+}
+
+.heroContent {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.heroTitle {
+  font-family: var(--font-heading);
+  font-size: 56px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+}
+
+.heroTitle em {
+  font-style: italic;
+  color: var(--accent-warm);
+}
+
+.heroSubtitle {
+  font-size: 18px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+
+.heroButtons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.heroIcons {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  font-size: 24px;
+  opacity: 0.5;
+  margin-bottom: 64px;
+}
+
+/* ==================== BROWSER MOCKUP ==================== */
+.mockupWrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+.mockup {
+  background: var(--bg-footer);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+  position: relative;
+}
+
+.mockupHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mockupDots {
+  display: flex;
+  gap: 8px;
+}
+
+.dotRed, .dotYellow, .dotGreen {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.dotRed { background: #EF5350; }
+.dotYellow { background: #FFC107; }
+.dotGreen { background: #4CAF50; }
+
+.mockupUrl {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 12px;
+}
+
+.mockupContent {
+  display: flex;
+  padding: 24px;
+  min-height: 300px;
+}
+
+.mockupSidebar {
+  width: 60px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  margin-right: 24px;
+}
+
+.mockupMain {
+  flex: 1;
+}
+
+.mockupGreeting {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.mockupTitle {
+  font-family: var(--font-heading);
+  color: var(--text-inverse);
+  font-size: 20px;
+  margin-bottom: 24px;
+}
+
+.mockupCards {
+  display: flex;
+  gap: 16px;
+}
+
+.mockupCard {
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  min-width: 180px;
+}
+
+.mockupCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.mathIcon {
+  font-size: 24px;
+  color: var(--text-muted);
+}
+
+.mockupProgress {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.progressBar {
+  height: 4px;
+  background: #E5E7EB;
+  border-radius: 2px;
+  margin-bottom: 16px;
+}
+
+.progressFill {
+  width: 75%;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.successBadge {
+  width: 32px;
+  height: 32px;
+  background: var(--success);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.completedNumber {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.completedText {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.aiTutorButton {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  background: var(--accent-warm);
+  color: white;
+  padding: 12px 20px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ==================== FEATURES SECTION ==================== */
+.features {
+  padding: 80px 0;
+}
+
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.featuresHeader {
+  margin-bottom: 48px;
+}
+
+.featuresHeader h2 {
+  font-family: var(--font-heading);
+  font-size: 40px;
+  margin-bottom: 16px;
+}
+
+.featuresHeader h2 em {
+  font-style: italic;
+  color: var(--accent-warm);
+}
+
+.featuresHeader p {
+  color: var(--text-secondary);
+  font-size: 18px;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.featuresList {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.featureItem h4 {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
+.featureItem p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.featuresImage {
+  display: flex;
+  justify-content: center;
+}
+
+.notesCard {
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  padding: 32px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: var(--shadow-soft);
+}
+
+.noteHeader {
+  width: 80px;
+  height: 8px;
+  background: var(--accent-warm);
+  border-radius: 4px;
+  margin-bottom: 24px;
+}
+
+.noteLine {
+  height: 4px;
+  background: #E5E7EB;
+  border-radius: 2px;
+  margin-bottom: 12px;
+}
+
+.noteLineShort {
+  width: 60%;
+  height: 4px;
+  background: #E5E7EB;
+  border-radius: 2px;
+}
+
+/* ==================== PARTNERS SECTION ==================== */
+.partners {
+  padding: 48px 24px;
+  text-align: center;
+  border-top: 1px solid #E5E7EB;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.partnersTitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  margin-bottom: 24px;
+}
+
+.partnersLogos {
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+  font-size: 18px;
+  color: var(--text-secondary);
+}
+
+.partnersLogos strong {
+  color: var(--text-primary);
+}
+
+/* ==================== VALUES SECTION ==================== */
+.values {
+  padding: 80px 0;
+  text-align: center;
+}
+
+.values h2 {
+  font-family: var(--font-heading);
+  font-size: 40px;
+  margin-bottom: 16px;
+}
+
+.values h2 em {
+  font-style: italic;
+  color: var(--accent-warm);
+}
+
+.valuesSubtitle {
+  color: var(--text-secondary);
+  font-size: 16px;
+  margin-bottom: 32px;
+  line-height: 1.7;
+}
+
+.valuesTags {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.valueTag {
+  background: var(--bg-surface);
+  border: 1px solid #E5E7EB;
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .heroTitle {
+    font-size: 36px;
+  }
+  
+  .heroButtons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .featuresGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .partnersLogos {
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+}
