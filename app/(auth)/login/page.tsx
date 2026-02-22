@@ -95,7 +95,7 @@ export default function LoginPage() {
           
           <div className={styles.quote}>
             <div className={styles.quoteLine}></div>
-            <p className={styles.quoteText}>"Học thông minh hơn<br/>với AI."</p>
+            <p className={styles.quoteText}>&quot;Học thông minh hơn<br/>với AI.&quot;</p>
             <p className={styles.quoteSubtext}>NỀN TẢNG GIÁO DỤC THẾ HỆ MỚI</p>
           </div>
         </div>

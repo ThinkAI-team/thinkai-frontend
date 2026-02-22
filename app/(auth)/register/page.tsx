@@ -1,8 +1,66 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button';
+import { register } from '@/services/auth';
+import { ApiException } from '@/services/api';
 
 export default function RegisterPage() {
+  const router = useRouter();
+
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [globalError, setGlobalError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+    // Clear field error on change
+    if (errors[id]) {
+      setErrors(prev => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }
+    if (globalError) setGlobalError('');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+    setGlobalError('');
+    setLoading(true);
+
+    try {
+      await register(formData);
+      router.push('/dashboard');
+    } catch (err) {
+      if (err instanceof ApiException) {
+        if (err.fieldErrors) {
+          setErrors(err.fieldErrors);
+        } else {
+          setGlobalError(err.message);
+        }
+      } else {
+        setGlobalError('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className={styles.container}>
       {/* Left Side - Form */}
@@ -22,57 +80,77 @@ export default function RegisterPage() {
             <p>Đăng ký tài khoản để trải nghiệm học tập thông minh với AI.</p>
           </div>
 
+          {/* Global Error */}
+          {globalError && (
+            <div className={styles.errorAlert}>{globalError}</div>
+          )}
+
           {/* Form */}
-          <form className={styles.form}>
+          <form className={styles.form} onSubmit={handleSubmit}>
             <div className={styles.inputRow}>
               <div className={styles.inputGroup}>
                 <label htmlFor="firstName">Họ</label>
-                <input 
-                  type="text" 
-                  id="firstName" 
-                  placeholder="Nguyễn" 
-                  className={styles.input}
+                <input
+                  type="text"
+                  id="firstName"
+                  placeholder="Nguyễn"
+                  className={`${styles.input} ${errors.firstName ? styles.inputError : ''}`}
+                  value={formData.firstName}
+                  onChange={handleChange}
                 />
+                {errors.firstName && <span className={styles.fieldError}>{errors.firstName}</span>}
               </div>
               <div className={styles.inputGroup}>
                 <label htmlFor="lastName">Tên</label>
-                <input 
-                  type="text" 
-                  id="lastName" 
-                  placeholder="Văn A" 
-                  className={styles.input}
+                <input
+                  type="text"
+                  id="lastName"
+                  placeholder="Văn A"
+                  className={`${styles.input} ${errors.lastName ? styles.inputError : ''}`}
+                  value={formData.lastName}
+                  onChange={handleChange}
                 />
+                {errors.lastName && <span className={styles.fieldError}>{errors.lastName}</span>}
               </div>
             </div>
 
             <div className={styles.inputGroup}>
               <label htmlFor="email">Email</label>
-              <input 
-                type="email" 
-                id="email" 
-                placeholder="ban@email.com" 
-                className={styles.input}
+              <input
+                type="email"
+                id="email"
+                placeholder="ban@email.com"
+                className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
+                value={formData.email}
+                onChange={handleChange}
               />
+              {errors.email && <span className={styles.fieldError}>{errors.email}</span>}
             </div>
 
             <div className={styles.inputGroup}>
               <label htmlFor="password">Mật khẩu</label>
-              <input 
-                type="password" 
-                id="password" 
-                placeholder="Tối thiểu 8 ký tự" 
-                className={styles.input}
+              <input
+                type="password"
+                id="password"
+                placeholder="Tối thiểu 8 ký tự"
+                className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
+                value={formData.password}
+                onChange={handleChange}
               />
+              {errors.password && <span className={styles.fieldError}>{errors.password}</span>}
             </div>
 
             <div className={styles.inputGroup}>
               <label htmlFor="confirmPassword">Xác nhận mật khẩu</label>
-              <input 
-                type="password" 
-                id="confirmPassword" 
-                placeholder="Nhập lại mật khẩu" 
-                className={styles.input}
+              <input
+                type="password"
+                id="confirmPassword"
+                placeholder="Nhập lại mật khẩu"
+                className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ''}`}
+                value={formData.confirmPassword}
+                onChange={handleChange}
               />
+              {errors.confirmPassword && <span className={styles.fieldError}>{errors.confirmPassword}</span>}
             </div>
 
             <div className={styles.checkbox}>
@@ -82,8 +160,14 @@ export default function RegisterPage() {
               </label>
             </div>
 
-            <Button variant="primary" size="lg" className={styles.submitBtn}>
-              Tạo tài khoản →
+            <Button
+              variant="primary"
+              size="lg"
+              className={styles.submitBtn}
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản →'}
             </Button>
           </form>
 
@@ -116,10 +200,10 @@ export default function RegisterPage() {
           <div className={styles.assistantBadge}>
             <span>🎯</span> ThinkAI Assistant
           </div>
-          
+
           <div className={styles.quote}>
             <div className={styles.quoteLine}></div>
-            <p className={styles.quoteText}>"Mỗi ngày một bước<br/>tiến mới."</p>
+            <p className={styles.quoteText}>&quot;Mỗi ngày một bước<br/>tiến mới.&quot;</p>
             <p className={styles.quoteSubtext}>HỌC TẬP KHÔNG GIỚI HẠN</p>
           </div>
         </div>
