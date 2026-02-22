@@ -8,6 +8,11 @@ export interface RegisterRequest {
   confirmPassword: string;
 }
 
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
 export interface AuthResponse {
   token: string;
   email: string;
@@ -21,7 +26,28 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
     body: JSON.stringify(data),
   });
 
-  // Save token to localStorage on successful register
+  saveAuth(response);
+  return response;
+}
+
+export async function login(data: LoginRequest): Promise<AuthResponse> {
+  const response = await apiRequest<AuthResponse>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+  saveAuth(response);
+  return response;
+}
+
+export function logout(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  }
+}
+
+function saveAuth(response: AuthResponse): void {
   if (typeof window !== 'undefined') {
     localStorage.setItem('token', response.token);
     localStorage.setItem('user', JSON.stringify({
@@ -30,6 +56,5 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
       role: response.role,
     }));
   }
-
-  return response;
 }
+

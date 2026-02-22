@@ -1,8 +1,62 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button';
+import { login } from '@/services/auth';
+import { ApiException } from '@/services/api';
 
 export default function LoginPage() {
+  const router = useRouter();
+
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [globalError, setGlobalError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+    if (errors[id]) {
+      setErrors(prev => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }
+    if (globalError) setGlobalError('');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+    setGlobalError('');
+    setLoading(true);
+
+    try {
+      await login(formData);
+      router.push('/dashboard');
+    } catch (err) {
+      if (err instanceof ApiException) {
+        if (err.fieldErrors) {
+          setErrors(err.fieldErrors);
+        } else {
+          setGlobalError(err.message);
+        }
+      } else {
+        setGlobalError('Đã xảy ra lỗi. Vui lòng thử lại sau.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className={styles.container}>
       {/* Left Side - Form */}
@@ -22,16 +76,24 @@ export default function LoginPage() {
             <p>Chào mừng quay trở lại! Hãy đăng nhập để tiếp tục hành trình học tập.</p>
           </div>
 
+          {/* Global Error */}
+          {globalError && (
+            <div className={styles.errorAlert}>{globalError}</div>
+          )}
+
           {/* Form */}
-          <form className={styles.form}>
+          <form className={styles.form} onSubmit={handleSubmit}>
             <div className={styles.inputGroup}>
               <label htmlFor="email">Email</label>
-              <input 
-                type="email" 
-                id="email" 
-                placeholder="ban@email.com" 
-                className={styles.input}
+              <input
+                type="email"
+                id="email"
+                placeholder="ban@email.com"
+                className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
+                value={formData.email}
+                onChange={handleChange}
               />
+              {errors.email && <span className={styles.fieldError}>{errors.email}</span>}
             </div>
 
             <div className={styles.inputGroup}>
@@ -41,16 +103,25 @@ export default function LoginPage() {
                   Quên mật khẩu?
                 </Link>
               </div>
-              <input 
-                type="password" 
-                id="password" 
-                placeholder="••••••••" 
-                className={styles.input}
+              <input
+                type="password"
+                id="password"
+                placeholder="••••••••"
+                className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
+                value={formData.password}
+                onChange={handleChange}
               />
+              {errors.password && <span className={styles.fieldError}>{errors.password}</span>}
             </div>
 
-            <Button variant="primary" size="lg" className={styles.submitBtn}>
-              Đăng nhập →
+            <Button
+              variant="primary"
+              size="lg"
+              className={styles.submitBtn}
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? 'Đang đăng nhập...' : 'Đăng nhập →'}
             </Button>
           </form>
 
@@ -92,7 +163,7 @@ export default function LoginPage() {
           <div className={styles.assistantBadge}>
             <span>🎯</span> ThinkAI Assistant
           </div>
-          
+
           <div className={styles.quote}>
             <div className={styles.quoteLine}></div>
             <p className={styles.quoteText}>&quot;Học thông minh hơn<br/>với AI.&quot;</p>
