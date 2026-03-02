@@ -47,6 +47,24 @@ export function logout(): void {
   }
 }
 
+export async function forgotPassword(email: string): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(
+  token: string,
+  newPassword: string,
+  confirmPassword: string
+): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, newPassword, confirmPassword }),
+  });
+}
+
 function saveAuth(response: AuthResponse): void {
   if (typeof window !== 'undefined') {
     localStorage.setItem('token', response.token);
