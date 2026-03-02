@@ -1,156 +1,348 @@
-import Link from 'next/link';
-import Navbar from '@/components/layout/Navbar';
-import Button from '@/components/ui/Button';
-import styles from './page.module.css';
+'use client';
 
-// Mock user data
-const userData = {
-  name: 'Nguyễn Văn A',
-  email: 'nguyenvana@example.com',
-  phone: '0912 345 678',
-  address: 'Hà Nội, Việt Nam',
-  bio: 'Đam mê AI và Machine Learning. Luôn tìm kiếm cơ hội để học hỏi và chia sẻ kiến thức với cộng đồng.',
-  badge: 'Học viên xuất sắc',
-  achievements: [
-    { icon: '🏆', name: '7 Ngày Streak', unlocked: true },
-    { icon: '📐', name: 'Toán học', unlocked: true },
-    { icon: '💬', name: 'Thảo luận', unlocked: true },
-    { icon: '🎓', name: 'Học viên', unlocked: true },
-    { icon: '✍️', name: 'Tác giả', unlocked: true },
-    { icon: '✅', name: 'Xác thực', unlocked: true },
-    { icon: '💡', name: 'Sáng tạo', unlocked: true },
-    { icon: '🚀', name: 'Khởi đầu', unlocked: true },
-    { icon: '💎', name: 'Đại gia', unlocked: false },
-    { icon: '👨‍🏫', name: 'Bậc thầy', unlocked: false },
-    { icon: '🏅', name: 'Vô địch', unlocked: false },
-    { icon: '⭐', name: 'Huyền thoại', unlocked: false },
-  ],
-  linkedAccounts: [
-    { provider: 'Google', icon: '🔵', connected: true },
-    { provider: 'Github', icon: '⚫', connected: false },
-  ]
-};
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import styles from './page.module.css';
+import Button from '@/components/ui/Button';
+import { getProfile, updateProfile, changePassword } from '@/services/user';
+import { ApiException } from '@/services/api';
 
 export default function ProfilePage() {
+  const router = useRouter();
+
+  // Profile state
+  const [profile, setProfile] = useState<{
+    email: string;
+    fullName: string;
+    phoneNumber: string | null;
+    avatarUrl: string | null;
+    role: string;
+    createdAt: string;
+  }>({
+    email: '',
+    fullName: '',
+    phoneNumber: '',
+    avatarUrl: '',
+    role: '',
+    createdAt: '',
+  });
+
+  // Edit form
+  const [editForm, setEditForm] = useState({ fullName: '', phoneNumber: '' });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  const [editSuccess, setEditSuccess] = useState('');
+
+  // Password form
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: '',
+  });
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  // Load profile on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const data = await getProfile();
+      setProfile(data);
+      setEditForm({ fullName: data.fullName, phoneNumber: data.phoneNumber || '' });
+    } catch {
+      router.push('/login');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getInitial = () => {
+    return profile.fullName ? profile.fullName.charAt(0).toUpperCase() : '?';
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const getRoleLabel = (role: string) => {
+    const labels: Record<string, string> = {
+      STUDENT: 'Sinh viên',
+      TEACHER: 'Giảng viên',
+      ADMIN: 'Quản trị viên',
+    };
+    return labels[role] || role;
+  };
+
+  // Edit profile handlers
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setEditForm(prev => ({ ...prev, [id]: value }));
+    if (editErrors[id]) {
+      setEditErrors(prev => { const n = { ...prev }; delete n[id]; return n; });
+    }
+    setEditSuccess('');
+  };
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditErrors({});
+    setEditSuccess('');
+    setSaving(true);
+
+    try {
+      const updated = await updateProfile(editForm);
+      setProfile(updated);
+      setIsEditing(false);
+      setEditSuccess('Cập nhật thông tin thành công!');
+
+      // Update localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify({
+          email: updated.email,
+          fullName: updated.fullName,
+          role: updated.role,
+        }));
+      }
+    } catch (err) {
+      if (err instanceof ApiException) {
+        err.fieldErrors ? setEditErrors(err.fieldErrors) : setEditErrors({ global: err.message });
+      } else {
+        setEditErrors({ global: 'Đã xảy ra lỗi. Vui lòng thử lại.' });
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Password handlers
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setPasswordForm(prev => ({ ...prev, [id]: value }));
+    if (passwordErrors[id]) {
+      setPasswordErrors(prev => { const n = { ...prev }; delete n[id]; return n; });
+    }
+    setPasswordSuccess('');
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordErrors({});
+    setPasswordSuccess('');
+    setChangingPassword(true);
+
+    try {
+      const result = await changePassword(passwordForm);
+      setPasswordSuccess(result.message);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
+    } catch (err) {
+      if (err instanceof ApiException) {
+        err.fieldErrors ? setPasswordErrors(err.fieldErrors) : setPasswordErrors({ global: err.message });
+      } else {
+        setPasswordErrors({ global: 'Đã xảy ra lỗi. Vui lòng thử lại.' });
+      }
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loading}>Đang tải...</div>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <Navbar />
-      
-      <main className={styles.main}>
-        <div className={styles.container}>
-          {/* Breadcrumb */}
-          <nav className={styles.breadcrumb}>
-            <Link href="/">Trang chủ</Link>
-            <span>/</span>
-            <span>Hồ sơ cá nhân</span>
-          </nav>
+    <div className={styles.container}>
+      <div className={styles.content}>
+        {/* Header */}
+        <div className={styles.pageHeader}>
+          <Link href="/dashboard" className={styles.backLink}>← Quay lại Dashboard</Link>
+          <h1>Hồ sơ cá nhân</h1>
+          <p>Quản lý thông tin tài khoản của bạn</p>
+        </div>
 
-          {/* Profile Card */}
-          <div className={styles.profileCard}>
-            {/* Header with Avatar */}
-            <div className={styles.profileHeader}>
-              <div className={styles.avatarWrapper}>
-                <div className={styles.avatar}>👤</div>
-                <button className={styles.editAvatarBtn}>✏️</button>
-              </div>
-              <h1>{userData.name}</h1>
-              <span className={styles.badge}>🏅 {userData.badge}</span>
-              <p className={styles.bio}>{userData.bio}</p>
+        {/* Section 1: Avatar + Display Info */}
+        <section className={styles.section}>
+          <div className={styles.profileHeader}>
+            <div className={styles.avatar}>
+              <span>{getInitial()}</span>
             </div>
-
-            {/* Content */}
-            <div className={styles.profileContent}>
-              {/* Left Column - Personal Info */}
-              <div className={styles.leftColumn}>
-                <section className={styles.section}>
-                  <h2>👤 Thông tin cá nhân</h2>
-                  
-                  <div className={styles.formGrid}>
-                    <div className={styles.formGroup}>
-                      <label>Họ và tên</label>
-                      <input type="text" defaultValue={userData.name} className={styles.input} />
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label>Email</label>
-                      <div className={styles.inputWithIcon}>
-                        <input type="email" defaultValue={userData.email} className={styles.input} />
-                        <span className={styles.lockIcon}>🔒</span>
-                      </div>
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label>Số điện thoại</label>
-                      <input type="tel" defaultValue={userData.phone} className={styles.input} />
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label>Địa chỉ</label>
-                      <input type="text" defaultValue={userData.address} className={styles.input} />
-                    </div>
-                  </div>
-                  
-                  <div className={styles.formGroup}>
-                    <label>Giới thiệu bản thân</label>
-                    <textarea defaultValue={userData.bio} className={styles.textarea} rows={3} />
-                  </div>
-                </section>
-
-                <section className={styles.section}>
-                  <h2>🔗 Tài khoản liên kết</h2>
-                  
-                  <div className={styles.linkedAccounts}>
-                    {userData.linkedAccounts.map((account, idx) => (
-                      <div key={idx} className={styles.accountItem}>
-                        <span className={styles.accountIcon}>{account.icon}</span>
-                        <div className={styles.accountInfo}>
-                          <span className={styles.accountName}>{account.provider}</span>
-                          <span className={styles.accountStatus}>
-                            {account.connected ? 'Đã kết nối' : 'Chưa kết nối'}
-                          </span>
-                        </div>
-                        <button className={account.connected ? styles.disconnectBtn : styles.connectBtn}>
-                          {account.connected ? 'Ngắt kết nối' : 'Kết nối'}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                <Button variant="primary" className={styles.saveBtn}>
-                  💾 Lưu thay đổi
-                </Button>
-              </div>
-
-              {/* Right Column - Achievements */}
-              <div className={styles.rightColumn}>
-                <section className={styles.section}>
-                  <div className={styles.achievementHeader}>
-                    <h2>🏆 Thành tựu</h2>
-                    <span className={styles.achievementCount}>
-                      {userData.achievements.filter(a => a.unlocked).length}/{userData.achievements.length}
-                    </span>
-                  </div>
-                  
-                  <div className={styles.achievementsGrid}>
-                    {userData.achievements.map((achievement, idx) => (
-                      <div 
-                        key={idx} 
-                        className={`${styles.achievementItem} ${!achievement.unlocked ? styles.locked : ''}`}
-                      >
-                        <span className={styles.achievementIcon}>{achievement.icon}</span>
-                        <span className={styles.achievementName}>{achievement.name}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className={styles.badgeTip}>
-                    <span className={styles.tipLabel}>MẸO KIẾM BADGE</span>
-                    <p>Hoàn thành khóa học Python Cơ bản để mở khóa huy hiệu "Lập trình viên".</p>
-                  </div>
-                </section>
-              </div>
+            <div className={styles.profileMeta}>
+              <h2>{profile.fullName}</h2>
+              <p className={styles.roleBadge}>{getRoleLabel(profile.role)}</p>
+              <p className={styles.email}>{profile.email}</p>
             </div>
           </div>
-        </div>
-      </main>
-    </>
+        </section>
+
+        {/* Section 2: Edit Profile */}
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h3>Thông tin cá nhân</h3>
+            {!isEditing && (
+              <button className={styles.editBtn} onClick={() => setIsEditing(true)}>
+                ✏️ Chỉnh sửa
+              </button>
+            )}
+          </div>
+
+          {editSuccess && <div className={styles.successAlert}>{editSuccess}</div>}
+          {editErrors.global && <div className={styles.errorAlert}>{editErrors.global}</div>}
+
+          {isEditing ? (
+            <form className={styles.form} onSubmit={handleSaveProfile}>
+              <div className={styles.inputGroup}>
+                <label htmlFor="fullName">Họ và tên</label>
+                <input
+                  type="text"
+                  id="fullName"
+                  className={`${styles.input} ${editErrors.fullName ? styles.inputError : ''}`}
+                  value={editForm.fullName}
+                  onChange={handleEditChange}
+                />
+                {editErrors.fullName && <span className={styles.fieldError}>{editErrors.fullName}</span>}
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label htmlFor="phoneNumber">Số điện thoại</label>
+                <input
+                  type="tel"
+                  id="phoneNumber"
+                  placeholder="Chưa cập nhật"
+                  className={`${styles.input} ${editErrors.phoneNumber ? styles.inputError : ''}`}
+                  value={editForm.phoneNumber}
+                  onChange={handleEditChange}
+                />
+                {editErrors.phoneNumber && <span className={styles.fieldError}>{editErrors.phoneNumber}</span>}
+              </div>
+
+              <div className={styles.formActions}>
+                <Button variant="primary" type="submit" disabled={saving}>
+                  {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
+                </Button>
+                <button type="button" className={styles.cancelBtn} onClick={() => {
+                  setIsEditing(false);
+                  setEditForm({ fullName: profile.fullName, phoneNumber: profile.phoneNumber || '' });
+                  setEditErrors({});
+                }}>
+                  Hủy
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className={styles.infoGrid}>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Họ và tên</span>
+                <span className={styles.infoValue}>{profile.fullName}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Số điện thoại</span>
+                <span className={styles.infoValue}>
+                  {profile.phoneNumber || <em className={styles.notSet}>Chưa cập nhật</em>}
+                </span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Email</span>
+                <span className={styles.infoValue}>{profile.email}</span>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Section 3: Change Password */}
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h3>Đổi mật khẩu</h3>
+          </div>
+
+          {passwordSuccess && <div className={styles.successAlert}>{passwordSuccess}</div>}
+          {passwordErrors.global && <div className={styles.errorAlert}>{passwordErrors.global}</div>}
+
+          <form className={styles.form} onSubmit={handleChangePassword}>
+            <div className={styles.inputGroup}>
+              <label htmlFor="currentPassword">Mật khẩu hiện tại</label>
+              <input
+                type="password"
+                id="currentPassword"
+                placeholder="••••••••"
+                className={`${styles.input} ${passwordErrors.currentPassword ? styles.inputError : ''}`}
+                value={passwordForm.currentPassword}
+                onChange={handlePasswordChange}
+              />
+              {passwordErrors.currentPassword && <span className={styles.fieldError}>{passwordErrors.currentPassword}</span>}
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label htmlFor="newPassword">Mật khẩu mới</label>
+              <input
+                type="password"
+                id="newPassword"
+                placeholder="Tối thiểu 8 ký tự"
+                className={`${styles.input} ${passwordErrors.newPassword ? styles.inputError : ''}`}
+                value={passwordForm.newPassword}
+                onChange={handlePasswordChange}
+              />
+              {passwordErrors.newPassword && <span className={styles.fieldError}>{passwordErrors.newPassword}</span>}
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label htmlFor="confirmNewPassword">Xác nhận mật khẩu mới</label>
+              <input
+                type="password"
+                id="confirmNewPassword"
+                placeholder="••••••••"
+                className={`${styles.input} ${passwordErrors.confirmNewPassword ? styles.inputError : ''}`}
+                value={passwordForm.confirmNewPassword}
+                onChange={handlePasswordChange}
+              />
+              {passwordErrors.confirmNewPassword && <span className={styles.fieldError}>{passwordErrors.confirmNewPassword}</span>}
+            </div>
+
+            <div className={styles.formActions}>
+              <Button variant="primary" type="submit" disabled={changingPassword}>
+                {changingPassword ? 'Đang đổi...' : 'Đổi mật khẩu'}
+              </Button>
+            </div>
+          </form>
+        </section>
+
+        {/* Section 4: Account Info (read-only) */}
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h3>Thông tin tài khoản</h3>
+          </div>
+          <div className={styles.infoGrid}>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Email</span>
+              <span className={styles.infoValue}>{profile.email}</span>
+            </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Vai trò</span>
+              <span className={styles.infoValue}>{getRoleLabel(profile.role)}</span>
+            </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Ngày tham gia</span>
+              <span className={styles.infoValue}>{formatDate(profile.createdAt)}</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }

@@ -39,7 +39,8 @@ const examData = {
   ]
 };
 
-export default function ExamTakingPage({ params }: { params: { id: string } }) {
+export default function ExamTakingPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = require('react').use(params);
   const router = useRouter();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -72,7 +73,7 @@ export default function ExamTakingPage({ params }: { params: { id: string } }) {
 
   const handleSubmit = () => {
     // TODO: Submit answers to API
-    router.push(`/exams/${params.id}/result`);
+    router.push(`/exams/${resolvedParams.id}/result`);
   };
 
   return (
