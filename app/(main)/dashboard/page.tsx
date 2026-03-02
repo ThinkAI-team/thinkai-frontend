@@ -39,13 +39,13 @@ export default function DashboardPage() {
           </nav>
 
           {/* User Profile */}
-          <div className={styles.userProfile}>
+          <Link href="/profile" className={styles.userProfile} style={{ textDecoration: 'none' }}>
             <div className={styles.avatar}>👤</div>
             <div className={styles.userInfo}>
               <p className={styles.userName}>Minh Nguyễn</p>
               <p className={styles.userRole}>Sinh viên năm 2</p>
             </div>
-          </div>
+          </Link>
         </div>
       </aside>
 
