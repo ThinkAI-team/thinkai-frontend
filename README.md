@@ -6,23 +6,45 @@ Nền tảng giáo dục thông minh với AI — Giao diện người dùng.
 
 - **Framework:** Next.js 15 (App Router)
 - **Language:** TypeScript
-- **Styling:** CSS Modules
-- **Design System:** Zen Harmony
+- **Styling:** CSS Modules + Zen Harmony Design System
+- **State:** React Hooks (useState, useEffect)
+- **API:** Custom fetch wrapper (`services/api.ts`)
 
-## Tính năng đã hoàn thành
+## Cấu trúc thư mục
 
-- 🏠 Trang chủ (Landing Page)
-- 🔐 Đăng ký / Đăng nhập (kết nối API)
-- 👤 Trang cá nhân (xem, sửa thông tin, đổi mật khẩu)
-- 📧 Quên mật khẩu (gửi email reset)
-- 📊 Dashboard
-- 📚 Khóa học & Chi tiết khóa học
-- 📝 Luyện thi & Kết quả
-- 🤖 Gia sư AI
-- ⚙️ Cài đặt
-- 🏫 Phòng học (Learning Room)
-- 💳 Thanh toán
-- 🔧 API Service Layer
+```
+app/
+├── (auth)/              # Trang xác thực
+│   ├── login/           # Đăng nhập
+│   ├── register/        # Đăng ký
+│   ├── forgot-password/ # Quên mật khẩu
+│   └── reset-password/  # Đặt lại mật khẩu
+├── (main)/              # Trang chính (cần đăng nhập)
+│   ├── dashboard/       # Tổng quan học tập
+│   ├── courses/         # Khóa học
+│   ├── exams/           # Luyện thi
+│   ├── profile/         # Trang cá nhân
+│   ├── settings/        # Cài đặt
+│   ├── ai-tutor/        # Gia sư AI
+│   ├── learn/           # Phòng học
+│   └── payment/         # Thanh toán
+├── admin/               # Quản trị viên
+└── page.tsx             # Trang chủ
+
+components/
+├── layout/              # Navbar, Footer
+└── ui/                  # Button, Card (reusable)
+
+services/
+├── api.ts               # API client (fetch wrapper + JWT)
+├── auth.ts              # Đăng ký, đăng nhập, quên mật khẩu
+└── user.ts              # Profile, đổi mật khẩu
+
+lib/
+├── api/                 # API layer (hooks-based)
+├── hooks/               # Custom React hooks
+└── types/               # TypeScript interfaces
+```
 
 ## Cài đặt & Chạy
 
@@ -30,36 +52,42 @@ Nền tảng giáo dục thông minh với AI — Giao diện người dùng.
 # Cài dependencies
 npm install
 
-# Chạy development server
+# Chạy dev server
 npm run dev
+
+# Build production
+npm run build
 ```
 
-Mở [http://localhost:3000](http://localhost:3000) để xem.
+Mặc định frontend chạy tại **http://localhost:3000**
 
-## Biến môi trường
+## Kết nối Backend
 
-Tạo file `.env.local`:
+Cấu hình API URL trong file `.env.local`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8081
 ```
 
-## Cấu trúc thư mục
+Nếu không có file `.env.local`, mặc định sẽ kết nối tới `http://localhost:8081`.
 
-```
-├── app/
-│   ├── (auth)/          # Đăng ký, Đăng nhập, Quên mật khẩu
-│   ├── (main)/          # Dashboard, Khóa học, Profile, ...
-│   ├── admin/           # Trang quản trị
-│   ├── globals.css      # CSS toàn cục & Design tokens
-│   └── layout.tsx       # Root layout
-├── components/
-│   ├── layout/          # Navbar, Footer
-│   └── ui/              # Button, Card
-├── services/            # API layer (auth, user, api utilities)
-└── lib/                 # Types, hooks, API clients
-```
+## Tính năng đã triển khai
 
-## Backend
+| Tính năng | Trang | API |
+|-----------|-------|-----|
+| Đăng ký | `/register` | ✅ |
+| Đăng nhập | `/login` | ✅ |
+| Trang cá nhân | `/profile` | ✅ |
+| Đổi mật khẩu | `/profile` | ✅ |
+| Quên mật khẩu | `/forgot-password` | ✅ |
+| Đặt lại mật khẩu | `/reset-password` | ✅ |
+| Dashboard | `/dashboard` | Mock |
+| Khóa học | `/courses` | Mock |
+| Luyện thi | `/exams` | Mock |
+| Gia sư AI | `/ai-tutor` | Mock |
+| Cài đặt | `/settings` | Mock |
+| Thanh toán | `/payment` | Mock |
 
-Backend repository: [thinkai-backend](https://github.com/ThinkAI-team/thinkai-backend)
+## Đội ngũ
+
+**ThinkAI Team** — Đồ án môn học
