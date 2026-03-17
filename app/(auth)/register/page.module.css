@@ -178,7 +178,76 @@
   font-size: 14px;
 }
 
-/* Google Button */
+/* Role Selection */
+.roleSelection {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.roleCard {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background-color: var(--bg-surface);
+  border: 2px solid #E5E7EB;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.roleCard:hover {
+  border-color: #D1D5DB;
+  transform: translateY(-2px);
+}
+
+.roleActive {
+  border-color: var(--accent);
+  background-color: rgba(var(--accent-rgb), 0.05); /* Giả định có biến rgb */
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.1);
+}
+
+.roleActive::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 2px solid var(--accent);
+  pointer-events: none;
+}
+
+.roleIcon {
+  font-size: 24px;
+}
+
+.roleInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.roleTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.roleDesc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.checkMark {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  color: var(--accent);
+  font-weight: bold;
+}
+
+/* Google Button - ThinkAI Style */
 .googleBtn {
   width: 100%;
   display: flex;
@@ -186,17 +255,31 @@
   justify-content: center;
   gap: 12px;
   padding: 14px 24px;
-  background-color: var(--bg-surface);
-  border: 1px solid #E5E7EB;
+  background-color: transparent;
+  border: 1px solid var(--text-muted);
   border-radius: var(--radius-md);
+  color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
-  transition: border-color var(--transition-fast);
+  transition: all var(--transition-fast);
+}
+
+.googleBtn svg {
+  filter: grayscale(1); /* ThinkAI mono style */
+  opacity: 0.7;
+  transition: all var(--transition-fast);
 }
 
 .googleBtn:hover {
-  border-color: var(--accent);
+  border-color: var(--text-primary);
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.googleBtn:hover svg {
+  filter: grayscale(0); /* Hiện màu khi hover */
+  opacity: 1;
 }
 
 /* Register Link */
@@ -210,6 +293,13 @@
 .registerLink strong {
   color: var(--text-primary);
   text-decoration: underline;
+}
+
+/* Update Responsive */
+@media (max-width: 480px) {
+  .roleSelection {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ==================== RIGHT SIDE - IMAGE ==================== */
