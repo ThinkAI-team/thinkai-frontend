@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "ThinkAI - Nền tảng Học Tiếng Anh Thông Minh",
@@ -14,7 +15,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi">
-      <body>{children}</body>
+      <body>
+        {children}
+        <Script src="https://accounts.google.com/gsi/client" strategy="beforeInteractive" />
+      </body>
     </html>
   );
 }
