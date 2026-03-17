@@ -9,7 +9,7 @@ import { logout } from '@/services/auth';
 
 export default function Navbar() {
   const router = useRouter();
-  const [user, setUser] = useState<{ fullName: string; email: string; role: string } | null>(null);
+  const [user, setUser] = useState<{ fullName: string; email: string; role: string; avatarUrl?: string } | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -69,7 +69,13 @@ export default function Navbar() {
               onClick={() => setDropdownOpen(!dropdownOpen)}
               aria-label="Menu người dùng"
             >
-              <span className={styles.avatar}>{getInitial()}</span>
+              <span className={styles.avatar}>
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.fullName} className={styles.avatarImg} />
+                ) : (
+                  getInitial()
+                )}
+              </span>
               <span className={styles.userName}>{user.fullName}</span>
               <span className={styles.chevron}>▾</span>
             </button>

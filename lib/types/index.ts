@@ -5,10 +5,12 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   confirmPassword: string;
+  role: 'STUDENT' | 'TEACHER';
 }
 
 export interface AuthResponse {
@@ -20,11 +22,14 @@ export interface AuthResponse {
 // ==================== USER TYPES ====================
 export interface User {
   id: number;
-  name: string;
+  name: string; // Tên cũ
+  fullName?: string; // Tên từ backend mới
   email: string;
   avatar?: string;
+  avatarUrl?: string; // Tên từ backend mới
   role: 'STUDENT' | 'TEACHER' | 'ADMIN';
   phone?: string;
+  phoneNumber?: string; // Số điện thoại từ backend
   address?: string;
   bio?: string;
   createdAt: string;

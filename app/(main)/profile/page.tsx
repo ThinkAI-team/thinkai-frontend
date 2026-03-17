@@ -7,9 +7,13 @@ import styles from './page.module.css';
 import Button from '@/components/ui/Button';
 import { getProfile, updateProfile, changePassword } from '@/services/user';
 import { ApiException } from '@/services/api';
+import { getCurrentUser, AuthResponse } from '@/services/auth';
 
 export default function ProfilePage() {
   const router = useRouter();
+
+  // Auth Info for password checking
+  const [authInfo, setAuthInfo] = useState<AuthResponse | null>(null);
 
   // Profile state
   const [profile, setProfile] = useState<{
@@ -38,7 +42,7 @@ export default function ProfilePage() {
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
-    confirmNewPassword: '',
+    confirmPassword: '',
   });
   const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
   const [passwordSuccess, setPasswordSuccess] = useState('');
@@ -55,9 +59,13 @@ export default function ProfilePage() {
 
   const loadProfile = async () => {
     try {
-      const data = await getProfile();
-      setProfile(data);
-      setEditForm({ fullName: data.fullName, phoneNumber: data.phoneNumber || '' });
+      const [profData, authData] = await Promise.all([
+        getProfile(),
+        getCurrentUser()
+      ]);
+      setProfile(profData);
+      setAuthInfo(authData);
+      setEditForm({ fullName: profData.fullName, phoneNumber: profData.phoneNumber || '' });
     } catch {
       router.push('/login');
     } finally {
@@ -142,12 +150,27 @@ export default function ProfilePage() {
     e.preventDefault();
     setPasswordErrors({});
     setPasswordSuccess('');
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordErrors({ confirmPassword: 'Mật khẩu xác nhận không khớp' });
+      return;
+    }
+
     setChangingPassword(true);
 
     try {
-      const result = await changePassword(passwordForm);
+      const result = await changePassword({
+        currentPassword: authInfo?.hasPassword ? passwordForm.currentPassword : '',
+        newPassword: passwordForm.newPassword,
+        confirmPassword: passwordForm.confirmPassword,
+      });
+      
       setPasswordSuccess(result.message);
-      setPasswordForm({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      
+      // Refresh auth info to update hasPassword status
+      const updatedAuth = await getCurrentUser();
+      setAuthInfo(updatedAuth);
     } catch (err) {
       if (err instanceof ApiException) {
         err.fieldErrors ? setPasswordErrors(err.fieldErrors) : setPasswordErrors({ global: err.message });
@@ -181,7 +204,11 @@ export default function ProfilePage() {
         <section className={styles.section}>
           <div className={styles.profileHeader}>
             <div className={styles.avatar}>
-              <span>{getInitial()}</span>
+              {profile.avatarUrl ? (
+                <img src={profile.avatarUrl} alt={profile.fullName} />
+              ) : (
+                <span>{getInitial()}</span>
+              )}
             </div>
             <div className={styles.profileMeta}>
               <h2>{profile.fullName}</h2>
@@ -275,18 +302,25 @@ export default function ProfilePage() {
           {passwordErrors.global && <div className={styles.errorAlert}>{passwordErrors.global}</div>}
 
           <form className={styles.form} onSubmit={handleChangePassword}>
-            <div className={styles.inputGroup}>
-              <label htmlFor="currentPassword">Mật khẩu hiện tại</label>
-              <input
-                type="password"
-                id="currentPassword"
-                placeholder="••••••••"
-                className={`${styles.input} ${passwordErrors.currentPassword ? styles.inputError : ''}`}
-                value={passwordForm.currentPassword}
-                onChange={handlePasswordChange}
-              />
-              {passwordErrors.currentPassword && <span className={styles.fieldError}>{passwordErrors.currentPassword}</span>}
-            </div>
+            {authInfo?.hasPassword ? (
+              <div className={styles.inputGroup}>
+                <label htmlFor="currentPassword">Mật khẩu hiện tại</label>
+                <input
+                  type="password"
+                  id="currentPassword"
+                  placeholder="••••••••"
+                  className={`${styles.input} ${passwordErrors.currentPassword ? styles.inputError : ''}`}
+                  value={passwordForm.currentPassword}
+                  onChange={handlePasswordChange}
+                  required
+                />
+                {passwordErrors.currentPassword && <span className={styles.fieldError}>{passwordErrors.currentPassword}</span>}
+              </div>
+            ) : authInfo?.isGoogleUser && (
+              <p className={styles.infoText}>
+                Bạn đang đăng nhập bằng Google và chưa thiết lập mật khẩu. Bạn có thể tạo mật khẩu ở đây để đăng nhập bằng Email sau này.
+              </p>
+            )}
 
             <div className={styles.inputGroup}>
               <label htmlFor="newPassword">Mật khẩu mới</label>
@@ -297,21 +331,25 @@ export default function ProfilePage() {
                 className={`${styles.input} ${passwordErrors.newPassword ? styles.inputError : ''}`}
                 value={passwordForm.newPassword}
                 onChange={handlePasswordChange}
+                required
+                minLength={8}
               />
               {passwordErrors.newPassword && <span className={styles.fieldError}>{passwordErrors.newPassword}</span>}
             </div>
 
             <div className={styles.inputGroup}>
-              <label htmlFor="confirmNewPassword">Xác nhận mật khẩu mới</label>
+              <label htmlFor="confirmPassword">Xác nhận mật khẩu mới</label>
               <input
                 type="password"
-                id="confirmNewPassword"
+                id="confirmPassword"
                 placeholder="••••••••"
-                className={`${styles.input} ${passwordErrors.confirmNewPassword ? styles.inputError : ''}`}
-                value={passwordForm.confirmNewPassword}
+                className={`${styles.input} ${passwordErrors.confirmPassword ? styles.inputError : ''}`}
+                value={passwordForm.confirmPassword}
                 onChange={handlePasswordChange}
+                required
+                minLength={8}
               />
-              {passwordErrors.confirmNewPassword && <span className={styles.fieldError}>{passwordErrors.confirmNewPassword}</span>}
+              {passwordErrors.confirmPassword && <span className={styles.fieldError}>{passwordErrors.confirmPassword}</span>}
             </div>
 
             <div className={styles.formActions}>
