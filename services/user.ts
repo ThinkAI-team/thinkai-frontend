@@ -17,7 +17,7 @@ export interface UpdateProfileRequest {
 export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
-  confirmNewPassword: string;
+  confirmPassword: string;
 }
 
 export async function getProfile(): Promise<ProfileResponse> {

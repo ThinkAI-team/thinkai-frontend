@@ -6,6 +6,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   confirmPassword: string;
+  role: string;
 }
 
 export interface LoginRequest {
@@ -13,11 +14,18 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface GoogleLoginRequest {
+  idToken: string;
+}
+
 export interface AuthResponse {
   token: string;
   email: string;
   fullName: string;
   role: string;
+  hasPassword?: boolean;
+  isGoogleUser?: boolean;
+  avatarUrl?: string;
 }
 
 export async function register(data: RegisterRequest): Promise<AuthResponse> {
@@ -43,6 +51,7 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
 export function logout(): void {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('token');
+    localStorage.removeItem('thinkai_access_token');
     localStorage.removeItem('user');
   }
 }
@@ -65,14 +74,61 @@ export async function resetPassword(
   });
 }
 
+export async function googleLogin(idToken: string): Promise<AuthResponse> {
+  const response = await apiRequest<AuthResponse>('/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({ idToken }),
+  });
+
+  saveAuth(response);
+  return response;
+}
+
+export async function updatePassword(
+  currentPassword: string | null,
+  newPassword: string,
+  confirmPassword: string
+): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>('/auth/update-password', {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+  });
+}
+
+export async function getCurrentUser(): Promise<AuthResponse> {
+  const response = await apiRequest<AuthResponse>('/auth/me', {
+    method: 'GET',
+  });
+  
+  // Cập nhật lại user trong localStorage nếu có thay đổi
+  if (typeof window !== 'undefined') {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      localStorage.setItem('user', JSON.stringify({
+        ...user,
+        email: response.email,
+        fullName: response.fullName,
+        hasPassword: response.hasPassword,
+        isGoogleUser: response.isGoogleUser,
+      }));
+    }
+  }
+  
+  return response;
+}
+
 function saveAuth(response: AuthResponse): void {
   if (typeof window !== 'undefined') {
     localStorage.setItem('token', response.token);
+    localStorage.setItem('thinkai_access_token', response.token);
     localStorage.setItem('user', JSON.stringify({
       email: response.email,
       fullName: response.fullName,
       role: response.role,
+      hasPassword: response.hasPassword,
+      isGoogleUser: response.isGoogleUser,
+      avatarUrl: response.avatarUrl,
     }));
   }
 }
-

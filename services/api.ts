@@ -35,7 +35,7 @@ export async function apiRequest<T>(
 
   // Attach JWT token if available
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('thinkai_access_token');
     if (token) {
       config.headers = {
         ...config.headers,

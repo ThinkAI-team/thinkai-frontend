@@ -11,8 +11,11 @@ export const usersApi = {
   getProfile: async (): Promise<UserProfile> => {
     try {
       const response =
-        await apiClient.get<ApiResponse<UserProfile>>("/api/users/profile");
-      return response.data.data;
+        await apiClient.get<UserProfile>("/users/me");
+      // Dùng authController backend, có thể trả trực tiếp ProfileResponse (KHÔNG bọc ApiResponse)
+      // Wait, the backend returns direct body or mapped body. `ResponseEntity.ok(profile)` -> `response.data` is the object.
+      // So no `.data.data` here. just return response.data
+      return (response.data as any).data || response.data;
     } catch (error) {
       throw handleApiError(error);
     }
@@ -23,11 +26,11 @@ export const usersApi = {
    */
   updateProfile: async (data: Partial<User>): Promise<User> => {
     try {
-      const response = await apiClient.put<ApiResponse<User>>(
-        "/api/users/profile",
+      const response = await apiClient.put<User>(
+        "/users/me",
         data,
       );
-      return response.data.data;
+      return (response.data as any).data || response.data;
     } catch (error) {
       throw handleApiError(error);
     }
@@ -41,7 +44,7 @@ export const usersApi = {
     newPassword: string;
   }): Promise<void> => {
     try {
-      await apiClient.put("/api/users/password", data);
+      await apiClient.put("/users/me/password", data); // UserController PUT /me/password
     } catch (error) {
       throw handleApiError(error);
     }
@@ -55,13 +58,13 @@ export const usersApi = {
       const formData = new FormData();
       formData.append("avatar", file);
 
-      const response = await apiClient.post<ApiResponse<{ avatarUrl: string }>>(
-        "/api/users/avatar",
+      const response = await apiClient.post<any>(
+        "/users/avatar",
         formData,
         { headers: { "Content-Type": "multipart/form-data" } },
       );
 
-      return response.data.data.avatarUrl;
+      return response.data.avatarUrl;
     } catch (error) {
       throw handleApiError(error);
     }
@@ -72,10 +75,10 @@ export const usersApi = {
    */
   getAchievements: async (): Promise<Achievement[]> => {
     try {
-      const response = await apiClient.get<ApiResponse<Achievement[]>>(
-        "/api/users/achievements",
+      const response = await apiClient.get<any>(
+        "/users/achievements",
       );
-      return response.data.data;
+      return response.data;
     } catch (error) {
       throw handleApiError(error);
     }
@@ -88,10 +91,8 @@ export const usersApi = {
     provider: "google" | "github",
   ): Promise<string> => {
     try {
-      const response = await apiClient.post<
-        ApiResponse<{ redirectUrl: string }>
-      >(`/api/users/connect/${provider}`);
-      return response.data.data.redirectUrl;
+      const response = await apiClient.post<any>(`/users/connect/${provider}`);
+      return response.data.redirectUrl;
     } catch (error) {
       throw handleApiError(error);
     }
@@ -104,7 +105,7 @@ export const usersApi = {
     provider: "google" | "github",
   ): Promise<void> => {
     try {
-      await apiClient.delete(`/api/users/connect/${provider}`);
+      await apiClient.delete(`/users/connect/${provider}`);
     } catch (error) {
       throw handleApiError(error);
     }
