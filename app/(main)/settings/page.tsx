@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Button from '@/components/ui/Button';
 import styles from './page.module.css';
+import { usersApi } from '@/lib/api/users';
+import { getCurrentUser, AuthResponse, updatePassword } from '@/services/auth';
+import type { UserProfile } from '@/lib/types';
 
 const tabs = [
   { id: 'profile', icon: '👤', label: 'Hồ sơ' },
@@ -16,6 +19,85 @@ const tabs = [
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
   const [darkMode, setDarkMode] = useState(false);
+  
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [authInfo, setAuthInfo] = useState<AuthResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [globalMessage, setGlobalMessage] = useState({ text: '', type: '' });
+  
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [profData, authData] = await Promise.all([
+        usersApi.getProfile().catch(() => null),
+        getCurrentUser().catch(() => null)
+      ]);
+      if (profData) setProfile(profData);
+      if (authData) setAuthInfo(authData);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGlobalMessage({ text: '', type: '' });
+    try {
+      if (profile) {
+        await usersApi.updateProfile({ 
+          fullName: profile.fullName,
+          phoneNumber: profile.phoneNumber
+        });
+        setGlobalMessage({ text: 'Cập nhật hồ sơ thành công', type: 'success' });
+      }
+    } catch (err: any) {
+      setGlobalMessage({ text: err.message || 'Lỗi cập nhật hồ sơ', type: 'error' });
+    }
+  };
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGlobalMessage({ text: '', type: '' });
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setGlobalMessage({ text: 'Mật khẩu xác nhận không khớp', type: 'error' });
+      return;
+    }
+    
+    try {
+      await updatePassword(
+        authInfo?.hasPassword ? passwordData.currentPassword : null,
+        passwordData.newPassword,
+        passwordData.confirmPassword
+      );
+      setGlobalMessage({ text: 'Đổi mật khẩu thành công', type: 'success' });
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      // Reload auth info
+      const authData = await getCurrentUser();
+      setAuthInfo(authData);
+    } catch (err: any) {
+      setGlobalMessage({ text: err.message || 'Lỗi đổi mật khẩu', type: 'error' });
+    }
+  };
+
+  const getUserInitial = () => {
+    return profile?.fullName ? profile.fullName.charAt(0).toUpperCase() : '?';
+  };
+
+  if (loading) {
+    return <div style={{textAlign: 'center', padding: '5rem'}}>Đang tải...</div>;
+  }
 
   return (
     <>
@@ -36,7 +118,10 @@ export default function SettingsPage() {
                 <button
                   key={tab.id}
                   className={`${styles.tabBtn} ${activeTab === tab.id ? styles.active : ''}`}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setGlobalMessage({ text: '', type: '' });
+                  }}
                 >
                   <span>{tab.icon}</span>
                   <span>{tab.label}</span>
@@ -52,7 +137,9 @@ export default function SettingsPage() {
                   <section className={styles.section}>
                     <div className={styles.profileSection}>
                       <div className={styles.avatarSection}>
-                        <div className={styles.avatar}>👤</div>
+                        <div className={styles.avatar}>
+                          {profile?.avatarUrl ? <img src={profile.avatarUrl} alt="Avatar" /> : getUserInitial()}
+                        </div>
                         <button className={styles.editAvatarBtn}>✏️</button>
                         <span className={styles.avatarLabel}>Ảnh đại diện</span>
                       </div>
@@ -61,26 +148,37 @@ export default function SettingsPage() {
                         <div className={styles.formRow}>
                           <div className={styles.formGroup}>
                             <label>Họ và tên</label>
-                            <input type="text" defaultValue="Nguyễn Văn An" className={styles.input} />
+                            <input 
+                              type="text" 
+                              value={profile?.fullName || ''} 
+                              onChange={(e) => setProfile(prev => prev ? {...prev, fullName: e.target.value} : null)}
+                              className={styles.input} 
+                            />
                           </div>
                           <div className={styles.formGroup}>
-                            <label>Tên hiển thị</label>
-                            <input type="text" defaultValue="@annguyen" className={styles.input} />
+                            <label>Vai trò</label>
+                            <input type="text" value={profile?.role || ''} className={styles.input} disabled style={{opacity: 0.6}} />
                           </div>
                         </div>
                         
                         <div className={styles.formGroup}>
                           <label>Địa chỉ Email</label>
-                          <input type="email" defaultValue="an.nguyen@example.com" className={styles.input} />
+                          <input type="email" value={profile?.email || ''} className={styles.input} disabled style={{opacity: 0.6}} />
                         </div>
                         
                         <div className={styles.formGroup}>
-                          <label>Giới thiệu ngắn</label>
-                          <textarea 
-                            defaultValue="Người đam mê học hỏi và khám phá công nghệ mới." 
-                            className={styles.textarea} 
-                            rows={3} 
+                          <label>Số điện thoại</label>
+                          <input 
+                            type="text" 
+                            value={profile?.phoneNumber || ''}
+                            onChange={(e) => setProfile(prev => prev ? {...prev, phoneNumber: e.target.value} : null)}
+                            className={styles.input} 
+                            placeholder="Nhập số điện thoại"
                           />
+                        </div>
+
+                        <div style={{marginTop: '1rem'}}>
+                          <Button variant="primary" onClick={handleProfileUpdate}>Lưu hồ sơ</Button>
                         </div>
                       </div>
                     </div>
@@ -145,18 +243,54 @@ export default function SettingsPage() {
               {activeTab === 'security' && (
                 <section className={styles.section}>
                   <h2>Bảo mật</h2>
-                  <div className={styles.formGroup}>
-                    <label>Mật khẩu hiện tại</label>
-                    <input type="password" placeholder="••••••••" className={styles.input} />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Mật khẩu mới</label>
-                    <input type="password" placeholder="••••••••" className={styles.input} />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Xác nhận mật khẩu mới</label>
-                    <input type="password" placeholder="••••••••" className={styles.input} />
-                  </div>
+                  <form onSubmit={handlePasswordUpdate}>
+                    {(authInfo?.hasPassword) && (
+                      <div className={styles.formGroup}>
+                        <label>Mật khẩu hiện tại</label>
+                        <input 
+                          type="password" 
+                          placeholder="••••••••" 
+                          className={styles.input} 
+                          value={passwordData.currentPassword}
+                          onChange={(e) => setPasswordData(prev => ({...prev, currentPassword: e.target.value}))}
+                          required
+                        />
+                      </div>
+                    )}
+                    {!authInfo?.hasPassword && authInfo?.isGoogleUser && (
+                      <p style={{color: '#666', marginBottom: '1rem', fontSize: '0.9rem'}}>
+                        Bạn đang đăng nhập bằng Google và chưa thiết lập mật khẩu. Bạn có thể tạo mật khẩu ở đây để đăng nhập bằng Email/Password sau này.
+                      </p>
+                    )}
+                    <div className={styles.formGroup}>
+                      <label>Mật khẩu mới</label>
+                      <input 
+                        type="password" 
+                        placeholder="••••••••" 
+                        className={styles.input} 
+                        value={passwordData.newPassword}
+                        onChange={(e) => setPasswordData(prev => ({...prev, newPassword: e.target.value}))}
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Xác nhận mật khẩu mới</label>
+                      <input 
+                        type="password" 
+                        placeholder="••••••••" 
+                        className={styles.input}
+                        value={passwordData.confirmPassword}
+                        onChange={(e) => setPasswordData(prev => ({...prev, confirmPassword: e.target.value}))}
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    
+                    <div style={{marginTop: '1.5rem'}}>
+                      <Button variant="primary" type="submit">Cập nhật mật khẩu</Button>
+                    </div>
+                  </form>
                 </section>
               )}
 
@@ -174,9 +308,12 @@ export default function SettingsPage() {
               )}
 
               {/* Action Buttons */}
-              <div className={styles.actions}>
-                <button className={styles.cancelBtn}>Hủy bỏ</button>
-                <Button variant="primary">Lưu thay đổi →</Button>
+              <div className={styles.actions} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                {globalMessage.text ? (
+                  <span style={{color: globalMessage.type === 'error' ? 'red' : 'green', fontSize: '0.9rem', fontWeight: 500}}>
+                    {globalMessage.text}
+                  </span>
+                ) : <span />}
               </div>
             </div>
           </div>

@@ -1,8 +1,53 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button';
+import { logout } from '@/services/auth';
+import { usersApi } from '@/lib/api/users';
+import type { UserProfile } from '@/lib/types';
+import Navbar from '@/components/layout/Navbar';
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await usersApi.getProfile();
+        setProfile(data);
+      } catch (err) {
+        console.error('Failed to load profile:', err);
+        // If 401, redirect to login is handled by interceptor but good to have here
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
+
+  const getUserInitial = () => {
+    return profile?.fullName ? profile.fullName.charAt(0).toUpperCase() : '?';
+  };
+
+  const getFirstName = () => {
+    return profile?.fullName ? profile.fullName.split(' ')[0] : 'bạn';
+  };
+
+  if (loading) {
+    return <div className={styles.loadingContainer}>Đang tải...</div>;
+  }
+
   return (
     <div className={styles.container}>
       {/* Sidebar */}
@@ -39,13 +84,20 @@ export default function DashboardPage() {
           </nav>
 
           {/* User Profile */}
-          <Link href="/profile" className={styles.userProfile} style={{ textDecoration: 'none' }}>
-            <div className={styles.avatar}>👤</div>
-            <div className={styles.userInfo}>
-              <p className={styles.userName}>Minh Nguyễn</p>
-              <p className={styles.userRole}>Sinh viên năm 2</p>
-            </div>
-          </Link>
+          <div className={styles.userSection}>
+            <Link href="/profile" className={styles.userProfile} style={{ textDecoration: 'none' }}>
+              <div className={styles.avatar}>
+                {profile?.avatarUrl ? <img src={profile.avatarUrl} alt="Avatar" /> : getUserInitial()}
+              </div>
+              <div className={styles.userInfo}>
+                <p className={styles.userName}>{profile?.fullName || 'Người dùng'}</p>
+                <p className={styles.userRole}>{profile?.role === 'STUDENT' ? 'Sinh viên' : profile?.role === 'TEACHER' ? 'Giảng viên' : profile?.role || 'Học viên'}</p>
+              </div>
+            </Link>
+            <button className={styles.logoutBtn} onClick={handleLogout} title="Đăng xuất">
+              <span className={styles.logoutIcon}>🚪</span>
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -54,7 +106,7 @@ export default function DashboardPage() {
         {/* Header */}
         <header className={styles.header}>
           <div className={styles.greeting}>
-            <h1>Chào buổi sáng, <em>Minh!</em> 👋</h1>
+            <h1>Chào buổi sáng, <em>{getFirstName()}!</em> 👋</h1>
             <p>Hôm nay là một ngày tuyệt vời để học điều mới.</p>
           </div>
           <div className={styles.headerActions}>
