@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -6,30 +7,35 @@ import Link from 'next/link';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button';
 import { logout } from '@/services/auth';
-import { usersApi } from '@/lib/api/users';
-import type { UserProfile } from '@/lib/types';
-import Navbar from '@/components/layout/Navbar';
+import { getProfile, type ProfileResponse } from '@/services/user';
+import { getDashboard, type DashboardData } from '@/services/dashboard';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<ProfileResponse | null>(null);
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchData = async () => {
       try {
-        const data = await usersApi.getProfile();
-        setProfile(data);
+        const [profileData, dashboardData] = await Promise.all([
+          getProfile(),
+          getDashboard(),
+        ]);
+        setProfile(profileData);
+        setDashboard(dashboardData);
       } catch (err) {
-        console.error('Failed to load profile:', err);
-        // If 401, redirect to login is handled by interceptor but good to have here
+        setError('Không thể tải dữ liệu dashboard. Vui lòng đăng nhập lại.');
+        setTimeout(() => router.push('/login'), 1200);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProfile();
-  }, []);
+    fetchData();
+  }, [router]);
 
   const handleLogout = () => {
     logout();
@@ -44,8 +50,23 @@ export default function DashboardPage() {
     return profile?.fullName ? profile.fullName.split(' ')[0] : 'bạn';
   };
 
+  const completedLessons = dashboard?.enrolledCourses.reduce(
+    (sum, course) => sum + course.completedLessons,
+    0
+  ) || 0;
+
+  const nextLessonHref = dashboard?.nextLesson
+    ? `/learn/${dashboard.nextLesson.lessonId}`
+    : '/courses';
+
+  const firstCourse = dashboard?.enrolledCourses[0];
+
   if (loading) {
     return <div className={styles.loadingContainer}>Đang tải...</div>;
+  }
+
+  if (error) {
+    return <div className={styles.loadingContainer}>{error}</div>;
   }
 
   return (
@@ -106,8 +127,12 @@ export default function DashboardPage() {
         {/* Header */}
         <header className={styles.header}>
           <div className={styles.greeting}>
-            <h1>Chào buổi sáng, <em>{getFirstName()}!</em> 👋</h1>
-            <p>Hôm nay là một ngày tuyệt vời để học điều mới.</p>
+            <h1>
+              {dashboard?.greeting || (
+                <>Chào mừng quay lại, <em>{getFirstName()}!</em></>
+              )}
+            </h1>
+            <p>Theo dõi tiến độ và tiếp tục bài học tiếp theo của bạn.</p>
           </div>
           <div className={styles.headerActions}>
             <button className={styles.iconBtn}>🔔</button>
@@ -119,18 +144,18 @@ export default function DashboardPage() {
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
             <div className={styles.statIcon}>📚</div>
-            <div className={styles.statValue}>3</div>
+            <div className={styles.statValue}>{dashboard?.totalEnrolledCourses || 0}</div>
             <div className={styles.statLabel}>KHÓA HỌC</div>
           </div>
           <div className={styles.statCard}>
             <div className={styles.statIcon}>📈</div>
-            <div className={styles.statValue}>65%</div>
+            <div className={styles.statValue}>{Math.round(dashboard?.averageProgress || 0)}%</div>
             <div className={styles.statLabel}>TIẾN ĐỘ</div>
           </div>
           <div className={styles.statCard}>
             <div className={styles.statIcon}>📝</div>
-            <div className={styles.statValue}>2</div>
-            <div className={styles.statLabel}>BÀI KIỂM TRA</div>
+            <div className={styles.statValue}>{completedLessons}</div>
+            <div className={styles.statLabel}>BÀI ĐÃ HOÀN THÀNH</div>
           </div>
         </div>
 
@@ -141,26 +166,47 @@ export default function DashboardPage() {
             <Link href="/courses" className={styles.viewAll}>Xem tất cả →</Link>
           </div>
           
-          <div className={styles.courseCard}>
-            <div className={styles.courseImage}>
-              <span>&lt; &gt;</span>
-            </div>
-            <div className={styles.courseInfo}>
-              <div className={styles.courseMeta}>
-                <span className={styles.courseTag}>BACKEND</span>
-                <span className={styles.courseTime}>2h 15m còn lại</span>
+          {firstCourse ? (
+            <div className={styles.courseCard}>
+              <div className={styles.courseImage}>
+                <span>&lt; / &gt;</span>
               </div>
-              <h3>Java Spring Boot: Xây dựng API</h3>
-              <p>Học cách xây dựng RESTful APIs mạnh m...</p>
-              <div className={styles.progressSection}>
-                <div className={styles.progressBar}>
-                  <div className={styles.progressFill} style={{width: '75%'}}></div>
+              <div className={styles.courseInfo}>
+                <div className={styles.courseMeta}>
+                  <span className={styles.courseTag}>ĐANG HỌC</span>
+                  <span className={styles.courseTime}>
+                    {firstCourse.completedLessons}/{firstCourse.totalLessons} bài
+                  </span>
                 </div>
-                <span className={styles.progressText}>75%</span>
+                <h3>{firstCourse.title}</h3>
+                <p>Tiếp tục bài học để hoàn thành tiến độ của khóa học.</p>
+                <div className={styles.progressSection}>
+                  <div className={styles.progressBar}>
+                    <div
+                      className={styles.progressFill}
+                      style={{ width: `${Math.round(firstCourse.progressPercent || 0)}%` }}
+                    />
+                  </div>
+                  <span className={styles.progressText}>
+                    {Math.round(firstCourse.progressPercent || 0)}%
+                  </span>
+                </div>
               </div>
+              <Link href={nextLessonHref}>
+                <Button variant="primary">Tiếp tục →</Button>
+              </Link>
             </div>
-            <Button variant="primary">Tiếp tục →</Button>
-          </div>
+          ) : (
+            <div className={styles.courseCard}>
+              <div className={styles.courseInfo}>
+                <h3>Bạn chưa đăng ký khóa học nào</h3>
+                <p>Khám phá các khóa học để bắt đầu hành trình học tập.</p>
+              </div>
+              <Link href="/courses">
+                <Button variant="primary">Khám phá khóa học →</Button>
+              </Link>
+            </div>
+          )}
         </section>
 
         {/* Bottom Grid */}
@@ -170,19 +216,27 @@ export default function DashboardPage() {
             <div className={styles.suggestion}>
               <span className={styles.suggestionIcon}>💡</span>
               <div>
-                <p className={styles.suggestionTitle}>Ôn tập kiến thức Database</p>
-                <p className={styles.suggestionDesc}>Dựa trên kết quả bài kiểm tra gần đây, bạn nên xem lại về SQL Joins.</p>
+                <p className={styles.suggestionTitle}>Bài học tiếp theo</p>
+                <p className={styles.suggestionDesc}>
+                  {dashboard?.nextLesson
+                    ? `${dashboard.nextLesson.lessonTitle} (${dashboard.nextLesson.courseTitle})`
+                    : 'Bạn đã hoàn thành các bài đang theo học. Tiếp tục học khóa mới.'}
+                </p>
               </div>
             </div>
           </div>
           
           <div className={styles.discussionCard}>
-            <h3>Thảo luận mới</h3>
+            <h3>Tiến độ trung bình</h3>
             <div className={styles.discussion}>
-              <span className={styles.discussionIcon}>💬</span>
+              <span className={styles.discussionIcon}>📊</span>
               <div>
-                <p className={styles.discussionTitle}>Hỏi đáp về Spring Security</p>
-                <p className={styles.discussionDesc}>2 tin nhắn mới từ Mentor.</p>
+                <p className={styles.discussionTitle}>
+                  {Math.round(dashboard?.averageProgress || 0)}% hoàn thành
+                </p>
+                <p className={styles.discussionDesc}>
+                  Duy trì đều đặn để hoàn thành mục tiêu học tập tuần này.
+                </p>
               </div>
             </div>
           </div>
@@ -192,47 +246,35 @@ export default function DashboardPage() {
       {/* Right Sidebar */}
       <aside className={styles.rightSidebar}>
         <div className={styles.lessonList}>
-          <h3>Danh sách bài học</h3>
-          <p className={styles.lessonCourse}>Java Spring Boot</p>
+          <h3>Khóa học đã đăng ký</h3>
+          <p className={styles.lessonCourse}>Theo dõi nhanh tiến độ</p>
           
           <div className={styles.chapters}>
-            <div className={`${styles.chapter} ${styles.completed}`}>
-              <span className={styles.chapterCheck}>✓</span>
-              <div>
-                <p className={styles.chapterNumber}>CHƯƠNG 1</p>
-                <p className={styles.chapterTitle}>Giới thiệu về Spring</p>
+            {(dashboard?.enrolledCourses || []).slice(0, 5).map((course) => (
+              <div
+                key={course.courseId}
+                className={`${styles.chapter} ${course.progressPercent >= 100 ? styles.completed : styles.current}`}
+              >
+                <span className={styles.chapterCheck}>
+                  {course.progressPercent >= 100 ? '✓' : '○'}
+                </span>
+                <div>
+                  <p className={styles.chapterNumber}>KHÓA HỌC #{course.courseId}</p>
+                  <p className={styles.chapterTitle}>{course.title}</p>
+                  <p className={styles.chapterMeta}>
+                    {course.completedLessons}/{course.totalLessons} bài • {Math.round(course.progressPercent)}%
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className={`${styles.chapter} ${styles.completed}`}>
-              <span className={styles.chapterCheck}>✓</span>
-              <div>
-                <p className={styles.chapterNumber}>CHƯƠNG 2</p>
-                <p className={styles.chapterTitle}>Cấu hình môi trường</p>
+            ))}
+            {!dashboard?.enrolledCourses.length && (
+              <div className={styles.chapter}>
+                <span className={styles.chapterLock}>○</span>
+                <div>
+                  <p className={styles.chapterTitle}>Chưa có dữ liệu khóa học</p>
+                </div>
               </div>
-            </div>
-            <div className={`${styles.chapter} ${styles.current}`}>
-              <span className={styles.chapterCurrent}>○</span>
-              <div>
-                <p className={styles.chapterNumber}>CHƯƠNG 3 - HIỆN TẠI</p>
-                <p className={styles.chapterTitle}>Dependency Injection</p>
-                <p className={styles.chapterMeta}>15 phút • Video & Quiz</p>
-              </div>
-            </div>
-            <div className={styles.chapter}>
-              <span className={styles.chapterLock}>○</span>
-              <div>
-                <p className={styles.chapterNumber}>CHƯƠNG 4</p>
-                <p className={styles.chapterTitle}>Spring Beans & Scopes</p>
-                <p className={styles.chapterMeta}>🔒 Đang khóa</p>
-              </div>
-            </div>
-            <div className={styles.chapter}>
-              <span className={styles.chapterLock}>○</span>
-              <div>
-                <p className={styles.chapterNumber}>CHƯƠNG 5</p>
-                <p className={styles.chapterTitle}>Component Scanning</p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 

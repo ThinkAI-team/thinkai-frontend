@@ -1,6 +1,7 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './page.module.css';
@@ -51,13 +52,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
 
-  // Load profile on mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     try {
       const [profData, authData] = await Promise.all([
         getProfile(),
@@ -71,7 +66,12 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  // Load profile on mount
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   const getInitial = () => {
     return profile.fullName ? profile.fullName.charAt(0).toUpperCase() : '?';

@@ -1,239 +1,303 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Button from '@/components/ui/Button';
 import styles from './page.module.css';
-
-// Mock course data
-const course = {
-  id: 1,
-  title: 'Lập trình Java Spring Boot chuyên sâu',
-  description: 'Xây dựng ứng dụng web mạnh mẽ, bảo mật và hiệu năng cao với framework phổ biến nhất thế giới Java. Từ cơ bản đến Microservices.',
-  rating: 4.8,
-  reviews: 1234,
-  students: 4500,
-  lastUpdated: '10/2023',
-  price: 999000,
-  originalPrice: 2000000,
-  discount: 50,
-  videoHours: 12.5,
-  articles: 15,
-  exercises: 20,
-  learningPoints: [
-    'Hiểu sâu về kiến trúc Spring Boot và Spring Framework',
-    'Xây dựng RESTful API chuẩn mực và bảo mật với Spring Security',
-    'Làm việc với Database sử dụng Spring Data JPA & Hibernate',
-    'Deploy ứng dụng lên Cloud (AWS/Azure) và sử dụng Docker',
-    'Tối ưu hiệu năng và xử lý cache với Redis',
-    'Kiến trúc Microservices cơ bản với Spring Cloud',
-  ],
-  curriculum: [
-    { title: '1. Giới thiệu & Cài đặt môi trường', lessons: 3, duration: '15p', isExpanded: true, items: [
-      { title: 'Giới thiệu khóa học', duration: '02:30', completed: true },
-      { title: 'Cài đặt JDK và IntelliJ IDEA', duration: '08:15', completed: false },
-    ]},
-    { title: '2. Dependency Injection & IoC Container', lessons: 8, duration: '1h 20p' },
-    { title: '3. Spring Data JPA & Hibernate', lessons: 12, duration: '2h 45p' },
-    { title: '4. RESTful API với Spring Boot', lessons: 10, duration: '2h 00p' },
-  ],
-  instructor: {
-    name: 'Nguyễn Văn A',
-    title: 'Senior Software Architect',
-    rating: 4.9,
-    courses: 10,
-    students: 20000,
-    avatar: '/images/instructor.jpg',
-    bio: 'Tôi là một kỹ sư phần mềm với hơn 10 năm kinh nghiệm làm việc với hệ sinh thái Java. Tôi từng làm việc tại các công ty công nghệ lớn tại Việt Nam và Singapore. Sứ mệnh của tôi là giúp các bạn trẻ tiếp cận kiến thức lập trình chuẩn quốc tế.'
-  },
-  reviewStats: {
-    average: 4.8,
-    total: 1234,
-    distribution: [72, 20, 5, 2, 1]
-  }
-};
+import {
+  enrollCourse,
+  getCourseDetail,
+  type CourseDetailResponse,
+} from '@/services/courses';
+import {
+  createCourseReview,
+  getCourseReviews,
+  type CourseReview,
+} from '@/services/reviews';
 
 export default function CourseDetailPage() {
+  const params = useParams<{ id: string }>();
+  const courseId = Number(params.id);
+
+  const [course, setCourse] = useState<CourseDetailResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [enrolling, setEnrolling] = useState(false);
+  const [message, setMessage] = useState('');
+  const [reviews, setReviews] = useState<CourseReview[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, reviewText: '' });
+  const [reviewMessage, setReviewMessage] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  useEffect(() => {
+    const fetchCourse = async () => {
+      if (!Number.isFinite(courseId)) {
+        setError('ID khóa học không hợp lệ.');
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setLoadingReviews(true);
+      setError('');
+      try {
+        const [data, reviewData] = await Promise.all([
+          getCourseDetail(courseId),
+          getCourseReviews(courseId).catch(() => [] as CourseReview[]),
+        ]);
+        setCourse(data);
+        setReviews(reviewData);
+      } catch (err: any) {
+        setError(err.message || 'Không thể tải chi tiết khóa học.');
+      } finally {
+        setLoading(false);
+        setLoadingReviews(false);
+      }
+    };
+
+    fetchCourse();
+  }, [courseId]);
+
+  const handleEnroll = async () => {
+    if (!course) return;
+    setEnrolling(true);
+    setMessage('');
+    try {
+      await enrollCourse(course.id);
+      setCourse((prev) => (prev ? { ...prev, isEnrolled: true } : prev));
+      setMessage('Đăng ký khóa học thành công.');
+    } catch (err: any) {
+      setMessage(err.message || 'Không thể đăng ký khóa học.');
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!course) return;
+    const reviewText = reviewForm.reviewText.trim();
+    if (!reviewText) {
+      setReviewMessage('Vui lòng nhập nội dung nhận xét.');
+      return;
+    }
+
+    setSubmittingReview(true);
+    setReviewMessage('');
+    try {
+      const created = await createCourseReview(course.id, {
+        rating: reviewForm.rating,
+        reviewText,
+      });
+      setReviews((prev) => [created, ...prev]);
+      setReviewForm({ rating: 5, reviewText: '' });
+      setReviewMessage('Đã gửi đánh giá thành công.');
+    } catch (err: any) {
+      setReviewMessage(err.message || 'Không thể gửi đánh giá.');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <main className={styles.main}>
+          <div className={styles.container}>Đang tải chi tiết khóa học...</div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  if (error || !course) {
+    return (
+      <>
+        <Navbar />
+        <main className={styles.main}>
+          <div className={styles.container}>{error || 'Không tìm thấy khóa học.'}</div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  const firstLessonId = course.lessons?.[0]?.id;
+  const averageRating = reviews.length
+    ? reviews.reduce((sum, item) => sum + item.rating, 0) / reviews.length
+    : 0;
+
   return (
     <>
       <Navbar />
-      
+
       <main className={styles.main}>
         <div className={styles.container}>
-          {/* Left Content */}
           <div className={styles.content}>
-            {/* Breadcrumb */}
             <nav className={styles.breadcrumb}>
               <Link href="/">Trang chủ</Link>
               <span>›</span>
-              <Link href="/courses">Lập trình</Link>
+              <Link href="/courses">Khóa học</Link>
               <span>›</span>
-              <span>Backend</span>
+              <span>Chi tiết</span>
             </nav>
 
-            {/* Header */}
             <header className={styles.header}>
               <h1>{course.title}</h1>
               <p className={styles.subtitle}>{course.description}</p>
-              
+
               <div className={styles.meta}>
-                <span className={styles.rating}>
-                  {course.rating} ★★★★★ 
-                  <Link href="#reviews">({course.reviews.toLocaleString()} đánh giá)</Link>
-                </span>
-                <span>{course.students.toLocaleString()} học viên</span>
-                <span>Cập nhật: {course.lastUpdated}</span>
+                <span>{course.lessons.length} bài học</span>
+                <span>{course.instructor?.fullName || 'Đang cập nhật giảng viên'}</span>
+                <span>Tiến độ: {Math.round(course.progressPercent || 0)}%</span>
               </div>
             </header>
 
-            {/* What you'll learn */}
-            <section className={styles.section}>
-              <h2>Bạn sẽ học được gì</h2>
-              <div className={styles.learningGrid}>
-                {course.learningPoints.map((point, idx) => (
-                  <div key={idx} className={styles.learningItem}>
-                    <span className={styles.checkIcon}>✓</span>
-                    <span>{point}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Curriculum */}
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
                 <h2>Nội dung khóa học</h2>
                 <p className={styles.curriculumMeta}>
-                  8 chương • 64 bài học • 12 giờ 30 phút
+                  {course.lessons.length} bài học
                 </p>
-                <button className={styles.expandAll}>Mở rộng tất cả</button>
               </div>
-              
+
               <div className={styles.curriculum}>
-                {course.curriculum.map((section, idx) => (
-                  <div key={idx} className={styles.curriculumSection}>
+                {course.lessons.map((lesson) => (
+                  <div key={lesson.id} className={styles.curriculumSection}>
                     <div className={styles.sectionTitle}>
-                      <span className={styles.expandIcon}>{section.isExpanded ? '∨' : '›'}</span>
-                      <span>{section.title}</span>
-                      <span className={styles.sectionMeta}>{section.lessons} bài • {section.duration}</span>
+                      <span className={styles.expandIcon}>{lesson.isCompleted ? '✓' : '○'}</span>
+                      <span>{lesson.title}</span>
+                      <span className={styles.sectionMeta}>
+                        {lesson.type}
+                        {lesson.duration ? ` • ${lesson.duration}` : ''}
+                      </span>
                     </div>
-                    {section.isExpanded && section.items && (
-                      <div className={styles.sectionItems}>
-                        {section.items.map((item, iIdx) => (
-                          <div key={iIdx} className={styles.lessonItem}>
-                            <span className={item.completed ? styles.completedIcon : styles.playIcon}>
-                              {item.completed ? '●' : '○'}
-                            </span>
-                            <span>{item.title}</span>
-                            <span className={styles.lessonDuration}>{item.duration}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
             </section>
 
-            {/* Description */}
-            <section className={styles.section}>
-              <h2>Mô tả chi tiết</h2>
-              <div className={styles.description}>
-                <p>Khóa học này được thiết kế dành cho các lập trình viên Java muốn nâng cao kỹ năng backend của mình lên một tầm cao mới. Spring Boot hiện là framework Java phổ biến nhất cho việc phát triển web hiện đại.</p>
-                <p>Trong khóa học này, chúng ta sẽ không chỉ học cú pháp, mà còn học tư duy thiết kế hệ thống. Bạn sẽ được thực hành xây dựng một dự án E-commerce thực tế từ đầu đến cuối, bao gồm tích hợp thanh toán, gửi email, và bảo mật với JWT.</p>
-                <h4>Yêu cầu đầu vào:</h4>
-                <ul>
-                  <li>Kiến thức Java Core vững chắc (OOP, Collection, Stream API).</li>
-                  <li>Hiểu biết cơ bản về Database và SQL.</li>
-                  <li>Tinh thần ham học hỏi và kiên trì.</li>
-                </ul>
-              </div>
-            </section>
-
-            {/* Instructor */}
             <section className={styles.section}>
               <h2>Giảng viên</h2>
               <div className={styles.instructor}>
                 <div className={styles.instructorAvatar}>👨‍🏫</div>
                 <div className={styles.instructorInfo}>
-                  <h3>{course.instructor.name}</h3>
-                  <p className={styles.instructorTitle}>{course.instructor.title}</p>
-                  <div className={styles.instructorStats}>
-                    <span>★ {course.instructor.rating} Xếp hạng</span>
-                    <span>📚 {course.instructor.courses} Khóa học</span>
-                    <span>👥 {course.instructor.students.toLocaleString()} Học viên</span>
-                  </div>
-                  <p className={styles.instructorBio}>{course.instructor.bio}</p>
+                  <h3>{course.instructor?.fullName || 'Đang cập nhật'}</h3>
+                  <p className={styles.instructorTitle}>ThinkAI Instructor</p>
                 </div>
               </div>
             </section>
 
-            {/* Reviews */}
-            <section id="reviews" className={styles.section}>
-              <h2>Đánh giá từ học viên</h2>
+            <section className={styles.section}>
+              <h2>Đánh giá khóa học</h2>
               <div className={styles.reviews}>
                 <div className={styles.reviewSummary}>
                   <div className={styles.reviewScore}>
-                    <span className={styles.scoreNumber}>{course.reviewStats.average}</span>
-                    <span className={styles.stars}>★★★★★</span>
-                    <span className={styles.totalReviews}>{course.reviewStats.total.toLocaleString()} đánh giá</span>
-                  </div>
-                  <div className={styles.reviewBars}>
-                    {course.reviewStats.distribution.map((percent, idx) => (
-                      <div key={idx} className={styles.reviewBar}>
-                        <span>{5 - idx}</span>
-                        <div className={styles.barTrack}>
-                          <div className={styles.barFill} style={{width: `${percent}%`}}></div>
-                        </div>
-                        <span>{percent}%</span>
-                      </div>
-                    ))}
+                    <span className={styles.scoreNumber}>{averageRating.toFixed(1)}</span>
+                    <span className={styles.stars}>⭐️⭐️⭐️⭐️⭐️</span>
+                    <span className={styles.totalReviews}>{reviews.length} đánh giá</span>
                   </div>
                 </div>
+
+                <form className={styles.reviewForm} onSubmit={handleSubmitReview}>
+                  <div className={styles.reviewInputs}>
+                    <select
+                      value={reviewForm.rating}
+                      onChange={(e) =>
+                        setReviewForm((prev) => ({ ...prev, rating: Number(e.target.value) }))
+                      }
+                    >
+                      {[5, 4, 3, 2, 1].map((value) => (
+                        <option key={value} value={value}>
+                          {value} sao
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={reviewForm.reviewText}
+                      onChange={(e) =>
+                        setReviewForm((prev) => ({ ...prev, reviewText: e.target.value }))
+                      }
+                      placeholder="Nhập nhận xét về khóa học..."
+                    />
+                    <button type="submit" disabled={submittingReview}>
+                      {submittingReview ? 'Đang gửi...' : 'Gửi đánh giá'}
+                    </button>
+                  </div>
+                  {reviewMessage && <p className={styles.reviewMessage}>{reviewMessage}</p>}
+                </form>
+
+                {loadingReviews ? (
+                  <p>Đang tải đánh giá...</p>
+                ) : (
+                  <div className={styles.reviewList}>
+                    {reviews.length === 0 ? (
+                      <p>Chưa có đánh giá nào cho khóa học này.</p>
+                    ) : (
+                      reviews.slice(0, 6).map((review) => (
+                        <article key={review.id} className={styles.reviewItem}>
+                          <div className={styles.reviewItemHeader}>
+                            <strong>{review.userName || 'Học viên ThinkAI'}</strong>
+                            <span>{'⭐️'.repeat(Math.max(1, Math.min(5, review.rating)))}</span>
+                          </div>
+                          <p>{review.reviewText}</p>
+                          {review.createdAt && (
+                            <small>{new Date(review.createdAt).toLocaleString('vi-VN')}</small>
+                          )}
+                        </article>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             </section>
           </div>
 
-          {/* Right Sidebar - Pricing Card */}
           <aside className={styles.sidebar}>
             <div className={styles.pricingCard}>
               <div className={styles.videoPreview}>
                 <div className={styles.playButton}>▶</div>
-                <span>Xem trước khóa học</span>
+                <span>Thông tin khóa học</span>
               </div>
-              
+
               <div className={styles.priceRow}>
                 <span className={styles.currentPrice}>{course.price.toLocaleString()}đ</span>
-                <span className={styles.originalPrice}>{course.originalPrice.toLocaleString()}đ</span>
-                <span className={styles.discount}>-{course.discount}%</span>
+                {course.isEnrolled && <span className={styles.discount}>Đã đăng ký</span>}
               </div>
-              
-              <Button variant="primary" size="lg" className={styles.enrollBtn}>
-                Đăng ký ngay
-              </Button>
-              
-              <p className={styles.guarantee}>Hoàn tiền trong 30 ngày nếu không hài lòng</p>
-              
+
+              {!course.isEnrolled ? (
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className={styles.enrollBtn}
+                  onClick={handleEnroll}
+                  disabled={enrolling}
+                >
+                  {enrolling ? 'Đang xử lý...' : 'Đăng ký ngay'}
+                </Button>
+              ) : firstLessonId ? (
+                <Link href={`/learn/${firstLessonId}`}>
+                  <Button variant="primary" size="lg" className={styles.enrollBtn}>
+                    Vào học ngay
+                  </Button>
+                </Link>
+              ) : null}
+
+              {message && <p className={styles.guarantee}>{message}</p>}
+
               <div className={styles.includes}>
                 <h4>Khóa học bao gồm:</h4>
                 <ul>
-                  <li>🕐 {course.videoHours} giờ video theo yêu cầu</li>
-                  <li>📄 {course.articles} bài viết chuyên sâu</li>
-                  <li>💻 {course.exercises} bài tập coding</li>
-                  <li>♾️ Truy cập trọn đời</li>
-                  <li>📱 Học trên Mobile và TV</li>
-                  <li>🏆 Chứng chỉ hoàn thành</li>
+                  <li>📘 {course.lessons.length} bài học</li>
+                  <li>👤 Giảng viên: {course.instructor?.fullName || 'Đang cập nhật'}</li>
+                  <li>📈 Theo dõi tiến độ học</li>
                 </ul>
-              </div>
-              
-              <div className={styles.actions}>
-                <button className={styles.shareBtn}>Chia sẻ</button>
-                <button className={styles.giftBtn}>Tặng quà</button>
-              </div>
-              
-              <div className={styles.businessCTA}>
-                <p>Đào tạo doanh nghiệp?</p>
-                <span>Nhận quyền truy cập vào 5,000+ khóa học cho đội ngũ của bạn.</span>
-                <Link href="/business">ThinkAI Business</Link>
               </div>
             </div>
           </aside>

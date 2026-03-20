@@ -31,7 +31,7 @@ export function useCourseList(options: UseCourseListOptions = {}): UseCourseList
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<ApiError | null>(null);
 
-  const fetchCourses = useCallback(async (opts: UseCourseListOptions = options) => {
+  const fetchCourses = useCallback(async (opts: UseCourseListOptions) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -46,7 +46,11 @@ export function useCourseList(options: UseCourseListOptions = {}): UseCourseList
 
   useEffect(() => {
     fetchCourses(options);
-  }, [options.page, options.category, options.level, options.search, options.sortBy]);
+  }, [fetchCourses, options]);
+
+  const refetch = useCallback((opts?: UseCourseListOptions) => {
+    return fetchCourses(opts || options);
+  }, [fetchCourses, options]);
 
   return {
     courses: data?.items || [],
@@ -57,7 +61,7 @@ export function useCourseList(options: UseCourseListOptions = {}): UseCourseList
     },
     isLoading,
     error,
-    refetch: fetchCourses,
+    refetch,
   };
 }
 

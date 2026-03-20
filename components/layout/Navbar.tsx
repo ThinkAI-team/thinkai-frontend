@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -101,6 +102,24 @@ export default function Navbar() {
                 >
                   📊 Dashboard
                 </Link>
+                {(user.role === 'TEACHER' || user.role === 'ADMIN') && (
+                  <Link
+                    href="/teacher"
+                    className={styles.dropdownItem}
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    🎓 Teacher Portal
+                  </Link>
+                )}
+                {user.role === 'ADMIN' && (
+                  <Link
+                    href="/admin"
+                    className={styles.dropdownItem}
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    🛡️ Admin Panel
+                  </Link>
+                )}
                 <div className={styles.dropdownDivider} />
                 <button className={styles.dropdownLogout} onClick={handleLogout}>
                   🚪 Đăng xuất

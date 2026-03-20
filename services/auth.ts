@@ -6,7 +6,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   confirmPassword: string;
-  role: string;
+  role?: string;
 }
 
 export interface LoginRequest {
@@ -29,9 +29,10 @@ export interface AuthResponse {
 }
 
 export async function register(data: RegisterRequest): Promise<AuthResponse> {
+  const { role, ...payload } = data;
   const response = await apiRequest<AuthResponse>('/auth/register', {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
 
   saveAuth(response);
@@ -52,6 +53,7 @@ export function logout(): void {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('token');
     localStorage.removeItem('thinkai_access_token');
+    localStorage.removeItem('thinkai_refresh_token');
     localStorage.removeItem('user');
   }
 }
@@ -89,9 +91,13 @@ export async function updatePassword(
   newPassword: string,
   confirmPassword: string
 ): Promise<{ message: string }> {
-  return apiRequest<{ message: string }>('/auth/update-password', {
-    method: 'POST',
-    body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+  return apiRequest<{ message: string }>('/users/me/password', {
+    method: 'PUT',
+    body: JSON.stringify({
+      currentPassword: currentPassword || '',
+      newPassword,
+      confirmNewPassword: confirmPassword,
+    }),
   });
 }
 
