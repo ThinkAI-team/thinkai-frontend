@@ -13,8 +13,7 @@ import {
   summarizeLesson,
   updateAISettings,
   type AISettings,
-  type ChatMessageDetail,
-  type ChatSession,
+  type AiChatLog,
   type SummarizeResponse,
 } from '@/services/ai-tutor';
 
@@ -22,50 +21,60 @@ interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  feedback?: 'UP' | 'DOWN' | 'NONE';
+  sourceLogId?: number;
+  rating?: number | null;
 }
 
 const defaultSettings: AISettings = {
-  language: 'VI',
-  responseLength: 'MEDIUM',
-  communicationStyle: 'FRIENDLY',
+  language: 'English',
+  responseLength: 'detailed',
 };
+
+function logToMessages(log: AiChatLog): Message[] {
+  return [
+    {
+      id: `${log.id}-user`,
+      role: 'user',
+      content: log.userMessage,
+    },
+    {
+      id: `${log.id}-assistant`,
+      role: 'assistant',
+      content: log.aiResponse,
+      sourceLogId: log.id,
+      rating: typeof log.rating === 'number' ? log.rating : null,
+    },
+  ];
+}
 
 export default function AITutorPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [sending, setSending] = useState(false);
-  const [activeChatId, setActiveChatId] = useState<string | null>(null);
-  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [chatLogs, setChatLogs] = useState<AiChatLog[]>([]);
+  const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
   const [chatLoading, setChatLoading] = useState(true);
 
   const [settings, setSettings] = useState<AISettings>(defaultSettings);
   const [savingSettings, setSavingSettings] = useState(false);
 
-  const [summaryForm, setSummaryForm] = useState({ lessonId: '', content: '' });
+  const [summaryContent, setSummaryContent] = useState('');
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryResult, setSummaryResult] = useState<SummarizeResponse | null>(null);
 
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
-  const loadChatDetail = async (chatId: string) => {
-    const detail = await getChatDetail(chatId);
-    setMessages(
-      detail.messages.map((msg: ChatMessageDetail) => ({
-        id: msg.messageId,
-        role: msg.sender === 'AI' ? 'assistant' : 'user',
-        content: msg.content,
-        feedback: msg.feedback,
-      }))
-    );
-    setActiveChatId(chatId);
+  const reloadHistory = async (): Promise<AiChatLog[]> => {
+    const history = await getChatHistory();
+    setChatLogs(history);
+    return history;
   };
 
-  const reloadHistory = async () => {
-    const history = await getChatHistory(0, 20);
-    setChatSessions(history.content);
-    return history.content;
+  const loadChatDetail = async (chatId: number) => {
+    const detail = await getChatDetail(chatId);
+    setMessages(logToMessages(detail));
+    setSelectedLogId(chatId);
   };
 
   useEffect(() => {
@@ -74,14 +83,17 @@ export default function AITutorPage() {
       setError('');
       try {
         const [history, aiSettings] = await Promise.all([
-          getChatHistory(0, 20),
+          getChatHistory(),
           getAISettings().catch(() => defaultSettings),
         ]);
-        setChatSessions(history.content);
-        setSettings(aiSettings);
+        setChatLogs(history);
+        setSettings({
+          ...defaultSettings,
+          ...aiSettings,
+        });
 
-        if (history.content[0]) {
-          await loadChatDetail(history.content[0].chatId);
+        if (history[0]) {
+          await loadChatDetail(history[0].id);
         }
       } catch (err: any) {
         setError(err.message || 'Không thể tải dữ liệu AI Tutor.');
@@ -101,64 +113,79 @@ export default function AITutorPage() {
     setSending(true);
     setError('');
     setNotice('');
-    const tempId = `tmp-${Date.now()}`;
-    setMessages((prev) => [...prev, { id: tempId, role: 'user', content: message }]);
+
+    const tempUserMessage: Message = {
+      id: `tmp-user-${Date.now()}`,
+      role: 'user',
+      content: message,
+    };
+
+    setMessages((prev) => [...prev, tempUserMessage]);
     setInputValue('');
 
     try {
       const response = await sendChatMessage({
         message,
-        contextId: activeChatId || undefined,
+        context: selectedLogId ? `Follow-up from chat #${selectedLogId}` : undefined,
       });
-      setActiveChatId(response.chatId);
+
       setMessages((prev) => [
         ...prev,
         {
-          id: response.messageId,
+          id: `tmp-assistant-${Date.now()}`,
           role: 'assistant',
           content: response.reply,
         },
       ]);
-      await reloadHistory();
+
+      const history = await reloadHistory();
+      if (history[0]) {
+        await loadChatDetail(history[0].id);
+      }
     } catch (err: any) {
       setError(err.message || 'Gửi tin nhắn thất bại.');
-      setMessages((prev) => prev.filter((item) => item.id !== tempId));
+      setMessages((prev) => prev.filter((item) => item.id !== tempUserMessage.id));
     } finally {
       setSending(false);
     }
   };
 
-  const handleFeedback = async (messageId: string, feedbackType: 'UP' | 'DOWN') => {
+  const handleFeedback = async (logId: number, rating: -1 | 1) => {
     try {
-      await sendMessageFeedback(messageId, feedbackType);
+      const updated = await sendMessageFeedback(logId, rating);
       setMessages((prev) =>
-        prev.map((msg) => (msg.id === messageId ? { ...msg, feedback: feedbackType } : msg))
+        prev.map((msg) =>
+          msg.sourceLogId === logId ? { ...msg, rating: updated.rating ?? rating } : msg
+        )
       );
-    } catch {
-      // Ignore feedback failures and keep UX responsive
+      setNotice('Đã ghi nhận đánh giá phản hồi AI.');
+      setError('');
+    } catch (err: any) {
+      setError(err.message || 'Không thể gửi đánh giá.');
     }
   };
 
-  const handleDeleteChat = async (chatId: string) => {
+  const handleDeleteChat = async (chatId: number) => {
     try {
       await deleteChat(chatId);
       const history = await reloadHistory();
-      if (chatId === activeChatId) {
+      if (selectedLogId === chatId) {
         if (history[0]) {
-          await loadChatDetail(history[0].chatId);
+          await loadChatDetail(history[0].id);
         } else {
-          setActiveChatId(null);
+          setSelectedLogId(null);
           setMessages([]);
         }
       }
       setNotice('Đã xóa hội thoại.');
+      setError('');
     } catch (err: any) {
       setError(err.message || 'Không thể xóa hội thoại.');
     }
   };
 
   const handleCreateNewChat = () => {
-    setActiveChatId(null);
+    setSelectedLogId(null);
     setMessages([]);
     setNotice('Đã tạo phiên chat mới.');
     setError('');
@@ -168,7 +195,8 @@ export default function AITutorPage() {
     try {
       setSavingSettings(true);
       setError('');
-      await updateAISettings(settings);
+      const updated = await updateAISettings(settings);
+      setSettings((prev) => ({ ...prev, ...updated }));
       setNotice('Đã cập nhật cài đặt AI.');
     } catch (err: any) {
       setError(err.message || 'Không thể cập nhật cài đặt AI.');
@@ -179,17 +207,13 @@ export default function AITutorPage() {
 
   const handleSummarize = async (e: FormEvent) => {
     e.preventDefault();
-    const content = summaryForm.content.trim();
+    const content = summaryContent.trim();
     if (!content) return;
 
     try {
       setSummaryLoading(true);
       setError('');
-      const parsedLessonId = Number(summaryForm.lessonId);
-      const result = await summarizeLesson({
-        lessonId: Number.isFinite(parsedLessonId) && parsedLessonId > 0 ? parsedLessonId : undefined,
-        content,
-      });
+      const result = await summarizeLesson({ content });
       setSummaryResult(result);
       setNotice('Đã tạo tóm tắt bằng AI.');
     } catch (err: any) {
@@ -223,7 +247,7 @@ export default function AITutorPage() {
       <main className={styles.main}>
         <section className={styles.welcome}>
           <h1>Gia sư AI hỗ trợ học tập theo thời gian thực</h1>
-          <p>Chat, tóm tắt bài học, chỉnh style phản hồi và quản lý lịch sử hội thoại.</p>
+          <p>Chat, tóm tắt bài học, chỉnh ngôn ngữ phản hồi và quản lý lịch sử hội thoại.</p>
         </section>
 
         {error && <p className={styles.errorText}>{error}</p>}
@@ -237,10 +261,15 @@ export default function AITutorPage() {
                 Ngôn ngữ
                 <select
                   value={settings.language}
-                  onChange={(e) => setSettings((prev) => ({ ...prev, language: e.target.value as AISettings['language'] }))}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      language: e.target.value,
+                    }))
+                  }
                 >
-                  <option value="VI">Tiếng Việt</option>
-                  <option value="EN">English</option>
+                  <option value="English">English</option>
+                  <option value="Vietnamese">Tiếng Việt</option>
                 </select>
               </label>
               <label>
@@ -250,28 +279,13 @@ export default function AITutorPage() {
                   onChange={(e) =>
                     setSettings((prev) => ({
                       ...prev,
-                      responseLength: e.target.value as AISettings['responseLength'],
+                      responseLength: e.target.value,
                     }))
                   }
                 >
-                  <option value="SHORT">Ngắn</option>
-                  <option value="MEDIUM">Vừa</option>
-                  <option value="LONG">Dài</option>
-                </select>
-              </label>
-              <label>
-                Phong cách
-                <select
-                  value={settings.communicationStyle}
-                  onChange={(e) =>
-                    setSettings((prev) => ({
-                      ...prev,
-                      communicationStyle: e.target.value as AISettings['communicationStyle'],
-                    }))
-                  }
-                >
-                  <option value="FRIENDLY">Friendly</option>
-                  <option value="PROFESSIONAL">Professional</option>
+                  <option value="short">Ngắn</option>
+                  <option value="medium">Vừa</option>
+                  <option value="detailed">Dài</option>
                 </select>
               </label>
             </div>
@@ -283,16 +297,10 @@ export default function AITutorPage() {
           <form className={styles.utilityCard} onSubmit={handleSummarize}>
             <h3>Tóm tắt bài học</h3>
             <div className={styles.summaryForm}>
-              <input
-                type="number"
-                placeholder="Lesson ID (tuỳ chọn)"
-                value={summaryForm.lessonId}
-                onChange={(e) => setSummaryForm((prev) => ({ ...prev, lessonId: e.target.value }))}
-              />
               <textarea
                 placeholder="Dán transcript hoặc nội dung bài học cần tóm tắt..."
-                value={summaryForm.content}
-                onChange={(e) => setSummaryForm((prev) => ({ ...prev, content: e.target.value }))}
+                value={summaryContent}
+                onChange={(e) => setSummaryContent(e.target.value)}
                 rows={4}
               />
               <button className={styles.actionBtn} type="submit" disabled={summaryLoading}>
@@ -303,11 +311,13 @@ export default function AITutorPage() {
             {summaryResult && (
               <div className={styles.summaryResult}>
                 <p>{summaryResult.summary}</p>
-                <ul>
-                  {summaryResult.keyPoints.map((point) => (
-                    <li key={point}>{point}</li>
-                  ))}
-                </ul>
+                {Array.isArray(summaryResult.keyPoints) && summaryResult.keyPoints.length > 0 && (
+                  <ul>
+                    {summaryResult.keyPoints.map((point) => (
+                      <li key={point}>{point}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
           </form>
@@ -324,20 +334,20 @@ export default function AITutorPage() {
 
             {chatLoading ? (
               <p className={styles.muted}>Đang tải lịch sử...</p>
-            ) : chatSessions.length === 0 ? (
+            ) : chatLogs.length === 0 ? (
               <p className={styles.muted}>Chưa có hội thoại.</p>
             ) : (
               <ul className={styles.historyList}>
-                {chatSessions.map((chat) => (
-                  <li key={chat.chatId} className={styles.historyItem}>
+                {chatLogs.map((chat) => (
+                  <li key={chat.id} className={styles.historyItem}>
                     <button
-                      className={`${styles.historyLink} ${activeChatId === chat.chatId ? styles.historyActive : ''}`}
-                      onClick={() => loadChatDetail(chat.chatId)}
+                      className={`${styles.historyLink} ${selectedLogId === chat.id ? styles.historyActive : ''}`}
+                      onClick={() => loadChatDetail(chat.id)}
                     >
-                      <span>{chat.title || 'Cuộc trò chuyện mới'}</span>
-                      <small>{new Date(chat.updatedAt).toLocaleString('vi-VN')}</small>
+                      <span>{chat.userMessage.slice(0, 48) || 'Cuộc trò chuyện mới'}</span>
+                      <small>{new Date(chat.createdAt).toLocaleString('vi-VN')}</small>
                     </button>
-                    <button className={styles.deleteBtn} onClick={() => handleDeleteChat(chat.chatId)}>
+                    <button className={styles.deleteBtn} onClick={() => handleDeleteChat(chat.id)}>
                       ✕
                     </button>
                   </li>
@@ -358,17 +368,18 @@ export default function AITutorPage() {
                       {msg.content.split('\n').map((line, idx) => (
                         <p key={`${msg.id}-${idx}`}>{line}</p>
                       ))}
-                      {msg.role === 'assistant' && (
+
+                      {msg.role === 'assistant' && typeof msg.sourceLogId === 'number' && (
                         <div className={styles.feedbackRow}>
-                          <button className={styles.smallBtn} onClick={() => handleFeedback(msg.id, 'UP')}>
+                          <button className={styles.smallBtn} onClick={() => handleFeedback(msg.sourceLogId!, 1)}>
                             👍
                           </button>
-                          <button className={styles.smallBtn} onClick={() => handleFeedback(msg.id, 'DOWN')}>
+                          <button className={styles.smallBtn} onClick={() => handleFeedback(msg.sourceLogId!, -1)}>
                             👎
                           </button>
-                          {msg.feedback && (
+                          {typeof msg.rating === 'number' && (
                             <span className={styles.muted}>
-                              {msg.feedback === 'UP' ? 'Đã thích' : 'Đã không thích'}
+                              {msg.rating > 0 ? 'Đã thích' : 'Đã không thích'}
                             </span>
                           )}
                         </div>
