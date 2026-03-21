@@ -10,6 +10,7 @@ import styles from './page.module.css';
 import {
   enrollCourse,
   getCourseDetail,
+  getMyCourses,
   type CourseDetailResponse,
 } from '@/services/courses';
 import {
@@ -27,6 +28,7 @@ export default function CourseDetailPage() {
   const [error, setError] = useState('');
   const [enrolling, setEnrolling] = useState(false);
   const [message, setMessage] = useState('');
+  const [isEnrolled, setIsEnrolled] = useState(false);
   const [reviews, setReviews] = useState<CourseReview[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 5, reviewText: '' });
@@ -45,11 +47,15 @@ export default function CourseDetailPage() {
       setLoadingReviews(true);
       setError('');
       try {
-        const [data, reviewData] = await Promise.all([
+        const [data, reviewData, myCourses] = await Promise.all([
           getCourseDetail(courseId),
           getCourseReviews(courseId).catch(() => [] as CourseReview[]),
+          getMyCourses().catch(() => []),
         ]);
         setCourse(data);
+        setIsEnrolled(
+          Boolean(data.isEnrolled) || myCourses.some((myCourse) => myCourse.id === data.id)
+        );
         setReviews(reviewData);
       } catch (err: any) {
         setError(err.message || 'Không thể tải chi tiết khóa học.');
@@ -68,7 +74,7 @@ export default function CourseDetailPage() {
     setMessage('');
     try {
       await enrollCourse(course.id);
-      setCourse((prev) => (prev ? { ...prev, isEnrolled: true } : prev));
+      setIsEnrolled(true);
       setMessage('Đăng ký khóa học thành công.');
     } catch (err: any) {
       setMessage(err.message || 'Không thể đăng ký khóa học.');
@@ -153,7 +159,7 @@ export default function CourseDetailPage() {
 
               <div className={styles.meta}>
                 <span>{course.lessons.length} bài học</span>
-                <span>{course.instructor?.fullName || 'Đang cập nhật giảng viên'}</span>
+                <span>{course.instructorName || 'Đang cập nhật giảng viên'}</span>
                 <span>Tiến độ: {Math.round(course.progressPercent || 0)}%</span>
               </div>
             </header>
@@ -187,7 +193,7 @@ export default function CourseDetailPage() {
               <div className={styles.instructor}>
                 <div className={styles.instructorAvatar}>👨‍🏫</div>
                 <div className={styles.instructorInfo}>
-                  <h3>{course.instructor?.fullName || 'Đang cập nhật'}</h3>
+                  <h3>{course.instructorName || 'Đang cập nhật'}</h3>
                   <p className={styles.instructorTitle}>ThinkAI Instructor</p>
                 </div>
               </div>
@@ -267,11 +273,15 @@ export default function CourseDetailPage() {
               </div>
 
               <div className={styles.priceRow}>
-                <span className={styles.currentPrice}>{course.price.toLocaleString()}đ</span>
-                {course.isEnrolled && <span className={styles.discount}>Đã đăng ký</span>}
+                <span className={styles.currentPrice}>
+                  {typeof course.price === 'number'
+                    ? `${course.price.toLocaleString()}đ`
+                    : 'Đang cập nhật'}
+                </span>
+                {isEnrolled && <span className={styles.discount}>Đã đăng ký</span>}
               </div>
 
-              {!course.isEnrolled ? (
+              {!isEnrolled ? (
                 <Button
                   variant="primary"
                   size="lg"
@@ -295,7 +305,7 @@ export default function CourseDetailPage() {
                 <h4>Khóa học bao gồm:</h4>
                 <ul>
                   <li>📘 {course.lessons.length} bài học</li>
-                  <li>👤 Giảng viên: {course.instructor?.fullName || 'Đang cập nhật'}</li>
+                  <li>👤 Giảng viên: {course.instructorName || 'Đang cập nhật'}</li>
                   <li>📈 Theo dõi tiến độ học</li>
                 </ul>
               </div>

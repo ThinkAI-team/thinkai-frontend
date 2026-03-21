@@ -47,12 +47,12 @@ export interface CourseDetailResponse {
   id: number;
   title: string;
   description: string;
-  thumbnail?: string;
-  price: number;
-  instructor: CourseInstructorSummary;
-  isEnrolled: boolean;
+  thumbnailUrl?: string;
+  instructorName?: string;
+  price?: number;
   progressPercent: number;
   lessons: CourseLessonItem[];
+  isEnrolled?: boolean;
 }
 
 export interface EnrollmentResponse {
@@ -93,7 +93,20 @@ export async function getCourses(query: CourseListQuery = {}): Promise<CourseLis
 }
 
 export async function getCourseDetail(courseId: number): Promise<CourseDetailResponse> {
-  return apiRequest<CourseDetailResponse>(`/courses/${courseId}`);
+  const payload = await apiRequest<
+    CourseDetailResponse & {
+      thumbnail?: string;
+      instructor?: CourseInstructorSummary;
+    }
+  >(`/courses/${courseId}`);
+
+  return {
+    ...payload,
+    thumbnailUrl: payload.thumbnailUrl || payload.thumbnail,
+    instructorName: payload.instructorName || payload.instructor?.fullName,
+    lessons: payload.lessons || [],
+    isEnrolled: typeof payload.isEnrolled === 'boolean' ? payload.isEnrolled : false,
+  };
 }
 
 export async function enrollCourse(courseId: number): Promise<EnrollmentResponse> {
