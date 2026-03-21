@@ -8,6 +8,13 @@ import Button from '@/components/ui/Button';
 import { ApiException } from '@/services/api';
 import { register, googleLogin } from '@/services/auth';
 
+function getRedirectPathByRole(role?: string): string {
+  const normalizedRole = (role || '').replace(/^ROLE_/, '').toUpperCase();
+  if (normalizedRole === 'ADMIN') return '/admin';
+  if (normalizedRole === 'TEACHER') return '/teacher';
+  return '/dashboard';
+}
+
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();

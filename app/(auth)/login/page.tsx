@@ -8,6 +8,13 @@ import Button from '@/components/ui/Button';
 import { login, googleLogin } from '@/services/auth';
 import { ApiException } from '@/services/api';
 
+function getRedirectPathByRole(role?: string): string {
+  const normalizedRole = (role || '').replace(/^ROLE_/, '').toUpperCase();
+  if (normalizedRole === 'ADMIN') return '/admin';
+  if (normalizedRole === 'TEACHER') return '/teacher';
+  return '/dashboard';
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const googleBtnRef = useRef<HTMLDivElement>(null);
