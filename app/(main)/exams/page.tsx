@@ -113,7 +113,8 @@ export default function ExamsPage() {
                       <h3>{exam.title}</h3>
                       <p>{exam.description || 'Bài thi luyện tập'}</p>
                       <small>
-                        {exam.totalQuestions} câu • {exam.durationMinutes} phút
+                        {exam.timeLimitMinutes} phút
+                        {typeof exam.passingScore === 'number' ? ` • Qua môn: ${exam.passingScore}` : ''}
                       </small>
                     </div>
                     <Link href={`/exams/${exam.id}`} className={styles.linkBtn}>
@@ -132,10 +133,10 @@ export default function ExamsPage() {
             ) : (
               <ul className={styles.list}>
                 {history.slice(0, 8).map((item) => (
-                  <li key={item.resultId} className={styles.historyItem}>
+                  <li key={item.attemptId} className={styles.historyItem}>
                     <div>
                       <h3>{item.examTitle}</h3>
-                      <small>{new Date(item.completedAt).toLocaleString('vi-VN')}</small>
+                      <small>{new Date(item.submittedAt).toLocaleString('vi-VN')}</small>
                     </div>
                     <span className={styles.score}>{item.score}</span>
                   </li>

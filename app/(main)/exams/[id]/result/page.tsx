@@ -12,7 +12,7 @@ export default function ExamResultPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const examId = params.id;
-  const resultId = Number(searchParams.get('resultId'));
+  const attemptId = Number(searchParams.get('attemptId'));
 
   const [result, setResult] = useState<ExamResultResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -20,8 +20,8 @@ export default function ExamResultPage() {
 
   useEffect(() => {
     const fetchResult = async () => {
-      if (!Number.isFinite(resultId)) {
-        setError('Thiếu resultId để xem kết quả.');
+      if (!Number.isFinite(attemptId)) {
+        setError('Thiếu attemptId để xem kết quả.');
         setLoading(false);
         return;
       }
@@ -29,7 +29,7 @@ export default function ExamResultPage() {
       setLoading(true);
       setError('');
       try {
-        const data = await getExamResult(resultId);
+        const data = await getExamResult(attemptId);
         setResult(data);
       } catch (err: any) {
         setError(err.message || 'Không thể tải kết quả bài thi.');
@@ -39,11 +39,11 @@ export default function ExamResultPage() {
     };
 
     fetchResult();
-  }, [resultId]);
+  }, [attemptId]);
 
-  const totalQuestions = result?.details.length || 0;
+  const totalQuestions = result?.answers.length || 0;
   const correctAnswers = useMemo(
-    () => result?.details.filter((item) => item.isCorrect).length || 0,
+    () => result?.answers.filter((item) => item.isCorrect).length || 0,
     [result]
   );
   const incorrectAnswers = Math.max(0, totalQuestions - correctAnswers);
@@ -157,7 +157,7 @@ export default function ExamResultPage() {
             </div>
 
             <div className={styles.questionList}>
-              {result.details.map((q, idx) => (
+              {result.answers.map((q, idx) => (
                 <div
                   key={q.questionId}
                   className={`${styles.questionItem} ${q.isCorrect ? styles.correct : styles.wrong}`}
@@ -169,11 +169,11 @@ export default function ExamResultPage() {
                     <p className={styles.questionNumber}>Câu hỏi {idx + 1}</p>
                     <div className={`${styles.answerBox} ${q.isCorrect ? styles.correctBg : styles.wrongBg}`}>
                       {q.isCorrect ? (
-                        <p>Đáp án của bạn: {q.userAnswer}</p>
+                        <p>Đáp án của bạn: {q.selectedOption}</p>
                       ) : (
                         <>
-                          <p className={styles.wrongAnswer}>Bạn chọn: {q.userAnswer}</p>
-                          <p className={styles.correctAnswer}>Đáp án đúng: {q.correctAnswer}</p>
+                          <p className={styles.wrongAnswer}>Bạn chọn: {q.selectedOption}</p>
+                          <p className={styles.correctAnswer}>Đáp án đúng: {q.correctOption}</p>
                         </>
                       )}
                       {q.explanation && <p>Giải thích: {q.explanation}</p>}

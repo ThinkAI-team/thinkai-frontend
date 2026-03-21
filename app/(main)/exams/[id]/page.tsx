@@ -35,6 +35,7 @@ export default function ExamTakingPage() {
       try {
         const started = await startExam(examId);
         setSession(started);
+        setTimeLeft((started.timeLimitMinutes || 120) * 60);
       } catch (err: any) {
         setError(err.message || 'Không thể bắt đầu bài thi.');
       } finally {
@@ -86,14 +87,14 @@ export default function ExamTakingPage() {
     setError('');
     try {
       const payload = {
-        examSessionId: session.examSessionId,
+        attemptId: session.attemptId,
         answers: Object.entries(answers).map(([questionId, selectedOption]) => ({
           questionId: Number(questionId),
           selectedOption,
         })),
       };
       const result = await submitExam(examId, payload);
-      router.push(`/exams/${examId}/result?resultId=${result.resultId}`);
+      router.push(`/exams/${examId}/result?attemptId=${result.attemptId}`);
     } catch (err: any) {
       setError(err.message || 'Nộp bài thất bại.');
     } finally {
