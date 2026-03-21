@@ -45,6 +45,13 @@ export default function Navbar() {
     return user?.fullName ? user.fullName.charAt(0).toUpperCase() : '?';
   };
 
+  const normalizedRole = (user?.role || '').replace(/^ROLE_/, '').toUpperCase();
+  const dashboardPath = normalizedRole === 'ADMIN'
+    ? '/admin'
+    : normalizedRole === 'TEACHER'
+      ? '/teacher'
+      : '/dashboard';
+
   return (
     <nav className={styles.navbar}>
       <div className={styles.container}>
@@ -96,13 +103,13 @@ export default function Navbar() {
                   👤 Trang cá nhân
                 </Link>
                 <Link
-                  href="/dashboard"
+                  href={dashboardPath}
                   className={styles.dropdownItem}
                   onClick={() => setDropdownOpen(false)}
                 >
                   📊 Dashboard
                 </Link>
-                {(user.role === 'TEACHER' || user.role === 'ADMIN') && (
+                {(normalizedRole === 'TEACHER' || normalizedRole === 'ADMIN') && (
                   <Link
                     href="/teacher"
                     className={styles.dropdownItem}
@@ -111,7 +118,7 @@ export default function Navbar() {
                     🎓 Teacher Portal
                   </Link>
                 )}
-                {user.role === 'ADMIN' && (
+                {normalizedRole === 'ADMIN' && (
                   <Link
                     href="/admin"
                     className={styles.dropdownItem}

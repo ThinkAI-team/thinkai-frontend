@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button';
 import { logout } from '@/services/auth';
 import { getProfile, type ProfileResponse } from '@/services/user';
 import { getDashboard, type DashboardData } from '@/services/dashboard';
+import { ApiException } from '@/services/api';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -20,15 +21,29 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [profileData, dashboardData] = await Promise.all([
-          getProfile(),
-          getDashboard(),
-        ]);
+        const profileData = await getProfile();
+        const normalizedRole = (profileData.role || '').replace(/^ROLE_/, '').toUpperCase();
         setProfile(profileData);
+
+        if (normalizedRole === 'TEACHER') {
+          router.replace('/teacher');
+          return;
+        }
+
+        if (normalizedRole === 'ADMIN') {
+          router.replace('/admin');
+          return;
+        }
+
+        const dashboardData = await getDashboard();
         setDashboard(dashboardData);
-      } catch (err) {
-        setError('Không thể tải dữ liệu dashboard. Vui lòng đăng nhập lại.');
-        setTimeout(() => router.push('/login'), 1200);
+      } catch (err: any) {
+        if (err instanceof ApiException && err.status === 401) {
+          setError('Không thể tải dữ liệu dashboard. Vui lòng đăng nhập lại.');
+          setTimeout(() => router.push('/login'), 1200);
+        } else {
+          setError(err.message || 'Không thể tải dữ liệu dashboard.');
+        }
       } finally {
         setLoading(false);
       }
@@ -49,6 +64,8 @@ export default function DashboardPage() {
   const getFirstName = () => {
     return profile?.fullName ? profile.fullName.split(' ')[0] : 'bạn';
   };
+
+  const normalizedRole = (profile?.role || '').replace(/^ROLE_/, '').toUpperCase();
 
   const completedLessons = dashboard?.enrolledCourses.reduce(
     (sum, course) => sum + course.completedLessons,
@@ -112,7 +129,13 @@ export default function DashboardPage() {
               </div>
               <div className={styles.userInfo}>
                 <p className={styles.userName}>{profile?.fullName || 'Người dùng'}</p>
-                <p className={styles.userRole}>{profile?.role === 'STUDENT' ? 'Sinh viên' : profile?.role === 'TEACHER' ? 'Giảng viên' : profile?.role || 'Học viên'}</p>
+                <p className={styles.userRole}>
+                  {normalizedRole === 'STUDENT'
+                    ? 'Sinh viên'
+                    : normalizedRole === 'TEACHER'
+                      ? 'Giảng viên'
+                      : normalizedRole || 'Học viên'}
+                </p>
               </div>
             </Link>
             <button className={styles.logoutBtn} onClick={handleLogout} title="Đăng xuất">
