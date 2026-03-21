@@ -1,80 +1,89 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useParams, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button';
-
-// Mock result data
-const resultData = {
-  examTitle: 'Kiến thức cơ bản về AI',
-  score: 8,
-  total: 10,
-  percentage: 80,
-  correctAnswers: 8,
-  incorrectAnswers: 2,
-  timeSpent: '12m 30s',
-  questions: [
-    {
-      id: 1,
-      text: 'AI là viết tắt của cụm từ nào?',
-      userAnswer: 'Artificial Intelligence',
-      correctAnswer: 'Artificial Intelligence',
-      isCorrect: true
-    },
-    {
-      id: 2,
-      text: 'Mạng nơ-ron nhân tạo lấy cảm hứng từ đâu?',
-      userAnswer: 'Hệ thống máy tính lượng tử',
-      correctAnswer: 'Bộ não sinh học của con người',
-      isCorrect: false
-    },
-    {
-      id: 3,
-      text: 'Ngôn ngữ lập trình nào phổ biến nhất cho AI hiện nay?',
-      userAnswer: 'Python',
-      correctAnswer: 'Python',
-      isCorrect: true
-    },
-    {
-      id: 4,
-      text: 'Thuật ngữ "Machine Learning" được đặt ra vào năm nào?',
-      userAnswer: '1980',
-      correctAnswer: '1959',
-      isCorrect: false
-    },
-  ]
-};
+import { getExamResult, type ExamResultResponse } from '@/services/exams';
 
 export default function ExamResultPage() {
-  const circumference = 2 * Math.PI * 60; // radius = 60
-  const offset = circumference - (resultData.percentage / 100) * circumference;
+  const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  const examId = params.id;
+  const attemptId = Number(searchParams.get('attemptId'));
+
+  const [result, setResult] = useState<ExamResultResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchResult = async () => {
+      if (!Number.isFinite(attemptId)) {
+        setError('Thiếu attemptId để xem kết quả.');
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError('');
+      try {
+        const data = await getExamResult(attemptId);
+        setResult(data);
+      } catch (err: any) {
+        setError(err.message || 'Không thể tải kết quả bài thi.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResult();
+  }, [attemptId]);
+
+  const totalQuestions = result?.answers.length || 0;
+  const correctAnswers = useMemo(
+    () => result?.answers.filter((item) => item.isCorrect).length || 0,
+    [result]
+  );
+  const incorrectAnswers = Math.max(0, totalQuestions - correctAnswers);
+  const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+
+  const circumference = 2 * Math.PI * 60;
+  const offset = circumference - (percentage / 100) * circumference;
+
+  if (loading) {
+    return <div className={styles.main}>Đang tải kết quả...</div>;
+  }
+
+  if (error || !result) {
+    return <div className={styles.main}>{error || 'Không có dữ liệu kết quả.'}</div>;
+  }
 
   return (
     <>
       <Navbar />
-      
+
       <main className={styles.main}>
         <div className={styles.container}>
-          {/* Result Card */}
           <div className={styles.resultCard}>
             <div className={styles.resultHeader}>
               <div className={styles.leftContent}>
-                <span className={styles.badge}>🎉 Hoàn thành xuất sắc</span>
-                <h1>Chúc mừng bạn!</h1>
+                <span className={styles.badge}>🎯 Kết quả bài thi</span>
+                <h1>Hoàn thành bài thi</h1>
                 <p>
-                  Bạn đã hoàn thành bài kiểm tra <strong>{resultData.examTitle}</strong>. 
-                  Kết quả của bạn rất ấn tượng.
+                  Kết quả đã được chấm. Bạn có thể xem chi tiết từng câu bên dưới.
                 </p>
                 <div className={styles.actions}>
-                  <Button variant="primary">
-                    🔄 Làm lại bài thi
-                  </Button>
-                  <Link href="/dashboard">
-                    <Button variant="secondary">Quay về Dashboard</Button>
+                  <Link href={`/exams/${examId}`}>
+                    <Button variant="primary">🔄 Làm lại bài thi</Button>
+                  </Link>
+                  <Link href="/exams">
+                    <Button variant="secondary">Danh sách bài thi</Button>
                   </Link>
                 </div>
               </div>
-              
-              {/* Score Circle */}
+
               <div className={styles.scoreCircle}>
                 <svg width="160" height="160" viewBox="0 0 160 160">
                   <circle
@@ -99,40 +108,45 @@ export default function ExamResultPage() {
                   />
                 </svg>
                 <div className={styles.scoreText}>
-                  <span className={styles.scoreNumber}>{resultData.score}</span>
-                  <span className={styles.scoreTotal}>/{resultData.total}</span>
-                  <span className={styles.scorePercent}>{resultData.percentage}% Đạt</span>
+                  <span className={styles.scoreNumber}>{result.score}</span>
+                  <span className={styles.scorePercent}>{percentage}% đúng</span>
                 </div>
               </div>
             </div>
 
-            {/* Stats */}
             <div className={styles.statsGrid}>
               <div className={styles.statCard}>
                 <span className={styles.statIcon}>✅</span>
                 <div>
                   <p className={styles.statLabel}>Câu trả lời đúng</p>
-                  <p className={styles.statValue}>{resultData.correctAnswers}</p>
+                  <p className={styles.statValue}>{correctAnswers}</p>
                 </div>
               </div>
               <div className={styles.statCard}>
                 <span className={`${styles.statIcon} ${styles.incorrect}`}>❌</span>
                 <div>
                   <p className={styles.statLabel}>Câu trả lời sai</p>
-                  <p className={styles.statValue}>{resultData.incorrectAnswers}</p>
+                  <p className={styles.statValue}>{incorrectAnswers}</p>
                 </div>
               </div>
               <div className={styles.statCard}>
-                <span className={`${styles.statIcon} ${styles.time}`}>⏱️</span>
+                <span className={`${styles.statIcon} ${styles.time}`}>📊</span>
                 <div>
-                  <p className={styles.statLabel}>Thời gian làm bài</p>
-                  <p className={styles.statValue}>{resultData.timeSpent}</p>
+                  <p className={styles.statLabel}>Tổng câu hỏi</p>
+                  <p className={styles.statValue}>{totalQuestions}</p>
                 </div>
               </div>
             </div>
+
+            {result.aiFeedback && (
+              <div className={styles.answerBox}>
+                <p>
+                  <strong>AI Feedback:</strong> {result.aiFeedback}
+                </p>
+              </div>
+            )}
           </div>
 
-          {/* Answer Review */}
           <section className={styles.reviewSection}>
             <div className={styles.reviewHeader}>
               <h2>Chi tiết câu trả lời</h2>
@@ -143,33 +157,26 @@ export default function ExamResultPage() {
             </div>
 
             <div className={styles.questionList}>
-              {resultData.questions.map((q) => (
-                <div 
-                  key={q.id} 
+              {result.answers.map((q, idx) => (
+                <div
+                  key={q.questionId}
                   className={`${styles.questionItem} ${q.isCorrect ? styles.correct : styles.wrong}`}
                 >
                   <span className={styles.questionIcon}>
                     {q.isCorrect ? '✓' : '✕'}
                   </span>
                   <div className={styles.questionContent}>
-                    <p className={styles.questionNumber}>Câu hỏi {q.id}</p>
-                    <p className={styles.questionText}>{q.text}</p>
-                    
+                    <p className={styles.questionNumber}>Câu hỏi {idx + 1}</p>
                     <div className={`${styles.answerBox} ${q.isCorrect ? styles.correctBg : styles.wrongBg}`}>
                       {q.isCorrect ? (
-                        <p>Đáp án của bạn: {q.userAnswer}</p>
+                        <p>Đáp án của bạn: {q.selectedOption}</p>
                       ) : (
                         <>
-                          <p className={styles.wrongAnswer}>
-                            Bạn chọn: {q.userAnswer}
-                            <span>✕</span>
-                          </p>
-                          <p className={styles.correctAnswer}>
-                            Đáp án đúng: {q.correctAnswer}
-                            <span>✓</span>
-                          </p>
+                          <p className={styles.wrongAnswer}>Bạn chọn: {q.selectedOption}</p>
+                          <p className={styles.correctAnswer}>Đáp án đúng: {q.correctOption}</p>
                         </>
                       )}
+                      {q.explanation && <p>Giải thích: {q.explanation}</p>}
                     </div>
                   </div>
                 </div>
@@ -177,11 +184,6 @@ export default function ExamResultPage() {
             </div>
           </section>
         </div>
-
-        {/* Footer */}
-        <footer className={styles.footer}>
-          <p>© 2024 ThinkAI Platform. All rights reserved.</p>
-        </footer>
       </main>
     </>
   );

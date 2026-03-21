@@ -6,7 +6,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   confirmPassword: string;
-  role: string;
+  role?: string;
 }
 
 export interface LoginRequest {
@@ -33,9 +33,9 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
     method: 'POST',
     body: JSON.stringify(data),
   });
-
-  saveAuth(response);
-  return response;
+  const normalized = normalizeAuthResponse(response);
+  saveAuth(normalized);
+  return normalized;
 }
 
 export async function login(data: LoginRequest): Promise<AuthResponse> {
@@ -43,15 +43,16 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
     method: 'POST',
     body: JSON.stringify(data),
   });
-
-  saveAuth(response);
-  return response;
+  const normalized = normalizeAuthResponse(response);
+  saveAuth(normalized);
+  return normalized;
 }
 
 export function logout(): void {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('token');
     localStorage.removeItem('thinkai_access_token');
+    localStorage.removeItem('thinkai_refresh_token');
     localStorage.removeItem('user');
   }
 }
@@ -79,9 +80,9 @@ export async function googleLogin(idToken: string): Promise<AuthResponse> {
     method: 'POST',
     body: JSON.stringify({ idToken }),
   });
-
-  saveAuth(response);
-  return response;
+  const normalized = normalizeAuthResponse(response);
+  saveAuth(normalized);
+  return normalized;
 }
 
 export async function updatePassword(
@@ -89,9 +90,13 @@ export async function updatePassword(
   newPassword: string,
   confirmPassword: string
 ): Promise<{ message: string }> {
-  return apiRequest<{ message: string }>('/auth/update-password', {
-    method: 'POST',
-    body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+  return apiRequest<{ message: string }>('/users/me/password', {
+    method: 'PUT',
+    body: JSON.stringify({
+      currentPassword: currentPassword || '',
+      newPassword,
+      confirmNewPassword: confirmPassword,
+    }),
   });
 }
 
@@ -99,6 +104,7 @@ export async function getCurrentUser(): Promise<AuthResponse> {
   const response = await apiRequest<AuthResponse>('/auth/me', {
     method: 'GET',
   });
+  const normalized = normalizeAuthResponse(response);
   
   // Cập nhật lại user trong localStorage nếu có thay đổi
   if (typeof window !== 'undefined') {
@@ -107,15 +113,17 @@ export async function getCurrentUser(): Promise<AuthResponse> {
       const user = JSON.parse(savedUser);
       localStorage.setItem('user', JSON.stringify({
         ...user,
-        email: response.email,
-        fullName: response.fullName,
-        hasPassword: response.hasPassword,
-        isGoogleUser: response.isGoogleUser,
+        email: normalized.email,
+        fullName: normalized.fullName,
+        role: normalized.role,
+        hasPassword: normalized.hasPassword,
+        isGoogleUser: normalized.isGoogleUser,
+        avatarUrl: normalized.avatarUrl,
       }));
     }
   }
   
-  return response;
+  return normalized;
 }
 
 function saveAuth(response: AuthResponse): void {
@@ -131,4 +139,20 @@ function saveAuth(response: AuthResponse): void {
       avatarUrl: response.avatarUrl,
     }));
   }
+}
+
+function normalizeRole(role?: string): string {
+  if (!role) return 'STUDENT';
+  const cleanRole = role.replace(/^ROLE_/, '').toUpperCase();
+  if (cleanRole === 'ADMIN' || cleanRole === 'TEACHER' || cleanRole === 'STUDENT') {
+    return cleanRole;
+  }
+  return 'STUDENT';
+}
+
+function normalizeAuthResponse(response: AuthResponse): AuthResponse {
+  return {
+    ...response,
+    role: normalizeRole(response.role),
+  };
 }

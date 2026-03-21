@@ -417,11 +417,20 @@
 .status.offline { background: #E5E7EB; color: #6B7280; }
 
 .actionBtn {
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  border: none;
-  font-size: 18px;
+  padding: 6px 10px;
+  background: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tableActionBtn {
+  padding: 8px 12px;
+  background: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
   cursor: pointer;
 }
 

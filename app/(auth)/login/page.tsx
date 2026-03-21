@@ -8,6 +8,13 @@ import Button from '@/components/ui/Button';
 import { login, googleLogin } from '@/services/auth';
 import { ApiException } from '@/services/api';
 
+function getRedirectPathByRole(role?: string): string {
+  const normalizedRole = (role || '').replace(/^ROLE_/, '').toUpperCase();
+  if (normalizedRole === 'ADMIN') return '/admin';
+  if (normalizedRole === 'TEACHER') return '/teacher';
+  return '/dashboard';
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const googleBtnRef = useRef<HTMLDivElement>(null);
@@ -32,8 +39,8 @@ export default function LoginPage() {
           setLoading(true);
           setGlobalError('');
           try {
-            await googleLogin(response.credential);
-            router.push('/dashboard');
+            const auth = await googleLogin(response.credential);
+            router.push(getRedirectPathByRole(auth.role));
           } catch (err: any) {
             console.error('Google login error:', err);
             setGlobalError(err.message || 'Đăng nhập Google thất bại');
@@ -85,8 +92,8 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login(formData);
-      router.push('/dashboard');
+      const auth = await login(formData);
+      router.push(getRedirectPathByRole(auth.role));
     } catch (err) {
       if (err instanceof ApiException) {
         if (err.fieldErrors) {

@@ -1,41 +1,194 @@
 'use client';
 
-import { useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import styles from './page.module.css';
+import {
+  createAdminCourse,
+  deleteAdminCourse,
+  getAdminCourses,
+  getAdminDashboard,
+  getAdminUsers,
+  updateAdminCourse,
+  updateAdminUserStatus,
+  updateAIPrompts,
+  type AdminCourse,
+  type AdminCourseRequest,
+  type AdminDashboardStats,
+  type AdminUser,
+} from '@/services/admin';
 
-const sidebarItems = [
-  { id: 'overview', icon: '📊', label: 'Tổng quan', active: true },
+type TabId = 'overview' | 'users' | 'courses' | 'prompts';
+
+const sidebarItems: Array<{ id: TabId; icon: string; label: string }> = [
+  { id: 'overview', icon: '📊', label: 'Tổng quan' },
   { id: 'users', icon: '👥', label: 'Người dùng' },
   { id: 'courses', icon: '📚', label: 'Khóa học' },
-  { id: 'reports', icon: '📈', label: 'Báo cáo' },
-  { id: 'settings', icon: '⚙️', label: 'Cài đặt' },
+  { id: 'prompts', icon: '🤖', label: 'AI Prompts' },
 ];
 
-const statsData = [
-  { icon: '👥', value: '2,543', label: 'Tổng người dùng', change: '+12%', positive: true },
-  { icon: '📚', value: '142', label: 'Khóa học hoạt động', change: '+5%', positive: true },
-  { icon: '⏱️', value: '45p', label: 'Thời gian học TB', change: '0%', positive: false },
-  { icon: '💰', value: '890tr', label: 'Doanh thu tháng', change: '+8%', positive: true },
-];
-
-const usersData = [
-  { name: 'Nguyễn Văn A', email: 'nguyen.a@example.com', role: 'Học viên', date: '12/10/2023', status: 'active' },
-  { name: 'Trần Thị B', email: 'tranthib@gmail.com', role: 'Giảng viên', date: '11/10/2023', status: 'pending' },
-  { name: 'Lê Văn C', email: 'levanc@outlook.com', role: 'Học viên', date: '10/10/2023', status: 'offline' },
-  { name: 'Phạm D', email: 'pham.d@company.vn', role: 'Premium', date: '09/10/2023', status: 'active' },
-];
-
-const chartData = [12, 15, 19, 22, 25, 28, 32, 35, 38, 42, 44];
+const defaultCourseForm: AdminCourseRequest = {
+  title: '',
+  description: '',
+  price: 0,
+  instructorId: 0,
+  thumbnailUrl: '',
+};
 
 export default function AdminDashboardPage() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState<TabId>('overview');
+  const [stats, setStats] = useState<AdminDashboardStats | null>(null);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [courses, setCourses] = useState<AdminCourse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
-  const maxValue = Math.max(...chartData);
-  
+  const [courseForm, setCourseForm] = useState<AdminCourseRequest>(defaultCourseForm);
+  const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
+  const [savingCourse, setSavingCourse] = useState(false);
+  const [aiPromptForm, setAIPromptForm] = useState({
+    tutorSystemPrompt: '',
+    examGeneratorPrompt: '',
+  });
+  const [savingPrompts, setSavingPrompts] = useState(false);
+
+  const fetchOverview = useCallback(async () => {
+    const dashboardData = await getAdminDashboard();
+    setStats(dashboardData);
+  }, []);
+
+  const fetchUsers = useCallback(async () => {
+    const usersData = await getAdminUsers({ page: 0, size: 20 });
+    setUsers(usersData.content);
+  }, []);
+
+  const fetchCourses = useCallback(async () => {
+    const coursesData = await getAdminCourses({ page: 0, size: 20 });
+    setCourses(coursesData.content);
+  }, []);
+
+  const fetchTabData = useCallback(async (tab: TabId) => {
+    setLoading(true);
+    setError('');
+    try {
+      if (tab === 'overview') await fetchOverview();
+      if (tab === 'users') await fetchUsers();
+      if (tab === 'courses') await fetchCourses();
+      if (tab === 'prompts') {
+        // API docs chỉ có PUT, nên giữ form rỗng để admin chủ động nhập mới.
+      }
+    } catch (err: any) {
+      setError(err.message || 'Không thể tải dữ liệu admin.');
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchCourses, fetchOverview, fetchUsers]);
+
+  useEffect(() => {
+    fetchTabData(activeTab);
+  }, [activeTab, fetchTabData]);
+
+  const handleToggleUserStatus = async (user: AdminUser) => {
+    try {
+      await updateAdminUserStatus(user.id, !user.isActive);
+      setUsers((prev) =>
+        prev.map((item) => (item.id === user.id ? { ...item, isActive: !item.isActive } : item))
+      );
+      setNotice('Đã cập nhật trạng thái tài khoản.');
+      setError('');
+    } catch (err: any) {
+      setError(err.message || 'Không thể cập nhật trạng thái user.');
+    }
+  };
+
+  const resetCourseForm = () => {
+    setCourseForm(defaultCourseForm);
+    setEditingCourseId(null);
+  };
+
+  const handleCourseSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!courseForm.title.trim()) {
+      setError('Vui lòng nhập tiêu đề khóa học.');
+      return;
+    }
+    if (courseForm.instructorId <= 0) {
+      setError('Vui lòng nhập instructorId hợp lệ.');
+      return;
+    }
+
+    setSavingCourse(true);
+    setError('');
+    setNotice('');
+    try {
+      if (editingCourseId) {
+        await updateAdminCourse(editingCourseId, courseForm);
+        setNotice('Đã cập nhật khóa học.');
+      } else {
+        await createAdminCourse(courseForm);
+        setNotice('Đã tạo khóa học mới.');
+      }
+      resetCourseForm();
+      await fetchCourses();
+    } catch (err: any) {
+      setError(err.message || 'Không thể lưu khóa học.');
+    } finally {
+      setSavingCourse(false);
+    }
+  };
+
+  const handleEditCourse = (course: AdminCourse) => {
+    setEditingCourseId(course.id);
+    setCourseForm({
+      title: course.title || '',
+      description: course.description || '',
+      price: course.price || 0,
+      instructorId: course.instructorId || 0,
+      thumbnailUrl: course.thumbnailUrl || '',
+    });
+  };
+
+  const handleDeleteCourse = async (courseId: number) => {
+    try {
+      await deleteAdminCourse(courseId);
+      setCourses((prev) => prev.filter((item) => item.id !== courseId));
+      setNotice('Đã xóa khóa học.');
+      if (editingCourseId === courseId) resetCourseForm();
+    } catch (err: any) {
+      setError(err.message || 'Không thể xóa khóa học.');
+    }
+  };
+
+  const handleSavePrompts = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!aiPromptForm.tutorSystemPrompt.trim() || !aiPromptForm.examGeneratorPrompt.trim()) {
+      setError('Vui lòng nhập đầy đủ tutorSystemPrompt và examGeneratorPrompt.');
+      return;
+    }
+
+    setSavingPrompts(true);
+    setError('');
+    setNotice('');
+    try {
+      await updateAIPrompts(aiPromptForm);
+      setNotice('Đã cập nhật AI prompts.');
+    } catch (err: any) {
+      setError(err.message || 'Không thể cập nhật AI prompts.');
+    } finally {
+      setSavingPrompts(false);
+    }
+  };
+
+  const statsData = [
+    { icon: '👥', value: stats?.totalUsers || 0, label: 'Tổng người dùng' },
+    { icon: '📚', value: stats?.totalCourses || 0, label: 'Tổng khóa học' },
+    { icon: '🧾', value: stats?.totalEnrollments || 0, label: 'Tổng lượt đăng ký' },
+    { icon: '🤖', value: stats?.aiChatsToday || 0, label: 'AI chats hôm nay' },
+  ];
+
   return (
     <div className={styles.container}>
-      {/* Sidebar */}
       <aside className={styles.sidebar}>
         <Link href="/" className={styles.logo}>
           <span className={styles.logoIcon}>T</span>
@@ -47,7 +200,11 @@ export default function AdminDashboardPage() {
             <button
               key={item.id}
               className={`${styles.navItem} ${activeTab === item.id ? styles.active : ''}`}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => {
+                setActiveTab(item.id);
+                setError('');
+                setNotice('');
+              }}
             >
               <span>{item.icon}</span>
               <span>{item.label}</span>
@@ -56,7 +213,9 @@ export default function AdminDashboardPage() {
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <button className={styles.themeBtn}>🎨 Chế độ giao diện</button>
+          <button className={styles.themeBtn} onClick={() => fetchTabData(activeTab)}>
+            🔄 Làm mới dữ liệu
+          </button>
           <div className={styles.adminInfo}>
             <div className={styles.adminAvatar}>👤</div>
             <div>
@@ -67,155 +226,218 @@ export default function AdminDashboardPage() {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className={styles.main}>
-        {/* Header */}
         <header className={styles.header}>
           <div>
-            <h1>Chào mừng trở lại, <span className={styles.adminHighlight}>Admin</span></h1>
-            <p>Dưới đây là tổng quan hệ thống ThinkAI hôm nay.</p>
+            <h1>Bảng điều khiển Admin</h1>
+            <p>Tích hợp API docs: dashboard, users, courses và AI prompts.</p>
           </div>
           <div className={styles.headerActions}>
-            <div className={styles.searchBar}>
-              <span>🔍</span>
-              <input type="text" placeholder="Tìm kiếm..." />
-            </div>
-            <button className={styles.downloadBtn}>
-              📥 Tải báo cáo
+            <button className={styles.downloadBtn} onClick={() => fetchTabData(activeTab)}>
+              Cập nhật
             </button>
           </div>
         </header>
 
-        {/* Stats Grid */}
-        <div className={styles.statsGrid}>
-          {statsData.map((stat, idx) => (
-            <div key={idx} className={styles.statCard}>
-              <div className={styles.statIcon}>{stat.icon}</div>
-              <div className={styles.statContent}>
-                <span className={styles.statValue}>{stat.value}</span>
-                <span className={styles.statLabel}>{stat.label}</span>
-              </div>
-              <span className={`${styles.statChange} ${stat.positive ? styles.positive : ''}`}>
-                {stat.change}
-              </span>
-            </div>
-          ))}
-        </div>
+        {error && <p style={{ color: '#b91c1c', marginBottom: '10px' }}>{error}</p>}
+        {notice && <p style={{ color: '#166534', marginBottom: '10px' }}>{notice}</p>}
+        {loading && <p>Đang tải dữ liệu...</p>}
 
-        {/* Charts Row */}
-        <div className={styles.chartsRow}>
-          {/* Line Chart */}
-          <div className={styles.chartCard}>
-            <div className={styles.chartHeader}>
-              <h3>Tăng trưởng người dùng</h3>
-              <select className={styles.chartSelect}>
-                <option>7 ngày qua</option>
-                <option>30 ngày qua</option>
-              </select>
-            </div>
-            <div className={styles.chart}>
-              <div className={styles.chartY}>
-                {[45, 35, 25, 15, 5, 0].map((v) => (
-                  <span key={v}>{v}</span>
-                ))}
+        {!loading && activeTab === 'overview' && (
+          <div className={styles.statsGrid}>
+            {statsData.map((stat) => (
+              <div key={stat.label} className={styles.statCard}>
+                <div className={styles.statIcon}>{stat.icon}</div>
+                <div className={styles.statContent}>
+                  <span className={styles.statValue}>{stat.value}</span>
+                  <span className={styles.statLabel}>{stat.label}</span>
+                </div>
               </div>
-              <div className={styles.chartArea}>
-                <svg viewBox="0 0 100 50" preserveAspectRatio="none" className={styles.chartSvg}>
-                  <defs>
-                    <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#F87171" stopOpacity="0.3"/>
-                      <stop offset="100%" stopColor="#F87171" stopOpacity="0"/>
-                    </linearGradient>
-                  </defs>
-                  <path
-                    d={`M 0 ${50 - (chartData[0] / maxValue) * 45} ${chartData.map((v, i) => `L ${(i / (chartData.length - 1)) * 100} ${50 - (v / maxValue) * 45}`).join(' ')} L 100 50 L 0 50 Z`}
-                    fill="url(#gradient)"
-                  />
-                  <path
-                    d={`M 0 ${50 - (chartData[0] / maxValue) * 45} ${chartData.map((v, i) => `L ${(i / (chartData.length - 1)) * 100} ${50 - (v / maxValue) * 45}`).join(' ')}`}
-                    fill="none"
-                    stroke="#F87171"
-                    strokeWidth="0.5"
-                  />
-                </svg>
-              </div>
-            </div>
-            <div className={styles.chartX}>
-              {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((d) => (
-                <span key={d}>{d}</span>
-              ))}
-            </div>
+            ))}
           </div>
+        )}
 
-          {/* Premium Card */}
-          <div className={styles.premiumCard}>
-            <span className={styles.premiumIcon}>✨</span>
-            <h3>ThinkAI Premium</h3>
-            <p>Đã có 450 người dùng nâng cấp lên gói Premium trong tháng này.</p>
-            <Link href="#" className={styles.premiumLink}>Xem chi tiết →</Link>
-          </div>
-        </div>
+        {!loading && activeTab === 'users' && (
+          <section className={styles.tableSection}>
+            <div className={styles.tableHeader}>
+              <h3>Quản lý người dùng</h3>
+            </div>
 
-        {/* Users Table */}
-        <section className={styles.tableSection}>
-          <div className={styles.tableHeader}>
-            <h3>Người dùng mới nhất</h3>
-            <Link href="#" className={styles.viewAll}>Xem tất cả</Link>
-          </div>
-          
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>TÊN NGƯỜI DÙNG</th>
-                <th>EMAIL</th>
-                <th>VAI TRÒ</th>
-                <th>NGÀY THAM GIA</th>
-                <th>TRẠNG THÁI</th>
-                <th>HÀNH ĐỘNG</th>
-              </tr>
-            </thead>
-            <tbody>
-              {usersData.map((user, idx) => (
-                <tr key={idx}>
-                  <td>
-                    <div className={styles.userCell}>
-                      <div className={styles.userAvatar}>{user.name.charAt(0)}</div>
-                      <span>{user.name}</span>
-                    </div>
-                  </td>
-                  <td>{user.email}</td>
-                  <td>{user.role}</td>
-                  <td>{user.date}</td>
-                  <td>
-                    <span className={`${styles.status} ${styles[user.status]}`}>
-                      {user.status === 'active' ? 'Hoạt động' : 
-                       user.status === 'pending' ? 'Chờ duyệt' : 'Ngoại tuyến'}
-                    </span>
-                  </td>
-                  <td>
-                    <button className={styles.actionBtn}>⋮</button>
-                  </td>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>TÊN NGƯỜI DÙNG</th>
+                  <th>EMAIL</th>
+                  <th>VAI TRÒ</th>
+                  <th>TRẠNG THÁI</th>
+                  <th>HÀNH ĐỘNG</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {users.map((user) => (
+                  <tr key={user.id}>
+                    <td>
+                      <div className={styles.userCell}>
+                        <div className={styles.userAvatar}>{user.fullName.charAt(0)}</div>
+                        <span>{user.fullName}</span>
+                      </div>
+                    </td>
+                    <td>{user.email}</td>
+                    <td>{user.role}</td>
+                    <td>
+                      <span className={`${styles.status} ${user.isActive ? styles.active : styles.offline}`}>
+                        {user.isActive ? 'Hoạt động' : 'Đã khóa'}
+                      </span>
+                    </td>
+                    <td>
+                      <button className={styles.actionBtn} onClick={() => handleToggleUserStatus(user)}>
+                        {user.isActive ? 'Khóa' : 'Mở'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
 
-          <div className={styles.tableFooter}>
-            <span>Hiển thị 4 trong số 2,543 người dùng</span>
-            <div className={styles.pagination}>
-              <button>Trước</button>
-              <button className={styles.pageActive}>1</button>
-              <button>2</button>
-              <button>3</button>
-              <span>...</span>
-              <button>Sau</button>
+        {!loading && activeTab === 'courses' && (
+          <>
+            <section className={styles.tableSection} style={{ marginBottom: '18px' }}>
+              <div className={styles.tableHeader}>
+                <h3>{editingCourseId ? `Cập nhật khóa học #${editingCourseId}` : 'Tạo khóa học mới'}</h3>
+              </div>
+
+              <form onSubmit={handleCourseSubmit}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                  <input
+                    className={styles.searchBar}
+                    style={{ padding: '10px 12px' }}
+                    placeholder="Tiêu đề"
+                    value={courseForm.title}
+                    onChange={(e) => setCourseForm((prev) => ({ ...prev, title: e.target.value }))}
+                  />
+                  <input
+                    className={styles.searchBar}
+                    style={{ padding: '10px 12px' }}
+                    type="number"
+                    placeholder="instructorId"
+                    value={courseForm.instructorId || ''}
+                    onChange={(e) =>
+                      setCourseForm((prev) => ({ ...prev, instructorId: Number(e.target.value) || 0 }))
+                    }
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 170px', gap: '10px', marginBottom: '10px' }}>
+                  <input
+                    className={styles.searchBar}
+                    style={{ padding: '10px 12px' }}
+                    placeholder="Thumbnail URL (tùy chọn)"
+                    value={courseForm.thumbnailUrl || ''}
+                    onChange={(e) => setCourseForm((prev) => ({ ...prev, thumbnailUrl: e.target.value }))}
+                  />
+                  <input
+                    className={styles.searchBar}
+                    style={{ padding: '10px 12px' }}
+                    type="number"
+                    placeholder="Giá (VND)"
+                    value={courseForm.price || 0}
+                    onChange={(e) => setCourseForm((prev) => ({ ...prev, price: Number(e.target.value) || 0 }))}
+                  />
+                </div>
+
+                <textarea
+                  className={styles.searchBar}
+                  style={{ width: '100%', minHeight: '90px', padding: '10px 12px', marginBottom: '10px' }}
+                  placeholder="Mô tả khóa học"
+                  value={courseForm.description}
+                  onChange={(e) => setCourseForm((prev) => ({ ...prev, description: e.target.value }))}
+                />
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button className={styles.downloadBtn} type="submit" disabled={savingCourse}>
+                    {savingCourse ? 'Đang lưu...' : editingCourseId ? 'Cập nhật khóa học' : 'Tạo khóa học'}
+                  </button>
+                  {editingCourseId && (
+                    <button className={styles.tableActionBtn} type="button" onClick={resetCourseForm}>
+                      Hủy chỉnh sửa
+                    </button>
+                  )}
+                </div>
+              </form>
+            </section>
+
+            <section className={styles.tableSection}>
+              <div className={styles.tableHeader}>
+                <h3>Danh sách khóa học</h3>
+              </div>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>TÊN KHÓA HỌC</th>
+                    <th>GIÁ</th>
+                    <th>TRẠNG THÁI</th>
+                    <th>HÀNH ĐỘNG</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {courses.map((course) => (
+                    <tr key={course.id}>
+                      <td>{course.id}</td>
+                      <td>{course.title}</td>
+                      <td>{(course.price || 0).toLocaleString('vi-VN')}đ</td>
+                      <td>{course.status || (course.isPublished ? 'PUBLISHED' : 'DRAFT')}</td>
+                      <td style={{ display: 'flex', gap: '6px' }}>
+                        <button className={styles.tableActionBtn} onClick={() => handleEditCourse(course)}>
+                          Sửa
+                        </button>
+                        <button className={styles.tableActionBtn} onClick={() => handleDeleteCourse(course.id)}>
+                          Xóa
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          </>
+        )}
+
+        {!loading && activeTab === 'prompts' && (
+          <section className={styles.tableSection}>
+            <div className={styles.tableHeader}>
+              <h3>Cấu hình AI Prompts</h3>
             </div>
-          </div>
-        </section>
+            <form onSubmit={handleSavePrompts}>
+              <textarea
+                className={styles.searchBar}
+                style={{ width: '100%', minHeight: '120px', padding: '10px 12px', marginBottom: '10px' }}
+                placeholder="tutorSystemPrompt"
+                value={aiPromptForm.tutorSystemPrompt}
+                onChange={(e) =>
+                  setAIPromptForm((prev) => ({ ...prev, tutorSystemPrompt: e.target.value }))
+                }
+              />
+              <textarea
+                className={styles.searchBar}
+                style={{ width: '100%', minHeight: '120px', padding: '10px 12px', marginBottom: '10px' }}
+                placeholder="examGeneratorPrompt"
+                value={aiPromptForm.examGeneratorPrompt}
+                onChange={(e) =>
+                  setAIPromptForm((prev) => ({ ...prev, examGeneratorPrompt: e.target.value }))
+                }
+              />
+              <button className={styles.downloadBtn} type="submit" disabled={savingPrompts}>
+                {savingPrompts ? 'Đang lưu...' : 'Lưu AI prompts'}
+              </button>
+            </form>
+          </section>
+        )}
 
-        {/* Footer */}
         <footer className={styles.footer}>
-          <p>© 2023 ThinkAI. Thiết kế lấy cảm hứng từ sự tối giản.</p>
+          <p>© 2026 ThinkAI Admin Panel.</p>
         </footer>
       </main>
     </div>

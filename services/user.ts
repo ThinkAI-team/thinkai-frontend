@@ -34,6 +34,10 @@ export async function updateProfile(data: UpdateProfileRequest): Promise<Profile
 export async function changePassword(data: ChangePasswordRequest): Promise<{ message: string }> {
   return apiRequest<{ message: string }>('/users/me/password', {
     method: 'PUT',
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      currentPassword: data.currentPassword,
+      newPassword: data.newPassword,
+      confirmNewPassword: data.confirmPassword,
+    }),
   });
 }

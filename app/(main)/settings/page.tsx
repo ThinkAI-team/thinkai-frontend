@@ -1,29 +1,47 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Button from '@/components/ui/Button';
 import styles from './page.module.css';
-import { usersApi } from '@/lib/api/users';
 import { getCurrentUser, AuthResponse, updatePassword } from '@/services/auth';
-import type { UserProfile } from '@/lib/types';
+import {
+  getProfile,
+  updateProfile,
+  type ProfileResponse,
+} from '@/services/user';
+import {
+  getAISettings,
+  updateAISettings,
+  type AISettings,
+} from '@/services/ai-tutor';
 
 const tabs = [
   { id: 'profile', icon: '👤', label: 'Hồ sơ' },
+  { id: 'ai', icon: '🤖', label: 'AI Tutor' },
   { id: 'notifications', icon: '🔔', label: 'Thông báo' },
   { id: 'security', icon: '🔒', label: 'Bảo mật' },
   { id: 'subscription', icon: '💳', label: 'Gói đăng ký' },
 ];
 
+const defaultAISettings: AISettings = {
+  language: 'VI',
+  responseLength: 'MEDIUM',
+  communicationStyle: 'FRIENDLY',
+};
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
   const [darkMode, setDarkMode] = useState(false);
   
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [authInfo, setAuthInfo] = useState<AuthResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [globalMessage, setGlobalMessage] = useState({ text: '', type: '' });
+  const [aiSettings, setAISettings] = useState<AISettings>(defaultAISettings);
+  const [savingAISettings, setSavingAISettings] = useState(false);
   
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -39,11 +57,13 @@ export default function SettingsPage() {
     try {
       setLoading(true);
       const [profData, authData] = await Promise.all([
-        usersApi.getProfile().catch(() => null),
-        getCurrentUser().catch(() => null)
+        getProfile().catch(() => null),
+        getCurrentUser().catch(() => null),
       ]);
       if (profData) setProfile(profData);
       if (authData) setAuthInfo(authData);
+      const settings = await getAISettings().catch(() => defaultAISettings);
+      setAISettings(settings);
     } catch (err) {
       console.error(err);
     } finally {
@@ -56,10 +76,11 @@ export default function SettingsPage() {
     setGlobalMessage({ text: '', type: '' });
     try {
       if (profile) {
-        await usersApi.updateProfile({ 
+        const updated = await updateProfile({
           fullName: profile.fullName,
-          phoneNumber: profile.phoneNumber
+          phoneNumber: profile.phoneNumber || undefined
         });
+        setProfile(updated);
         setGlobalMessage({ text: 'Cập nhật hồ sơ thành công', type: 'success' });
       }
     } catch (err: any) {
@@ -88,6 +109,20 @@ export default function SettingsPage() {
       setAuthInfo(authData);
     } catch (err: any) {
       setGlobalMessage({ text: err.message || 'Lỗi đổi mật khẩu', type: 'error' });
+    }
+  };
+
+  const handleAISettingsUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGlobalMessage({ text: '', type: '' });
+    setSavingAISettings(true);
+    try {
+      await updateAISettings(aiSettings);
+      setGlobalMessage({ text: 'Đã cập nhật AI settings thành công', type: 'success' });
+    } catch (err: any) {
+      setGlobalMessage({ text: err.message || 'Lỗi cập nhật AI settings', type: 'error' });
+    } finally {
+      setSavingAISettings(false);
     }
   };
 
@@ -240,6 +275,70 @@ export default function SettingsPage() {
                 </section>
               )}
 
+              {activeTab === 'ai' && (
+                <section className={styles.section}>
+                  <h2>Cấu hình AI Tutor</h2>
+                  <form onSubmit={handleAISettingsUpdate}>
+                    <div className={styles.formRow}>
+                      <div className={styles.formGroup}>
+                        <label>Ngôn ngữ phản hồi</label>
+                        <select
+                          className={styles.input}
+                          value={aiSettings.language}
+                          onChange={(e) =>
+                            setAISettings((prev) => ({
+                              ...prev,
+                              language: e.target.value as AISettings['language'],
+                            }))
+                          }
+                        >
+                          <option value="VI">Tiếng Việt</option>
+                          <option value="EN">English</option>
+                        </select>
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label>Độ dài phản hồi</label>
+                        <select
+                          className={styles.input}
+                          value={aiSettings.responseLength}
+                          onChange={(e) =>
+                            setAISettings((prev) => ({
+                              ...prev,
+                              responseLength: e.target.value as AISettings['responseLength'],
+                            }))
+                          }
+                        >
+                          <option value="SHORT">Ngắn</option>
+                          <option value="MEDIUM">Vừa</option>
+                          <option value="LONG">Dài</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label>Phong cách giao tiếp</label>
+                      <select
+                        className={styles.input}
+                        value={aiSettings.communicationStyle}
+                        onChange={(e) =>
+                          setAISettings((prev) => ({
+                            ...prev,
+                            communicationStyle: e.target.value as AISettings['communicationStyle'],
+                          }))
+                        }
+                      >
+                        <option value="FRIENDLY">Friendly</option>
+                        <option value="PROFESSIONAL">Professional</option>
+                      </select>
+                    </div>
+
+                    <Button variant="primary" type="submit" disabled={savingAISettings}>
+                      {savingAISettings ? 'Đang lưu...' : 'Lưu cấu hình AI'}
+                    </Button>
+                  </form>
+                </section>
+              )}
+
               {activeTab === 'security' && (
                 <section className={styles.section}>
                   <h2>Bảo mật</h2>
@@ -271,7 +370,7 @@ export default function SettingsPage() {
                         value={passwordData.newPassword}
                         onChange={(e) => setPasswordData(prev => ({...prev, newPassword: e.target.value}))}
                         required
-                        minLength={6}
+                        minLength={8}
                       />
                     </div>
                     <div className={styles.formGroup}>
@@ -283,7 +382,7 @@ export default function SettingsPage() {
                         value={passwordData.confirmPassword}
                         onChange={(e) => setPasswordData(prev => ({...prev, confirmPassword: e.target.value}))}
                         required
-                        minLength={6}
+                        minLength={8}
                       />
                     </div>
                     

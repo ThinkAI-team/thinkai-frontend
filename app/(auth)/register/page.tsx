@@ -8,6 +8,13 @@ import Button from '@/components/ui/Button';
 import { ApiException } from '@/services/api';
 import { register, googleLogin } from '@/services/auth';
 
+function getRedirectPathByRole(role?: string): string {
+  const normalizedRole = (role || '').replace(/^ROLE_/, '').toUpperCase();
+  if (normalizedRole === 'ADMIN') return '/admin';
+  if (normalizedRole === 'TEACHER') return '/teacher';
+  return '/dashboard';
+}
+
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -45,8 +52,8 @@ function RegisterForm() {
           setLoading(true);
           setGlobalError('');
           try {
-            await googleLogin(response.credential);
-            router.push('/dashboard');
+            const auth = await googleLogin(response.credential);
+            router.push(getRedirectPathByRole(auth.role));
           } catch (err: any) {
             console.error('Google register error:', err);
             setGlobalError(err.message || 'Đăng ký Google thất bại');
@@ -107,8 +114,8 @@ function RegisterForm() {
     setLoading(true);
 
     try {
-      await register(formData);
-      router.push('/dashboard');
+      const auth = await register(formData);
+      router.push(getRedirectPathByRole(auth.role));
     } catch (err) {
       if (err instanceof ApiException) {
         if (err.fieldErrors) {

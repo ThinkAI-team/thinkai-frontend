@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -43,6 +44,13 @@ export default function Navbar() {
   const getInitial = () => {
     return user?.fullName ? user.fullName.charAt(0).toUpperCase() : '?';
   };
+
+  const normalizedRole = (user?.role || '').replace(/^ROLE_/, '').toUpperCase();
+  const dashboardPath = normalizedRole === 'ADMIN'
+    ? '/admin'
+    : normalizedRole === 'TEACHER'
+      ? '/teacher'
+      : '/dashboard';
 
   return (
     <nav className={styles.navbar}>
@@ -95,12 +103,30 @@ export default function Navbar() {
                   👤 Trang cá nhân
                 </Link>
                 <Link
-                  href="/dashboard"
+                  href={dashboardPath}
                   className={styles.dropdownItem}
                   onClick={() => setDropdownOpen(false)}
                 >
                   📊 Dashboard
                 </Link>
+                {(normalizedRole === 'TEACHER' || normalizedRole === 'ADMIN') && (
+                  <Link
+                    href="/teacher"
+                    className={styles.dropdownItem}
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    🎓 Teacher Portal
+                  </Link>
+                )}
+                {normalizedRole === 'ADMIN' && (
+                  <Link
+                    href="/admin"
+                    className={styles.dropdownItem}
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    🛡️ Admin Panel
+                  </Link>
+                )}
                 <div className={styles.dropdownDivider} />
                 <button className={styles.dropdownLogout} onClick={handleLogout}>
                   🚪 Đăng xuất

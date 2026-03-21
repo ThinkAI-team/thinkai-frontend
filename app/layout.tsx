@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   keywords: ["TOEIC", "IELTS", "học tiếng Anh", "AI", "gia sư ảo"],
 };
 
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: Readonly<{

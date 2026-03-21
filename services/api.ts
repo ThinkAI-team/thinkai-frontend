@@ -2,7 +2,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
 
 interface ApiError {
   status: number;
-  error: string;
+  error?: string;
   message?: string;
   errors?: Record<string, string>;
   timestamp?: string;
@@ -13,10 +13,37 @@ export class ApiException extends Error {
   fieldErrors?: Record<string, string>;
 
   constructor(data: ApiError) {
-    super(data.message || data.error);
+    super(data.message || data.error || 'Lỗi không xác định');
     this.status = data.status;
     this.fieldErrors = data.errors;
   }
+}
+
+interface ApiWrapper<T> {
+  status?: number;
+  message?: string;
+  data?: T;
+}
+
+function normalizeFieldErrors(
+  errors?: Record<string, string | string[]>
+): Record<string, string> | undefined {
+  if (!errors) return undefined;
+  const result: Record<string, string> = {};
+  Object.entries(errors).forEach(([key, value]) => {
+    result[key] = Array.isArray(value) ? value[0] || '' : value;
+  });
+  return result;
+}
+
+function unwrapData<T>(payload: unknown): T {
+  if (payload && typeof payload === 'object') {
+    const wrapper = payload as ApiWrapper<T>;
+    if ('data' in wrapper && (typeof wrapper.status === 'number' || typeof wrapper.message === 'string')) {
+      return wrapper.data as T;
+    }
+  }
+  return payload as T;
 }
 
 export async function apiRequest<T>(
@@ -49,7 +76,18 @@ export async function apiRequest<T>(
   if (!response.ok) {
     let errorData: ApiError;
     try {
-      errorData = await response.json();
+      const payload = await response.json();
+      const normalized = payload as ApiError & {
+        data?: { message?: string };
+        errors?: Record<string, string | string[]>;
+      };
+      errorData = {
+        status: normalized.status || response.status,
+        error: normalized.error || response.statusText || 'Server Error',
+        message: normalized.message || normalized.data?.message,
+        errors: normalizeFieldErrors(normalized.errors),
+        timestamp: normalized.timestamp,
+      };
     } catch {
       errorData = {
         status: response.status,
@@ -60,5 +98,10 @@ export async function apiRequest<T>(
     throw new ApiException(errorData);
   }
 
-  return response.json();
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const payload = await response.json();
+  return unwrapData<T>(payload);
 }

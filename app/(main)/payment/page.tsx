@@ -113,7 +113,7 @@ export default function PaymentPage() {
             <section className={styles.section}>
               <div className={styles.qrPlaceholder}>
                 <span>📱</span>
-                <p>Mã QR sẽ hiển thị sau khi nhấn "Thanh toán ngay"</p>
+                <p>Mã QR sẽ hiển thị sau khi nhấn &quot;Thanh toán ngay&quot;</p>
               </div>
             </section>
           )}
