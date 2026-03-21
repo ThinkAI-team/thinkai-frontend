@@ -29,14 +29,13 @@ export interface AuthResponse {
 }
 
 export async function register(data: RegisterRequest): Promise<AuthResponse> {
-  const { role, ...payload } = data;
   const response = await apiRequest<AuthResponse>('/auth/register', {
     method: 'POST',
-    body: JSON.stringify(payload),
+    body: JSON.stringify(data),
   });
-
-  saveAuth(response);
-  return response;
+  const normalized = normalizeAuthResponse(response);
+  saveAuth(normalized);
+  return normalized;
 }
 
 export async function login(data: LoginRequest): Promise<AuthResponse> {
@@ -44,9 +43,9 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
     method: 'POST',
     body: JSON.stringify(data),
   });
-
-  saveAuth(response);
-  return response;
+  const normalized = normalizeAuthResponse(response);
+  saveAuth(normalized);
+  return normalized;
 }
 
 export function logout(): void {
@@ -81,9 +80,9 @@ export async function googleLogin(idToken: string): Promise<AuthResponse> {
     method: 'POST',
     body: JSON.stringify({ idToken }),
   });
-
-  saveAuth(response);
-  return response;
+  const normalized = normalizeAuthResponse(response);
+  saveAuth(normalized);
+  return normalized;
 }
 
 export async function updatePassword(
@@ -105,6 +104,7 @@ export async function getCurrentUser(): Promise<AuthResponse> {
   const response = await apiRequest<AuthResponse>('/auth/me', {
     method: 'GET',
   });
+  const normalized = normalizeAuthResponse(response);
   
   // Cập nhật lại user trong localStorage nếu có thay đổi
   if (typeof window !== 'undefined') {
@@ -113,15 +113,17 @@ export async function getCurrentUser(): Promise<AuthResponse> {
       const user = JSON.parse(savedUser);
       localStorage.setItem('user', JSON.stringify({
         ...user,
-        email: response.email,
-        fullName: response.fullName,
-        hasPassword: response.hasPassword,
-        isGoogleUser: response.isGoogleUser,
+        email: normalized.email,
+        fullName: normalized.fullName,
+        role: normalized.role,
+        hasPassword: normalized.hasPassword,
+        isGoogleUser: normalized.isGoogleUser,
+        avatarUrl: normalized.avatarUrl,
       }));
     }
   }
   
-  return response;
+  return normalized;
 }
 
 function saveAuth(response: AuthResponse): void {
@@ -137,4 +139,20 @@ function saveAuth(response: AuthResponse): void {
       avatarUrl: response.avatarUrl,
     }));
   }
+}
+
+function normalizeRole(role?: string): string {
+  if (!role) return 'STUDENT';
+  const cleanRole = role.replace(/^ROLE_/, '').toUpperCase();
+  if (cleanRole === 'ADMIN' || cleanRole === 'TEACHER' || cleanRole === 'STUDENT') {
+    return cleanRole;
+  }
+  return 'STUDENT';
+}
+
+function normalizeAuthResponse(response: AuthResponse): AuthResponse {
+  return {
+    ...response,
+    role: normalizeRole(response.role),
+  };
 }
