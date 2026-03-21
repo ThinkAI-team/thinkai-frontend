@@ -39,8 +39,8 @@ export default function LoginPage() {
           setLoading(true);
           setGlobalError('');
           try {
-            await googleLogin(response.credential);
-            router.push('/dashboard');
+            const auth = await googleLogin(response.credential);
+            router.push(getRedirectPathByRole(auth.role));
           } catch (err: any) {
             console.error('Google login error:', err);
             setGlobalError(err.message || 'Đăng nhập Google thất bại');
@@ -92,8 +92,8 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login(formData);
-      router.push('/dashboard');
+      const auth = await login(formData);
+      router.push(getRedirectPathByRole(auth.role));
     } catch (err) {
       if (err instanceof ApiException) {
         if (err.fieldErrors) {

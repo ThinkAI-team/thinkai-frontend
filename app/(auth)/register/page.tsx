@@ -52,8 +52,8 @@ function RegisterForm() {
           setLoading(true);
           setGlobalError('');
           try {
-            await googleLogin(response.credential);
-            router.push('/dashboard');
+            const auth = await googleLogin(response.credential);
+            router.push(getRedirectPathByRole(auth.role));
           } catch (err: any) {
             console.error('Google register error:', err);
             setGlobalError(err.message || 'Đăng ký Google thất bại');
@@ -114,8 +114,8 @@ function RegisterForm() {
     setLoading(true);
 
     try {
-      await register(formData);
-      router.push('/dashboard');
+      const auth = await register(formData);
+      router.push(getRedirectPathByRole(auth.role));
     } catch (err) {
       if (err instanceof ApiException) {
         if (err.fieldErrors) {
