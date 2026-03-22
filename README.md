@@ -1,98 +1,155 @@
 # ThinkAI Frontend
 
-Nền tảng giáo dục thông minh với AI — Giao diện người dùng.
+Frontend cho nền tảng ThinkAI (Student, Teacher, Admin) xây dựng bằng Next.js App Router.
 
-## Tech Stack
+Tài liệu này phản ánh trạng thái hiện tại của codebase trong thư mục `thinkai-frontend`.
 
-- **Framework:** Next.js 15 (App Router)
-- **Language:** TypeScript
-- **Styling:** CSS Modules + Zen Harmony Design System
-- **State:** React Hooks (useState, useEffect)
-- **API:** Custom fetch wrapper (`services/api.ts`)
+## 1) Tổng quan
 
-## Cấu trúc thư mục
+- Framework: Next.js 15 + React 19 + TypeScript
+- Giao diện: CSS Modules + shared UI components
+- API layer: `services/*` dùng `services/api.ts` (fetch wrapper, auth header, error normalize)
+- Theme: `light/dark` đồng bộ qua `cookie + localStorage + html[data-theme]`
+- Mục tiêu: tách rõ luồng Student / Teacher / Admin nhưng giữ chung trải nghiệm UI
 
-```
+## 2) Trạng thái tích hợp API
+
+Frontend đã chuyển sang luồng API thật cho các module chính.  
+Ma trận đối chiếu contract chi tiết nằm ở:
+
+- [docs/API_CONTRACT_MATRIX.md](./docs/API_CONTRACT_MATRIX.md)
+
+Tóm tắt nhanh:
+
+- Auth/Profile: phần lớn `MATCH`
+- Course/Learning/Review/Dashboard: `MATCH`
+- Teacher Portal: gần như `MATCH`
+- Admin Panel: đa số `MATCH`, có điểm `UNDOCUMENTED` ở `GET /admin/courses`
+- Smart Exam & AI Tutor: còn một số `DRIFT` cần chốt với backend/docs
+
+## 3) Luồng theo vai trò
+
+- Student: `/dashboard`, `/courses`, `/learn/[lessonId]`, `/exams`, `/ai-tutor`, `/profile`, `/settings`, `/payment`
+- Teacher: `/teacher`, `/teacher/courses`, `/teacher/questions`, `/teacher/exams`
+- Admin: `/admin`
+- Marketing/info pages: dynamic route `/[slug]` (about, blog, contact, faq, privacy, terms, help, calendar)
+
+## 4) Cấu trúc dự án
+
+```txt
 app/
-├── (auth)/              # Trang xác thực
-│   ├── login/           # Đăng nhập
-│   ├── register/        # Đăng ký
-│   ├── forgot-password/ # Quên mật khẩu
-│   └── reset-password/  # Đặt lại mật khẩu
-├── (main)/              # Trang chính (cần đăng nhập)
-│   ├── dashboard/       # Tổng quan học tập
-│   ├── courses/         # Khóa học
-│   ├── exams/           # Luyện thi
-│   ├── profile/         # Trang cá nhân
-│   ├── settings/        # Cài đặt
-│   ├── ai-tutor/        # Gia sư AI
-│   ├── learn/           # Phòng học
-│   └── payment/         # Thanh toán
-├── admin/               # Quản trị viên
-└── page.tsx             # Trang chủ
+  (auth)/
+  (main)/
+    components/
+  teacher/
+    components/
+  admin/
+  [slug]/
+  layout.tsx
+  page.tsx
 
 components/
-├── layout/              # Navbar, Footer
-└── ui/                  # Button, Card (reusable)
+  layout/
+  ui/
 
 services/
-├── api.ts               # API client (fetch wrapper + JWT + FormData)
-├── auth.ts              # Đăng ký, đăng nhập, quên mật khẩu
-├── user.ts              # Profile, đổi mật khẩu
-├── courses.ts           # Luồng khóa học học viên
-├── exams.ts             # Luồng luyện thi
-├── ai-tutor.ts          # Luồng AI tutor
-├── teacher.ts           # Luồng teacher workspace
-└── admin.ts             # Luồng admin
+  api.ts
+  auth.ts
+  user.ts
+  courses.ts
+  reviews.ts
+  learning.ts
+  exams.ts
+  ai-tutor.ts
+  teacher.ts
+  admin.ts
 
 lib/
-└── types/               # TypeScript interfaces dùng chung
+  types/
+  utils/
 ```
 
-Chuẩn hiện tại: `app/*` và `components/*` chỉ dùng API qua `services/*`.
+Rule chính: page/component không gọi `fetch` trực tiếp tới backend, chỉ gọi qua `services/*`.
 
-## Cài đặt & Chạy
+## 5) Cài đặt & chạy local
+
+Yêu cầu:
+
+- Node.js 20+
+- npm 10+
+
+Chạy dự án:
 
 ```bash
-# Cài dependencies
 npm install
-
-# Chạy dev server
 npm run dev
-
-# Build production
-npm run build
 ```
 
-Mặc định frontend chạy tại **http://localhost:3000**
+Frontend mặc định chạy tại `http://localhost:3000`.
 
-## Kết nối Backend
+## 6) Environment variables
 
-Cấu hình API URL trong file `.env.local`:
+Tạo file `.env.local`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8081
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
 ```
 
-Nếu không có file `.env.local`, mặc định sẽ kết nối tới `http://localhost:8081`.
+Ghi chú:
 
-## Tính năng đã triển khai
+- Nếu thiếu `NEXT_PUBLIC_API_URL`, frontend fallback về `http://localhost:8081`.
+- Google Sign-In cần `NEXT_PUBLIC_GOOGLE_CLIENT_ID` hợp lệ.
 
-| Tính năng | Trang | API |
-|-----------|-------|-----|
-| Đăng ký | `/register` | ✅ |
-| Đăng nhập | `/login` | ✅ |
-| Trang cá nhân | `/profile` | ✅ |
-| Đổi mật khẩu | `/profile` | ✅ |
-| Quên mật khẩu | `/forgot-password` | ✅ |
-| Đặt lại mật khẩu | `/reset-password` | ✅ |
-| Dashboard | `/dashboard` | Mock |
-| Khóa học | `/courses` | Mock |
-| Luyện thi | `/exams` | Mock |
-| Gia sư AI | `/ai-tutor` | Mock |
-| Cài đặt | `/settings` | Mock |
-| Thanh toán | `/payment` | Mock |
+## 7) Scripts
 
-## Đội ngũ
+```bash
+npm run dev    # chạy local
+npm run lint   # eslint
+npm run build  # build production
+npm run start  # chạy build production
+```
 
-**ThinkAI Team** — Đồ án môn học
+## 8) Quy ước UI/UX hiện tại
+
+- Dùng `components/ui/Button` cho toàn bộ action button
+- Avatar chuyển sang `next/image`
+- Date/currency format dùng utility chung: `lib/utils/format.ts`
+- Tab/list quan trọng có `aria-*` cơ bản (`aria-current`, `role=tablist/tab/tabpanel`, `aria-checked`)
+
+## 9) Troubleshooting nhanh
+
+### Hydration mismatch với theme
+
+Đã xử lý bằng cơ chế SSR theme từ cookie trong `app/layout.tsx`.  
+Nếu vẫn gặp mismatch:
+
+1. Xóa cache browser
+2. Hard refresh
+3. Thử lại ở cửa sổ ẩn danh để loại trừ extension can thiệp DOM
+
+### Không gọi được backend
+
+Kiểm tra:
+
+1. Backend đang chạy ở `:8081`
+2. `NEXT_PUBLIC_API_URL` đúng
+3. CORS backend cho phép origin frontend
+
+## 10) Chất lượng & kiểm thử
+
+- Đã dùng `lint + build` làm gate chính trước khi merge
+- Chưa có bộ test tự động đầy đủ (unit/e2e) trong repo
+- Khuyến nghị thêm e2e smoke cho các luồng:
+  - Login/Register theo role
+  - Teacher tạo course/question/exam
+  - Student xem course/làm exam
+  - Admin quản lý users/courses
+
+## 11) Team note
+
+Khi update API contract:
+
+1. Sửa service trong `services/*`
+2. Cập nhật `docs/API_CONTRACT_MATRIX.md`
+3. Chạy lại `lint + build`
