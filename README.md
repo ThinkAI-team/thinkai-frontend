@@ -1,155 +1,154 @@
 # ThinkAI Frontend
 
-Frontend cho nền tảng ThinkAI (Student, Teacher, Admin) xây dựng bằng Next.js App Router.
+ThinkAI Frontend là giao diện web cho nền tảng học tập thông minh, nơi **học viên**, **giảng viên** và **quản trị viên** làm việc trên cùng một hệ thống nhưng theo các luồng riêng biệt, rõ ràng.
 
-Tài liệu này phản ánh trạng thái hiện tại của codebase trong thư mục `thinkai-frontend`.
+Mục tiêu của dự án:
 
-## 1) Tổng quan
+- Giảm ma sát khi học và quản lý nội dung học tập
+- Đồng bộ dữ liệu theo thời gian thực với backend API
+- Giữ trải nghiệm UI nhất quán theo phong cách Zen hiện đại
 
-- Framework: Next.js 15 + React 19 + TypeScript
-- Giao diện: CSS Modules + shared UI components
-- API layer: `services/*` dùng `services/api.ts` (fetch wrapper, auth header, error normalize)
-- Theme: `light/dark` đồng bộ qua `cookie + localStorage + html[data-theme]`
-- Mục tiêu: tách rõ luồng Student / Teacher / Admin nhưng giữ chung trải nghiệm UI
+## Tính năng nổi bật
 
-## 2) Trạng thái tích hợp API
+### Student Workspace
 
-Frontend đã chuyển sang luồng API thật cho các module chính.  
-Ma trận đối chiếu contract chi tiết nằm ở:
+- Theo dõi tiến độ học tập tại `/dashboard`
+- Khám phá khóa học, đăng ký, vào phòng học `learn/[lessonId]`
+- Làm bài thi thông minh và xem kết quả
+- Sử dụng AI Tutor để hỏi đáp và tóm tắt nội dung học
+- Quản lý hồ sơ, bảo mật, cấu hình trải nghiệm trong `settings`
 
-- [docs/API_CONTRACT_MATRIX.md](./docs/API_CONTRACT_MATRIX.md)
+### Teacher Workspace
 
-Tóm tắt nhanh:
+- Dashboard giảng dạy riêng tại `/teacher`
+- Quản lý khóa học, bài học, upload tài nguyên
+- Quản lý question bank và import CSV
+- Tạo đề thi theo cấu hình thực tế
 
-- Auth/Profile: phần lớn `MATCH`
-- Course/Learning/Review/Dashboard: `MATCH`
-- Teacher Portal: gần như `MATCH`
-- Admin Panel: đa số `MATCH`, có điểm `UNDOCUMENTED` ở `GET /admin/courses`
-- Smart Exam & AI Tutor: còn một số `DRIFT` cần chốt với backend/docs
+### Admin Workspace
 
-## 3) Luồng theo vai trò
+- Theo dõi thống kê hệ thống
+- Quản lý người dùng và trạng thái tài khoản
+- Quản lý khóa học toàn hệ thống
+- Cấu hình AI prompts
 
-- Student: `/dashboard`, `/courses`, `/learn/[lessonId]`, `/exams`, `/ai-tutor`, `/profile`, `/settings`, `/payment`
-- Teacher: `/teacher`, `/teacher/courses`, `/teacher/questions`, `/teacher/exams`
-- Admin: `/admin`
-- Marketing/info pages: dynamic route `/[slug]` (about, blog, contact, faq, privacy, terms, help, calendar)
+## Công nghệ sử dụng
 
-## 4) Cấu trúc dự án
+- **Next.js 15 (App Router)**
+- **React 19 + TypeScript**
+- **CSS Modules**
+- **Service layer API-first** (`services/*`)
+- **Theme SSR-safe** (cookie + localStorage + `html[data-theme]`)
+
+## Kiến trúc frontend
 
 ```txt
 app/
-  (auth)/
-  (main)/
-    components/
-  teacher/
-    components/
-  admin/
-  [slug]/
-  layout.tsx
-  page.tsx
+  (auth)/                 # login/register/forgot/reset
+  (main)/                 # student workspace
+  teacher/                # teacher workspace
+  admin/                  # admin workspace
+  [slug]/                 # static info pages (about/blog/contact/...)
+  layout.tsx              # root layout + theme bootstrap
 
 components/
-  layout/
-  ui/
+  layout/                 # Navbar, Footer
+  ui/                     # Button, Card, PageState
 
 services/
-  api.ts
-  auth.ts
-  user.ts
-  courses.ts
-  reviews.ts
-  learning.ts
-  exams.ts
-  ai-tutor.ts
-  teacher.ts
-  admin.ts
+  api.ts                  # fetch wrapper + JWT + error normalize
+  auth.ts user.ts courses.ts reviews.ts learning.ts
+  exams.ts ai-tutor.ts teacher.ts admin.ts
 
 lib/
   types/
-  utils/
+  utils/format.ts         # format date/currency dùng chung
 ```
 
-Rule chính: page/component không gọi `fetch` trực tiếp tới backend, chỉ gọi qua `services/*`.
+Nguyên tắc quan trọng: page/component **không gọi API trực tiếp**, chỉ đi qua `services/*`.
 
-## 5) Cài đặt & chạy local
+## Trạng thái tích hợp API
 
-Yêu cầu:
+Dự án đang dùng API thật cho các luồng chính.  
+Ma trận đối chiếu contract chi tiết:
+
+- [docs/API_CONTRACT_MATRIX.md](./docs/API_CONTRACT_MATRIX.md)
+
+## Bắt đầu nhanh
+
+### 1) Yêu cầu môi trường
 
 - Node.js 20+
 - npm 10+
 
-Chạy dự án:
+### 2) Cài đặt
 
 ```bash
 npm install
-npm run dev
 ```
 
-Frontend mặc định chạy tại `http://localhost:3000`.
+### 3) Tạo file môi trường
 
-## 6) Environment variables
-
-Tạo file `.env.local`:
+`.env.local`
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8081
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
 ```
 
-Ghi chú:
-
-- Nếu thiếu `NEXT_PUBLIC_API_URL`, frontend fallback về `http://localhost:8081`.
-- Google Sign-In cần `NEXT_PUBLIC_GOOGLE_CLIENT_ID` hợp lệ.
-
-## 7) Scripts
+### 4) Chạy local
 
 ```bash
-npm run dev    # chạy local
-npm run lint   # eslint
-npm run build  # build production
-npm run start  # chạy build production
+npm run dev
 ```
 
-## 8) Quy ước UI/UX hiện tại
+Mặc định frontend chạy tại: `http://localhost:3000`
 
-- Dùng `components/ui/Button` cho toàn bộ action button
-- Avatar chuyển sang `next/image`
-- Date/currency format dùng utility chung: `lib/utils/format.ts`
-- Tab/list quan trọng có `aria-*` cơ bản (`aria-current`, `role=tablist/tab/tabpanel`, `aria-checked`)
+## Scripts
 
-## 9) Troubleshooting nhanh
+```bash
+npm run dev
+npm run lint
+npm run build
+npm run start
+```
 
-### Hydration mismatch với theme
+## Quy ước UI/UX hiện tại
 
-Đã xử lý bằng cơ chế SSR theme từ cookie trong `app/layout.tsx`.  
-Nếu vẫn gặp mismatch:
+- Action buttons thống nhất qua `components/ui/Button`
+- Avatar dùng `next/image`
+- Date/currency format thống nhất qua `lib/utils/format.ts`
+- Accessibility cơ bản cho tab/list/active state (`aria-current`, `role=tablist/tab/tabpanel`, `aria-checked`)
 
-1. Xóa cache browser
-2. Hard refresh
-3. Thử lại ở cửa sổ ẩn danh để loại trừ extension can thiệp DOM
+## Troubleshooting nhanh
 
-### Không gọi được backend
+### 1) Lỗi hydration mismatch theme
+
+- Theme đã được đồng bộ SSR/client trong `app/layout.tsx`.
+- Nếu còn cảnh báo: clear cache, hard refresh, thử Incognito để loại trừ browser extension.
+
+### 2) Frontend không gọi được backend
 
 Kiểm tra:
 
-1. Backend đang chạy ở `:8081`
-2. `NEXT_PUBLIC_API_URL` đúng
+1. Backend chạy đúng `:8081`
+2. `NEXT_PUBLIC_API_URL` đúng môi trường
 3. CORS backend cho phép origin frontend
 
-## 10) Chất lượng & kiểm thử
+## Chất lượng code
 
-- Đã dùng `lint + build` làm gate chính trước khi merge
-- Chưa có bộ test tự động đầy đủ (unit/e2e) trong repo
-- Khuyến nghị thêm e2e smoke cho các luồng:
-  - Login/Register theo role
-  - Teacher tạo course/question/exam
-  - Student xem course/làm exam
-  - Admin quản lý users/courses
+- Gate hiện tại: `npm run lint` + `npm run build`
+- Khuyến nghị bổ sung E2E smoke test cho:
+  - Auth + role redirect
+  - Teacher create course/question/exam
+  - Student học khóa học và làm bài thi
+  - Admin quản lý user/course
 
-## 11) Team note
+## Team workflow gợi ý
 
-Khi update API contract:
+Khi có thay đổi contract backend:
 
-1. Sửa service trong `services/*`
-2. Cập nhật `docs/API_CONTRACT_MATRIX.md`
-3. Chạy lại `lint + build`
+1. Cập nhật `services/*`
+2. Rà soát UI affected pages
+3. Cập nhật `docs/API_CONTRACT_MATRIX.md`
+4. Chạy lại `lint + build` trước khi tạo PR
