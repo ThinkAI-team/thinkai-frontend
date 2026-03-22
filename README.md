@@ -1,46 +1,72 @@
 # ThinkAI Frontend
 
-ThinkAI Frontend là giao diện web cho nền tảng học tập thông minh, nơi **học viên**, **giảng viên** và **quản trị viên** làm việc trên cùng một hệ thống nhưng theo các luồng riêng biệt, rõ ràng.
+[![Status](https://img.shields.io/badge/status-active-22c55e)]()
+[![Version](https://img.shields.io/badge/version-2.0-blue)]()
+[![API](https://img.shields.io/badge/API%20Base-8081-f97316)]()
 
-Mục tiêu của dự án:
+![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=next.js)
+![React](https://img.shields.io/badge/React-19-20232A?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)
+![CSS Modules](https://img.shields.io/badge/CSS-Modules-1572B6?logo=css3)
+![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js)
 
-- Giảm ma sát khi học và quản lý nội dung học tập
-- Đồng bộ dữ liệu theo thời gian thực với backend API
-- Giữ trải nghiệm UI nhất quán theo phong cách Zen hiện đại
+> Frontend cho nền tảng học tập thông minh ThinkAI, phục vụ đồng thời học viên, giảng viên và quản trị viên trên cùng một hệ thống.
 
-## Tính năng nổi bật
+---
+
+## Project Introduction
+
+### Vision
+
+ThinkAI Frontend được xây dựng để giảm ma sát trong toàn bộ hành trình học tập: học, luyện thi, quản lý nội dung, theo dõi tiến độ và tương tác với AI Tutor.
+
+### User Roles
+
+- Student: học khóa học, làm bài thi, theo dõi tiến độ, sử dụng AI Tutor.
+- Teacher: quản lý khóa học, lesson, question bank, đề thi.
+- Admin: quản lý users, courses, dashboard tổng quan và AI prompts.
+
+---
+
+## Core Features
 
 ### Student Workspace
 
-- Theo dõi tiến độ học tập tại `/dashboard`
-- Khám phá khóa học, đăng ký, vào phòng học `learn/[lessonId]`
-- Làm bài thi thông minh và xem kết quả
-- Sử dụng AI Tutor để hỏi đáp và tóm tắt nội dung học
-- Quản lý hồ sơ, bảo mật, cấu hình trải nghiệm trong `settings`
+- Dashboard học tập tại `/dashboard`
+- Khóa học và phòng học tại `/courses`, `/learn/[lessonId]`
+- Luyện thi tại `/exams`
+- AI Tutor tại `/ai-tutor`
+- Hồ sơ và cài đặt tại `/profile`, `/settings`
 
 ### Teacher Workspace
 
-- Dashboard giảng dạy riêng tại `/teacher`
-- Quản lý khóa học, bài học, upload tài nguyên
-- Quản lý question bank và import CSV
-- Tạo đề thi theo cấu hình thực tế
+- Tổng quan tại `/teacher`
+- Quản lý khóa học tại `/teacher/courses`
+- Quản lý ngân hàng câu hỏi tại `/teacher/questions`
+- Quản lý đề thi tại `/teacher/exams`
 
 ### Admin Workspace
 
-- Theo dõi thống kê hệ thống
-- Quản lý người dùng và trạng thái tài khoản
-- Quản lý khóa học toàn hệ thống
+- Tổng quan quản trị tại `/admin`
+- Quản lý người dùng
+- Quản lý khóa học
 - Cấu hình AI prompts
 
-## Công nghệ sử dụng
+---
 
-- **Next.js 15 (App Router)**
-- **React 19 + TypeScript**
-- **CSS Modules**
-- **Service layer API-first** (`services/*`)
-- **Theme SSR-safe** (cookie + localStorage + `html[data-theme]`)
+## Technology Stack
 
-## Kiến trúc frontend
+| Layer | Technology | Notes |
+| --- | --- | --- |
+| Frontend Framework | Next.js 15 (App Router) | React 19, dynamic routes |
+| Language | TypeScript | Strict typing |
+| Styling | CSS Modules | Design tokens + shared UI |
+| Data/API | Fetch wrapper (`services/api.ts`) | JWT header, unwrap data, normalize error |
+| Runtime | Node.js 20+ | Local development & build |
+
+---
+
+## Project Structure
 
 ```txt
 app/
@@ -48,63 +74,77 @@ app/
   (main)/                 # student workspace
   teacher/                # teacher workspace
   admin/                  # admin workspace
-  [slug]/                 # static info pages (about/blog/contact/...)
-  layout.tsx              # root layout + theme bootstrap
+  [slug]/                 # static info pages
+  layout.tsx              # SSR theme bootstrap
 
 components/
   layout/                 # Navbar, Footer
   ui/                     # Button, Card, PageState
 
 services/
-  api.ts                  # fetch wrapper + JWT + error normalize
-  auth.ts user.ts courses.ts reviews.ts learning.ts
-  exams.ts ai-tutor.ts teacher.ts admin.ts
+  api.ts
+  auth.ts
+  user.ts
+  courses.ts
+  reviews.ts
+  learning.ts
+  exams.ts
+  ai-tutor.ts
+  teacher.ts
+  admin.ts
 
 lib/
   types/
-  utils/format.ts         # format date/currency dùng chung
+  utils/format.ts
 ```
 
-Nguyên tắc quan trọng: page/component **không gọi API trực tiếp**, chỉ đi qua `services/*`.
+Nguyên tắc: page/component chỉ gọi API qua `services/*`.
 
-## Trạng thái tích hợp API
+---
 
-Dự án đang dùng API thật cho các luồng chính.  
-Ma trận đối chiếu contract chi tiết:
+## API Integration
+
+Trạng thái tích hợp API được theo dõi tại:
 
 - [docs/API_CONTRACT_MATRIX.md](./docs/API_CONTRACT_MATRIX.md)
 
-## Bắt đầu nhanh
+Tài liệu này mô tả `MATCH / DRIFT / UNDOCUMENTED` giữa frontend contract và API docs team.
 
-### 1) Yêu cầu môi trường
+---
+
+## Quick Start
+
+### Prerequisites
 
 - Node.js 20+
 - npm 10+
 
-### 2) Cài đặt
+### Install
 
 ```bash
 npm install
 ```
 
-### 3) Tạo file môi trường
+### Environment
 
-`.env.local`
+Tạo `.env.local`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8081
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
 ```
 
-### 4) Chạy local
+### Run
 
 ```bash
 npm run dev
 ```
 
-Mặc định frontend chạy tại: `http://localhost:3000`
+Frontend chạy tại `http://localhost:3000`.
 
-## Scripts
+---
+
+## Available Scripts
 
 ```bash
 npm run dev
@@ -113,42 +153,53 @@ npm run build
 npm run start
 ```
 
-## Quy ước UI/UX hiện tại
+---
 
-- Action buttons thống nhất qua `components/ui/Button`
+## UI and Engineering Notes
+
+- Toàn bộ action button dùng `components/ui/Button`
 - Avatar dùng `next/image`
-- Date/currency format thống nhất qua `lib/utils/format.ts`
-- Accessibility cơ bản cho tab/list/active state (`aria-current`, `role=tablist/tab/tabpanel`, `aria-checked`)
+- Format ngày/tiền dùng `lib/utils/format.ts`
+- Theme đồng bộ SSR/client qua cookie + localStorage
+- A11y cơ bản cho tab/navigation (`aria-current`, `tablist`, `tabpanel`)
 
-## Troubleshooting nhanh
+---
 
-### 1) Lỗi hydration mismatch theme
+## Troubleshooting
 
-- Theme đã được đồng bộ SSR/client trong `app/layout.tsx`.
-- Nếu còn cảnh báo: clear cache, hard refresh, thử Incognito để loại trừ browser extension.
+### Hydration mismatch theme
 
-### 2) Frontend không gọi được backend
+- Theme đã được xử lý SSR-safe trong `app/layout.tsx`.
+- Nếu còn warning: hard refresh, clear cache, thử Incognito.
+
+### Cannot reach backend
 
 Kiểm tra:
 
-1. Backend chạy đúng `:8081`
-2. `NEXT_PUBLIC_API_URL` đúng môi trường
+1. Backend đang chạy ở `:8081`
+2. `NEXT_PUBLIC_API_URL` đúng
 3. CORS backend cho phép origin frontend
 
-## Chất lượng code
+---
 
-- Gate hiện tại: `npm run lint` + `npm run build`
-- Khuyến nghị bổ sung E2E smoke test cho:
-  - Auth + role redirect
-  - Teacher create course/question/exam
-  - Student học khóa học và làm bài thi
-  - Admin quản lý user/course
+## Quality Gate
 
-## Team workflow gợi ý
+Trước khi push/PR:
 
-Khi có thay đổi contract backend:
+```bash
+npm run lint
+npm run build
+```
+
+Khuyến nghị bổ sung E2E smoke test cho các luồng role-based quan trọng.
+
+---
+
+## Team Workflow
+
+Khi thay đổi API contract:
 
 1. Cập nhật `services/*`
-2. Rà soát UI affected pages
+2. Rà soát các page bị ảnh hưởng
 3. Cập nhật `docs/API_CONTRACT_MATRIX.md`
-4. Chạy lại `lint + build` trước khi tạo PR
+4. Chạy lại `lint + build`
