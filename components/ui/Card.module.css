@@ -18,8 +18,8 @@
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(var(--surface-rgb), 0.8);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(var(--surface-rgb), 0.3);
 }

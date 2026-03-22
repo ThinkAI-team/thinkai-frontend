@@ -1,11 +1,15 @@
 'use client';
-/* eslint-disable @next/next/no-img-element */
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button';
+import PageState from '@/components/ui/PageState';
+import dashboardStyles from '../dashboard/page.module.css';
+import MainSidebar from '../components/MainSidebar';
+import { formatLongDateVi } from '@/lib/utils/format';
 import { getProfile, updateProfile, changePassword } from '@/services/user';
 import { ApiException } from '@/services/api';
 import { getCurrentUser, AuthResponse } from '@/services/auth';
@@ -75,15 +79,6 @@ export default function ProfilePage() {
 
   const getInitial = () => {
     return profile.fullName ? profile.fullName.charAt(0).toUpperCase() : '?';
-  };
-
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
   };
 
   const getRoleLabel = (role: string) => {
@@ -184,48 +179,73 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className={styles.container}>
-        <div className={styles.loading}>Đang tải...</div>
+      <div className={dashboardStyles.container}>
+        <MainSidebar active="profile" />
+        <main className={`${dashboardStyles.main} ${styles.main}`}>
+          <div className={styles.container}>
+            <PageState
+              type="loading"
+              title="Đang tải hồ sơ"
+              message="Hệ thống đang đồng bộ thông tin tài khoản của bạn."
+            />
+          </div>
+        </main>
       </div>
     );
   }
 
+  const normalizedRole = (profile.role || '').replace(/^ROLE_/, '').toUpperCase();
+  const dashboardPath = normalizedRole === 'ADMIN'
+    ? '/admin'
+    : normalizedRole === 'TEACHER'
+      ? '/teacher'
+      : '/dashboard';
+
   return (
-    <div className={styles.container}>
-      <div className={styles.content}>
-        {/* Header */}
-        <div className={styles.pageHeader}>
-          <Link href="/dashboard" className={styles.backLink}>← Quay lại Dashboard</Link>
-          <h1>Hồ sơ cá nhân</h1>
-          <p>Quản lý thông tin tài khoản của bạn</p>
-        </div>
-
-        {/* Section 1: Avatar + Display Info */}
-        <section className={styles.section}>
-          <div className={styles.profileHeader}>
-            <div className={styles.avatar}>
-              {profile.avatarUrl ? (
-                <img src={profile.avatarUrl} alt={profile.fullName} />
-              ) : (
-                <span>{getInitial()}</span>
-              )}
+    <div className={dashboardStyles.container}>
+      <MainSidebar active="profile" />
+      <main className={`${dashboardStyles.main} ${styles.main}`}>
+        <div className={styles.container}>
+          <div className={styles.content}>
+            {/* Header */}
+            <div className={styles.pageHeader}>
+              <Link href={dashboardPath} className={styles.backLink}>← Quay lại tổng quan</Link>
+              <h1>Hồ sơ cá nhân</h1>
+              <p>Quản lý thông tin tài khoản của bạn</p>
             </div>
-            <div className={styles.profileMeta}>
-              <h2>{profile.fullName}</h2>
-              <p className={styles.roleBadge}>{getRoleLabel(profile.role)}</p>
-              <p className={styles.email}>{profile.email}</p>
-            </div>
-          </div>
-        </section>
 
-        {/* Section 2: Edit Profile */}
-        <section className={styles.section}>
+            {/* Section 1: Avatar + Display Info */}
+            <section className={styles.section}>
+              <div className={styles.profileHeader}>
+                <div className={styles.avatar}>
+                  {profile.avatarUrl ? (
+                    <Image
+                      src={profile.avatarUrl}
+                      alt={profile.fullName}
+                      width={72}
+                      height={72}
+                      unoptimized
+                    />
+                  ) : (
+                    <span>{getInitial()}</span>
+                  )}
+                </div>
+                <div className={styles.profileMeta}>
+                  <h2>{profile.fullName}</h2>
+                  <p className={styles.roleBadge}>{getRoleLabel(profile.role)}</p>
+                  <p className={styles.email}>{profile.email}</p>
+                </div>
+              </div>
+            </section>
+
+            {/* Section 2: Edit Profile */}
+            <section className={styles.section}>
           <div className={styles.sectionHeader}>
             <h3>Thông tin cá nhân</h3>
             {!isEditing && (
-              <button className={styles.editBtn} onClick={() => setIsEditing(true)}>
-                ✏️ Chỉnh sửa
-              </button>
+              <Button variant="secondary" size="sm" className={styles.editBtn} onClick={() => setIsEditing(true)}>
+                Chỉnh sửa
+              </Button>
             )}
           </div>
 
@@ -263,13 +283,13 @@ export default function ProfilePage() {
                 <Button variant="primary" type="submit" disabled={saving}>
                   {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
                 </Button>
-                <button type="button" className={styles.cancelBtn} onClick={() => {
+                <Button variant="secondary" size="sm" type="button" className={styles.cancelBtn} onClick={() => {
                   setIsEditing(false);
                   setEditForm({ fullName: profile.fullName, phoneNumber: profile.phoneNumber || '' });
                   setEditErrors({});
                 }}>
                   Hủy
-                </button>
+                </Button>
               </div>
             </form>
           ) : (
@@ -290,10 +310,10 @@ export default function ProfilePage() {
               </div>
             </div>
           )}
-        </section>
+            </section>
 
-        {/* Section 3: Change Password */}
-        <section className={styles.section}>
+            {/* Section 3: Change Password */}
+            <section className={styles.section}>
           <div className={styles.sectionHeader}>
             <h3>Đổi mật khẩu</h3>
           </div>
@@ -358,10 +378,10 @@ export default function ProfilePage() {
               </Button>
             </div>
           </form>
-        </section>
+            </section>
 
-        {/* Section 4: Account Info (read-only) */}
-        <section className={styles.section}>
+            {/* Section 4: Account Info (read-only) */}
+            <section className={styles.section}>
           <div className={styles.sectionHeader}>
             <h3>Thông tin tài khoản</h3>
           </div>
@@ -376,11 +396,13 @@ export default function ProfilePage() {
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Ngày tham gia</span>
-              <span className={styles.infoValue}>{formatDate(profile.createdAt)}</span>
+              <span className={styles.infoValue}>{formatLongDateVi(profile.createdAt)}</span>
             </div>
           </div>
-        </section>
+            </section>
+          </div>
+        </div>
+      </main>
       </div>
-    </div>
   );
 }

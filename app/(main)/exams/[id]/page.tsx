@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
+import dashboardStyles from '../../dashboard/page.module.css';
+import MainSidebar from '../../components/MainSidebar';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button';
+import PageState from '@/components/ui/PageState';
 import { startExam, submitExam, type StartExamResponse } from '@/services/exams';
 
 const DEFAULT_DURATION_SECONDS = 120 * 60;
@@ -22,29 +25,29 @@ export default function ExamTakingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchExamSession = async () => {
-      if (!Number.isFinite(examId)) {
-        setError('Mã bài thi không hợp lệ.');
-        setLoading(false);
-        return;
-      }
+  const loadExamSession = useCallback(async () => {
+    if (!Number.isFinite(examId)) {
+      setError('Mã bài thi không hợp lệ.');
+      setLoading(false);
+      return;
+    }
 
-      setLoading(true);
-      setError('');
-      try {
-        const started = await startExam(examId);
-        setSession(started);
-        setTimeLeft((started.timeLimitMinutes || 120) * 60);
-      } catch (err: any) {
-        setError(err.message || 'Không thể bắt đầu bài thi.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchExamSession();
+    setLoading(true);
+    setError('');
+    try {
+      const started = await startExam(examId);
+      setSession(started);
+      setTimeLeft((started.timeLimitMinutes || 120) * 60);
+    } catch (err: any) {
+      setError(err.message || 'Không thể bắt đầu bài thi.');
+    } finally {
+      setLoading(false);
+    }
   }, [examId]);
+
+  useEffect(() => {
+    loadExamSession();
+  }, [loadExamSession]);
 
   useEffect(() => {
     if (loading || submitting) return undefined;
@@ -103,108 +106,170 @@ export default function ExamTakingPage() {
   };
 
   if (loading) {
-    return <div className={styles.container}>Đang tải bài thi...</div>;
+    return (
+      <div className={dashboardStyles.container}>
+        <MainSidebar active="exams" />
+        <main className={`${dashboardStyles.main} ${styles.examArea}`}>
+          <PageState
+            type="loading"
+            title="Đang tải bài thi"
+            message="Hệ thống đang khởi tạo phiên làm bài cho bạn."
+          />
+        </main>
+      </div>
+    );
   }
 
   if (error && !session) {
-    return <div className={styles.container}>{error}</div>;
+    return (
+      <div className={dashboardStyles.container}>
+        <MainSidebar active="exams" />
+        <main className={`${dashboardStyles.main} ${styles.examArea}`}>
+          <PageState
+            type="error"
+            message={error}
+            actionLabel="Thử lại"
+            onAction={loadExamSession}
+          />
+        </main>
+      </div>
+    );
   }
 
   if (!question) {
-    return <div className={styles.container}>Bài thi chưa có câu hỏi.</div>;
+    return (
+      <div className={dashboardStyles.container}>
+        <MainSidebar active="exams" />
+        <main className={`${dashboardStyles.main} ${styles.examArea}`}>
+          <PageState
+            type="empty"
+            message="Bài thi chưa có câu hỏi."
+            actionLabel="Quay lại danh sách bài thi"
+            onAction={() => router.push('/exams')}
+          />
+        </main>
+      </div>
+    );
   }
 
   return (
-    <div className={styles.container}>
-      <header className={styles.header}>
-        <Link href="/" className={styles.logo}>
-          <span className={styles.logoIcon}>🎯</span>
-          <span className={styles.logoText}>ThinkAI</span>
-        </Link>
+    <div className={dashboardStyles.container}>
+      <MainSidebar active="exams" />
 
-        <div className={styles.timer}>
-          <span className={styles.timerIcon}>⏱</span>
-          <span className={styles.timerText}>{formatTime(timeLeft)}</span>
-        </div>
+      <div className={styles.examArea}>
+        <header className={styles.header}>
+          <Link href="/" className={styles.logo}>
+            <span className={styles.logoText}>ThinkAI</span>
+          </Link>
 
-        <div className={styles.headerActions}>
-          <button className={styles.exitBtn} onClick={() => router.push('/exams')}>
-            Thoát bài thi
-          </button>
-          <button className={styles.themeBtn}>🌙</button>
-        </div>
-      </header>
+          <div className={styles.timer}>
+            <span className={styles.timerText}>{formatTime(timeLeft)}</span>
+          </div>
 
-      <main className={styles.main}>
-        <div className={styles.categoryTag}>EXAM #{examId}</div>
-
-        <div className={styles.questionNumber}>
-          Câu {currentQuestion + 1} <span>/{totalQuestions}</span>
-        </div>
-
-        <h1 className={styles.questionText}>{question.content}</h1>
-        <p className={styles.instruction}>Chọn một đáp án chính xác nhất bên dưới.</p>
-
-        {error && <p className={styles.instruction} style={{ color: '#b91c1c' }}>{error}</p>}
-
-        <div className={styles.optionsGrid}>
-          {question.options.map((option) => (
-            <button
-              key={option}
-              className={`${styles.optionBtn} ${answers[question.id] === option ? styles.selected : ''}`}
-              onClick={() => handleSelectAnswer(option)}
+          <div className={styles.headerActions}>
+            <Button
+              variant="secondary"
+              size="sm"
+              type="button"
+              className={styles.exitBtn}
+              onClick={() => router.push('/exams')}
             >
-              <span className={styles.optionText}>{option}</span>
-              {answers[question.id] === option && <span className={styles.checkIcon}>✓</span>}
-            </button>
-          ))}
-        </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <div className={styles.progressSection}>
-          <span className={styles.progressLabel}>TIẾN ĐỘ</span>
-          <div className={styles.progressBar}>
-            <div className={styles.progressFill} style={{ width: `${progress}%` }} />
+              Thoát bài thi
+            </Button>
           </div>
-          <span className={styles.progressPercent}>
-            {answerCount}/{totalQuestions} đã chọn
-          </span>
-        </div>
+        </header>
 
-        <div className={styles.navigation}>
-          <button
-            className={styles.prevBtn}
-            onClick={() => setCurrentQuestion((prev) => Math.max(0, prev - 1))}
-            disabled={currentQuestion === 0}
+        <main className={styles.main}>
+          <div className={styles.categoryTag}>EXAM #{examId}</div>
+
+          <div className={styles.questionNumber}>
+            Câu {currentQuestion + 1} <span>/{totalQuestions}</span>
+          </div>
+
+          <h1 className={styles.questionText}>{question.content}</h1>
+          <p className={styles.instruction}>Chọn một đáp án chính xác nhất bên dưới.</p>
+
+          {error && <p className={`${styles.instruction} ${styles.errorText}`}>{error}</p>}
+
+          <div
+            className={styles.optionsGrid}
+            role="radiogroup"
+            aria-label={`Danh sách đáp án cho câu ${currentQuestion + 1}`}
           >
-            ← Câu trước
-          </button>
+            {question.options.map((option) => (
+              <Button
+                key={option}
+                variant="secondary"
+                size="sm"
+                type="button"
+                role="radio"
+                aria-checked={answers[question.id] === option}
+                className={`${styles.optionBtn} ${answers[question.id] === option ? styles.selected : ''}`}
+                onClick={() => handleSelectAnswer(option)}
+              >
+                <span className={styles.optionText}>{option}</span>
+                {answers[question.id] === option && <span className={styles.checkIcon}>✓</span>}
+              </Button>
+            ))}
+          </div>
+        </main>
 
-          <div className={styles.questionDots}>
-            {Array.from({ length: totalQuestions }, (_, i) => {
-              const q = questions[i];
-              return (
-                <span
-                  key={q.id}
-                  className={`${styles.dot} ${i === currentQuestion ? styles.currentDot : ''} ${answers[q.id] ? styles.answeredDot : ''}`}
-                  onClick={() => setCurrentQuestion(i)}
-                />
-              );
-            })}
+        <footer className={styles.footer}>
+          <div className={styles.progressSection}>
+            <span className={styles.progressLabel}>TIẾN ĐỘ</span>
+            <div className={styles.progressBar}>
+              <div className={styles.progressFill} style={{ width: `${progress}%` }} />
+            </div>
+            <span className={styles.progressPercent}>
+              {answerCount}/{totalQuestions} đã chọn
+            </span>
           </div>
 
-          {currentQuestion < totalQuestions - 1 ? (
-            <Button variant="primary" onClick={() => setCurrentQuestion((prev) => prev + 1)}>
-              Câu sau →
+          <div className={styles.navigation}>
+            <Button
+              variant="secondary"
+              size="sm"
+              type="button"
+              className={styles.prevBtn}
+              onClick={() => setCurrentQuestion((prev) => Math.max(0, prev - 1))}
+              disabled={currentQuestion === 0}
+            >
+              ← Câu trước
             </Button>
-          ) : (
-            <Button variant="warm" onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Đang nộp...' : 'Nộp bài →'}
-            </Button>
-          )}
-        </div>
-      </footer>
+
+            <div className={styles.questionDots} role="navigation" aria-label="Danh sách câu hỏi">
+              {Array.from({ length: totalQuestions }, (_, i) => {
+                const q = questions[i];
+                return (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    type="button"
+                    key={q.id}
+                    aria-label={`Chuyển tới câu ${i + 1}`}
+                    aria-current={i === currentQuestion ? 'true' : undefined}
+                    aria-pressed={i === currentQuestion}
+                    className={`${styles.dot} ${i === currentQuestion ? styles.currentDot : ''} ${answers[q.id] ? styles.answeredDot : ''}`}
+                    onClick={() => setCurrentQuestion(i)}
+                  >
+                    {''}
+                  </Button>
+                );
+              })}
+            </div>
+
+            {currentQuestion < totalQuestions - 1 ? (
+              <Button variant="primary" onClick={() => setCurrentQuestion((prev) => prev + 1)}>
+                Câu sau →
+              </Button>
+            ) : (
+              <Button variant="warm" onClick={handleSubmit} disabled={submitting}>
+                {submitting ? 'Đang nộp...' : 'Nộp bài →'}
+              </Button>
+            )}
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }

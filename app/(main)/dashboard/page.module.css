@@ -1,114 +1,135 @@
 .container {
   display: flex;
   min-height: 100vh;
-  background-color: var(--bg-primary);
+  background: transparent;
 }
 
 .loadingContainer {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  font-size: 1.2rem;
+  min-height: 100vh;
+  font-size: 1rem;
   color: var(--text-secondary);
 }
 
-/* ==================== LEFT SIDEBAR ==================== */
 .sidebar {
-  width: 240px;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-right: 1px solid rgba(0, 0, 0, 0.05);
-  padding: 24px 16px;
-  display: flex;
-  flex-direction: column;
+  width: 264px;
+  margin: 14px 0 14px 14px;
+  border-radius: 20px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: var(--line-width) solid var(--line-soft);
+  box-shadow: var(--shadow-subtle);
 }
 
 .sidebarContent {
   display: flex;
   flex-direction: column;
   height: 100%;
+  padding: 20px 14px 14px;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 18px;
   text-decoration: none;
-  margin-bottom: 40px;
 }
 
 .logoIcon {
-  font-size: 28px;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(var(--accent-rgb), 0.18), rgba(var(--accent-rgb), 0.04));
 }
 
 .logoText {
-  font-family: var(--font-body);
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 1.03rem;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   flex: 1;
 }
 
 .navItem {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: var(--radius-sm);
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
   color: var(--text-secondary);
   text-decoration: none;
-  font-size: 15px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  border: 1px solid transparent;
   transition: all var(--transition-fast);
 }
 
 .navItem:hover {
-  background: rgba(238, 139, 96, 0.1);
-  color: var(--accent);
+  color: var(--text-primary);
+  background: rgba(var(--panel-rgb), 0.9);
+  border-color: var(--line-soft);
 }
 
+.active,
 .navItem.active {
-  color: var(--accent);
-  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--bg-active);
+  border-color: var(--line-strong);
 }
 
 .navIcon {
-  font-size: 18px;
+  min-width: 34px;
+  height: 22px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.1);
 }
 
 .userProfile {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: var(--radius-md);
+  gap: 11px;
   margin-top: auto;
-  cursor: pointer;
-  transition: background var(--transition-fast);
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: var(--line-width) solid var(--line-soft);
+  background: var(--bg-surface);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
 }
 
 .userProfile:hover {
-  background: rgba(238, 139, 96, 0.1);
+  border-color: var(--line-strong);
+  background: rgba(var(--surface-rgb), 0.95);
 }
 
 .avatar {
   width: 40px;
   height: 40px;
-  background: var(--accent);
-  border-radius: 50%;
+  border-radius: 12px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  overflow: hidden;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: linear-gradient(145deg, rgba(var(--accent-tint-rgb), 0.64), rgba(var(--surface-rgb), 0.95));
 }
 
 .avatar img {
@@ -118,35 +139,32 @@
 }
 
 .userName {
-  font-weight: 600;
-  font-size: 14px;
+  font-size: 0.84rem;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
 .userRole {
-  font-size: 12px;
+  font-size: 0.74rem;
   color: var(--text-muted);
 }
 
-/* ==================== MAIN CONTENT ==================== */
 .main {
   flex: 1;
-  padding: 32px;
-  max-width: 800px;
+  max-width: 900px;
+  padding: 26px 24px 30px;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 32px;
+  margin-bottom: 22px;
 }
 
 .greeting h1 {
-  font-family: var(--font-heading);
-  font-size: 32px;
-  font-weight: 400;
-  margin-bottom: 8px;
+  font-size: 2.08rem;
+  margin-bottom: 6px;
 }
 
 .greeting h1 em {
@@ -155,110 +173,103 @@
 
 .greeting p {
   color: var(--text-secondary);
-  font-size: 15px;
+  font-size: 0.95rem;
 }
 
 .headerActions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
-.iconBtn {
-  width: 40px;
-  height: 40px;
-  border: none;
-  background: var(--bg-surface);
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 18px;
-}
-
-/* Stats Grid */
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 32px;
+  gap: 14px;
+  margin-bottom: 20px;
 }
 
 .statCard {
-  background: var(--bg-surface);
-  border-radius: var(--radius-md);
-  padding: 20px;
   display: flex;
+  gap: 11px;
   align-items: center;
-  gap: 16px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(var(--surface-rgb), 0.8);
+  border: var(--line-width) solid var(--line-soft);
   box-shadow: var(--shadow-subtle);
 }
 
 .statIcon {
-  width: 48px;
-  height: 48px;
-  background: rgba(238, 139, 96, 0.1);
-  border-radius: 50%;
-  display: flex;
+  min-width: 72px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: rgba(var(--accent-rgb), 0.1);
 }
 
 .statValue {
-  font-size: 28px;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
 .statLabel {
-  font-size: 11px;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
-  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
-/* Section */
 .section {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .sectionHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .sectionHeader h2 {
-  font-family: var(--font-heading);
-  font-size: 24px;
-  font-style: italic;
+  font-size: 1.44rem;
 }
 
 .viewAll {
-  color: var(--accent);
-  font-size: 14px;
+  font-size: 0.86rem;
+  color: var(--text-secondary);
 }
 
-/* Course Card */
 .courseCard {
-  background: var(--bg-surface);
-  border-radius: var(--radius-lg);
-  padding: 24px;
   display: flex;
   align-items: center;
-  gap: 24px;
-  box-shadow: var(--shadow-card);
+  gap: 16px;
+  padding: 18px;
+  border-radius: 20px;
+  border: var(--line-width) solid var(--line-soft);
+  background: rgba(var(--surface-rgb), 0.8);
+  box-shadow: var(--shadow-subtle);
 }
 
 .courseImage {
-  width: 160px;
-  height: 120px;
-  background: linear-gradient(135deg, #2D3748 0%, #1A202C 100%);
-  border-radius: var(--radius-md);
+  width: 140px;
+  height: 104px;
+  border-radius: 14px;
+  background: linear-gradient(140deg, rgba(var(--auth-overlay-rgb), 0.88) 0%, rgba(var(--auth-ink-rgb), 0.94) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 32px;
-  font-family: monospace;
+  color: var(--text-inverse);
+  font-size: 1.34rem;
+  font-weight: 700;
 }
 
 .courseInfo {
@@ -268,295 +279,316 @@
 .courseMeta {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-bottom: 4px;
 }
 
 .courseTag {
-  background: rgba(238, 139, 96, 0.1);
+  font-size: 0.74rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(var(--accent-rgb), 0.11);
   color: var(--accent);
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .courseTime {
-  font-size: 13px;
+  font-size: 0.8rem;
   color: var(--text-muted);
 }
 
 .courseInfo h3 {
-  font-family: var(--font-heading);
-  font-size: 22px;
-  font-style: italic;
-  margin-bottom: 4px;
+  font-size: 1.25rem;
+  margin-bottom: 2px;
 }
 
 .courseInfo p {
-  font-size: 14px;
+  font-size: 0.88rem;
   color: var(--text-secondary);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .progressSection {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .progressBar {
   flex: 1;
-  height: 6px;
-  background: #E5E7EB;
-  border-radius: 3px;
-  max-width: 200px;
+  max-width: 220px;
+  height: 7px;
+  background: rgba(var(--neutral-track-rgb), 0.16);
+  border-radius: 999px;
 }
 
 .progressFill {
   height: 100%;
-  background: var(--accent);
-  border-radius: 3px;
+  background: var(--gradient-progress);
+  border-radius: 999px;
 }
 
 .progressText {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
-/* Bottom Grid */
 .bottomGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 14px;
 }
 
 .suggestionCard,
 .discussionCard {
-  background: var(--bg-surface);
-  border-radius: var(--radius-md);
-  padding: 20px;
+  padding: 16px;
+  border-radius: 18px;
+  border: var(--line-width) solid var(--line-soft);
+  background: rgba(var(--surface-rgb), 0.78);
   box-shadow: var(--shadow-subtle);
 }
 
 .suggestionCard h3,
 .discussionCard h3 {
-  font-family: var(--font-heading);
-  font-style: italic;
-  font-size: 18px;
-  margin-bottom: 16px;
+  font-size: 1.08rem;
+  margin-bottom: 12px;
 }
 
 .suggestion,
 .discussion {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
 .suggestionIcon,
 .discussionIcon {
-  width: 40px;
-  height: 40px;
-  background: rgba(238, 139, 96, 0.1);
-  border-radius: 8px;
-  display: flex;
+  min-width: 78px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.1);
 }
 
 .suggestionTitle,
 .discussionTitle {
-  font-weight: 600;
-  font-size: 14px;
-  margin-bottom: 4px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 2px;
 }
 
 .suggestionDesc,
 .discussionDesc {
-  font-size: 13px;
+  font-size: 0.82rem;
   color: var(--text-secondary);
-  line-height: 1.5;
 }
 
-/* ==================== RIGHT SIDEBAR ==================== */
 .rightSidebar {
-  width: 320px;
-  padding: 32px 24px;
-  background: rgba(255, 255, 255, 0.5);
+  width: 336px;
+  margin: 14px 14px 14px 0;
+  padding: 20px 16px;
+  border-radius: 20px;
+  border: var(--line-width) solid var(--line-soft);
+  background: rgba(var(--surface-rgb), 0.66);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-subtle);
 }
 
 .lessonList h3 {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 4px;
+  font-size: 1.05rem;
+  margin-bottom: 2px;
 }
 
 .lessonCourse {
-  font-size: 14px;
+  font-size: 0.82rem;
   color: var(--text-muted);
-  margin-bottom: 24px;
+  margin-bottom: 14px;
 }
 
 .chapters {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .chapter {
   display: flex;
-  gap: 12px;
-  padding-left: 4px;
+  gap: 10px;
 }
 
 .chapterCheck {
   width: 24px;
   height: 24px;
-  background: var(--success);
-  color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-inverse);
+  background: var(--accent);
+  flex-shrink: 0;
 }
 
 .chapterCurrent {
   width: 24px;
   height: 24px;
-  border: 2px solid var(--accent);
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: 2px solid var(--accent);
+  flex-shrink: 0;
 }
 
 .chapterLock {
   width: 24px;
   height: 24px;
-  border: 2px solid #D1D5DB;
   border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  flex-shrink: 0;
 }
 
 .chapterNumber {
-  font-size: 11px;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
   color: var(--text-muted);
-  letter-spacing: 0.3px;
-  margin-bottom: 2px;
+  text-transform: uppercase;
 }
 
 .current .chapterNumber {
   color: var(--accent);
 }
 
+.completed .chapterCheck {
+  background: var(--success);
+}
+
 .chapterTitle {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 .chapterMeta {
-  font-size: 12px;
+  font-size: 0.76rem;
   color: var(--text-muted);
-  margin-top: 2px;
 }
 
-/* Calendar */
 .calendar {
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid #E5E7EB;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: var(--line-width) solid var(--line-soft);
 }
 
 .calendarHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .calendarHeader h4 {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 1rem;
 }
 
 .viewCalendar {
-  font-size: 13px;
-  color: var(--accent);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
 }
 
 .calendarGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
+  gap: 6px;
   text-align: center;
-  font-size: 13px;
+  font-size: 0.79rem;
 }
 
-.calendarGrid span:nth-child(-n+7) {
+.calendarGrid span:nth-child(-n + 7) {
+  font-size: 0.72rem;
   color: var(--text-muted);
-  font-size: 11px;
 }
 
 .today {
-  background: var(--accent);
-  color: white !important;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  margin: 0 auto;
+  color: var(--text-inverse) !important;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto;
+  background: var(--accent);
 }
 
 .deadline {
-  border: 2px solid var(--accent);
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto;
+  border: 1px solid var(--accent);
 }
 
 .calendarLegend {
   display: flex;
-  gap: 16px;
-  margin-top: 12px;
-  font-size: 12px;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 0.74rem;
   color: var(--text-muted);
 }
 
-/* ==================== RESPONSIVE ==================== */
-@media (max-width: 1200px) {
+@media (max-width: 1260px) {
   .rightSidebar {
     display: none;
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .sidebar {
-    display: none;
+    width: 220px;
   }
-  
+
   .main {
-    padding: 16px;
+    max-width: none;
+    padding: 20px 14px;
   }
-  
-  .statsGrid {
-    grid-template-columns: 1fr;
-  }
-  
+
+  .statsGrid,
   .bottomGrid {
     grid-template-columns: 1fr;
   }
-  
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .main {
+    width: 100%;
+    padding: 14px 12px 22px;
+  }
+
   .courseCard {
     flex-direction: column;
-    text-align: center;
+    align-items: flex-start;
+  }
+
+  .courseImage {
+    width: 100%;
+    height: 88px;
   }
 }

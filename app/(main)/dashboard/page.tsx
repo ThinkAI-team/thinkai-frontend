@@ -1,15 +1,15 @@
 'use client';
-/* eslint-disable @next/next/no-img-element */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button';
-import { logout } from '@/services/auth';
+import PageState from '@/components/ui/PageState';
 import { getProfile, type ProfileResponse } from '@/services/user';
 import { getDashboard, type DashboardData } from '@/services/dashboard';
 import { ApiException } from '@/services/api';
+import MainSidebar from '../components/MainSidebar';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -18,54 +18,45 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const profileData = await getProfile();
-        const normalizedRole = (profileData.role || '').replace(/^ROLE_/, '').toUpperCase();
-        setProfile(profileData);
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const profileData = await getProfile();
+      const normalizedRole = (profileData.role || '').replace(/^ROLE_/, '').toUpperCase();
+      setProfile(profileData);
 
-        if (normalizedRole === 'TEACHER') {
-          router.replace('/teacher');
-          return;
-        }
-
-        if (normalizedRole === 'ADMIN') {
-          router.replace('/admin');
-          return;
-        }
-
-        const dashboardData = await getDashboard();
-        setDashboard(dashboardData);
-      } catch (err: any) {
-        if (err instanceof ApiException && err.status === 401) {
-          setError('Không thể tải dữ liệu dashboard. Vui lòng đăng nhập lại.');
-          setTimeout(() => router.push('/login'), 1200);
-        } else {
-          setError(err.message || 'Không thể tải dữ liệu dashboard.');
-        }
-      } finally {
-        setLoading(false);
+      if (normalizedRole === 'TEACHER') {
+        router.replace('/teacher');
+        return;
       }
-    };
 
-    fetchData();
+      if (normalizedRole === 'ADMIN') {
+        router.replace('/admin');
+        return;
+      }
+
+      const dashboardData = await getDashboard();
+      setDashboard(dashboardData);
+    } catch (err: any) {
+      if (err instanceof ApiException && err.status === 401) {
+        setError('Không thể tải dữ liệu dashboard. Vui lòng đăng nhập lại.');
+        setTimeout(() => router.push('/login'), 1200);
+      } else {
+        setError(err.message || 'Không thể tải dữ liệu dashboard.');
+      }
+    } finally {
+      setLoading(false);
+    }
   }, [router]);
 
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  };
-
-  const getUserInitial = () => {
-    return profile?.fullName ? profile.fullName.charAt(0).toUpperCase() : '?';
-  };
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
 
   const getFirstName = () => {
     return profile?.fullName ? profile.fullName.split(' ')[0] : 'bạn';
   };
-
-  const normalizedRole = (profile?.role || '').replace(/^ROLE_/, '').toUpperCase();
 
   const completedLessons = dashboard?.enrolledCourses.reduce(
     (sum, course) => sum + course.completedLessons,
@@ -79,71 +70,29 @@ export default function DashboardPage() {
   const firstCourse = dashboard?.enrolledCourses[0];
 
   if (loading) {
-    return <div className={styles.loadingContainer}>Đang tải...</div>;
+    return (
+      <div className={styles.loadingContainer}>
+        <PageState type="loading" message="Đang tải thông tin tổng quan học tập." />
+      </div>
+    );
   }
 
   if (error) {
-    return <div className={styles.loadingContainer}>{error}</div>;
+    return (
+      <div className={styles.loadingContainer}>
+        <PageState
+          type="error"
+          message={error}
+          actionLabel="Thử lại"
+          onAction={loadDashboard}
+        />
+      </div>
+    );
   }
 
   return (
     <div className={styles.container}>
-      {/* Sidebar */}
-      <aside className={styles.sidebar}>
-        <div className={styles.sidebarContent}>
-          {/* Logo */}
-          <Link href="/" className={styles.logo}>
-            <span className={styles.logoIcon}>🎯</span>
-            <span className={styles.logoText}>ThinkAI</span>
-          </Link>
-
-          {/* Navigation */}
-          <nav className={styles.nav}>
-            <Link href="/dashboard" className={`${styles.navItem} ${styles.active}`}>
-              <span className={styles.navIcon}>📊</span>
-              Tổng quan
-            </Link>
-            <Link href="/courses" className={styles.navItem}>
-              <span className={styles.navIcon}>📚</span>
-              Khóa học của tôi
-            </Link>
-            <Link href="/exams" className={styles.navItem}>
-              <span className={styles.navIcon}>📝</span>
-              Kỳ thi
-            </Link>
-            <Link href="/ai-tutor" className={styles.navItem}>
-              <span className={styles.navIcon}>🤖</span>
-              Gia sư AI
-            </Link>
-            <Link href="/settings" className={styles.navItem}>
-              <span className={styles.navIcon}>⚙️</span>
-              Cài đặt
-            </Link>
-          </nav>
-
-          {/* User Profile */}
-          <div className={styles.userSection}>
-            <Link href="/profile" className={styles.userProfile} style={{ textDecoration: 'none' }}>
-              <div className={styles.avatar}>
-                {profile?.avatarUrl ? <img src={profile.avatarUrl} alt="Avatar" /> : getUserInitial()}
-              </div>
-              <div className={styles.userInfo}>
-                <p className={styles.userName}>{profile?.fullName || 'Người dùng'}</p>
-                <p className={styles.userRole}>
-                  {normalizedRole === 'STUDENT'
-                    ? 'Sinh viên'
-                    : normalizedRole === 'TEACHER'
-                      ? 'Giảng viên'
-                      : normalizedRole || 'Học viên'}
-                </p>
-              </div>
-            </Link>
-            <button className={styles.logoutBtn} onClick={handleLogout} title="Đăng xuất">
-              <span className={styles.logoutIcon}>🚪</span>
-            </button>
-          </div>
-        </div>
-      </aside>
+      <MainSidebar active="dashboard" />
 
       {/* Main Content */}
       <main className={styles.main}>
@@ -157,26 +106,22 @@ export default function DashboardPage() {
             </h1>
             <p>Theo dõi tiến độ và tiếp tục bài học tiếp theo của bạn.</p>
           </div>
-          <div className={styles.headerActions}>
-            <button className={styles.iconBtn}>🔔</button>
-            <button className={styles.iconBtn}>🌙</button>
-          </div>
         </header>
 
         {/* Stats Cards */}
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
-            <div className={styles.statIcon}>📚</div>
+            <div className={styles.statIcon}>Khóa</div>
             <div className={styles.statValue}>{dashboard?.totalEnrolledCourses || 0}</div>
             <div className={styles.statLabel}>KHÓA HỌC</div>
           </div>
           <div className={styles.statCard}>
-            <div className={styles.statIcon}>📈</div>
+            <div className={styles.statIcon}>Tiến độ</div>
             <div className={styles.statValue}>{Math.round(dashboard?.averageProgress || 0)}%</div>
             <div className={styles.statLabel}>TIẾN ĐỘ</div>
           </div>
           <div className={styles.statCard}>
-            <div className={styles.statIcon}>📝</div>
+            <div className={styles.statIcon}>Bài học</div>
             <div className={styles.statValue}>{completedLessons}</div>
             <div className={styles.statLabel}>BÀI ĐÃ HOÀN THÀNH</div>
           </div>
@@ -237,7 +182,7 @@ export default function DashboardPage() {
           <div className={styles.suggestionCard}>
             <h3>Gợi ý học tập</h3>
             <div className={styles.suggestion}>
-              <span className={styles.suggestionIcon}>💡</span>
+              <span className={styles.suggestionIcon}>Gợi ý</span>
               <div>
                 <p className={styles.suggestionTitle}>Bài học tiếp theo</p>
                 <p className={styles.suggestionDesc}>
@@ -252,7 +197,7 @@ export default function DashboardPage() {
           <div className={styles.discussionCard}>
             <h3>Tiến độ trung bình</h3>
             <div className={styles.discussion}>
-              <span className={styles.discussionIcon}>📊</span>
+              <span className={styles.discussionIcon}>Tiến độ</span>
               <div>
                 <p className={styles.discussionTitle}>
                   {Math.round(dashboard?.averageProgress || 0)}% hoàn thành

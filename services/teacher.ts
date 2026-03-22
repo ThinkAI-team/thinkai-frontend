@@ -1,6 +1,4 @@
-import { apiRequest } from './api';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+import { apiRequest, apiRequestFormData } from './api';
 
 export interface TeacherDashboardStats {
   totalCourses: number;
@@ -154,21 +152,11 @@ export async function createTeacherLesson(courseId: number, payload: LessonReque
 export async function uploadTeacherLessonFile(courseId: number, file: File): Promise<{ url: string }> {
   const formData = new FormData();
   formData.append('file', file);
-
-  const token =
-    typeof window !== 'undefined' ? localStorage.getItem('thinkai_access_token') : null;
-
-  const response = await fetch(`${API_BASE_URL}/teacher/courses/${courseId}/lessons/upload`, {
-    method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    body: formData,
-  });
-
-  if (!response.ok) {
-    throw new Error(`Upload thất bại (${response.status})`);
-  }
-
-  return response.json() as Promise<{ url: string }>;
+  return apiRequestFormData<{ url: string }>(
+    `/teacher/courses/${courseId}/lessons/upload`,
+    formData,
+    { method: 'POST' }
+  );
 }
 
 export async function reorderTeacherLessons(
@@ -191,21 +179,11 @@ export async function createTeacherQuestion(payload: QuestionBankRequest): Promi
 export async function importTeacherQuestions(file: File): Promise<{ message: string; count: number }> {
   const formData = new FormData();
   formData.append('file', file);
-
-  const token =
-    typeof window !== 'undefined' ? localStorage.getItem('thinkai_access_token') : null;
-
-  const response = await fetch(`${API_BASE_URL}/teacher/questions/import`, {
-    method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    body: formData,
-  });
-
-  if (!response.ok) {
-    throw new Error(`Import câu hỏi thất bại (${response.status})`);
-  }
-
-  return response.json() as Promise<{ message: string; count: number }>;
+  return apiRequestFormData<{ message: string; count: number }>(
+    '/teacher/questions/import',
+    formData,
+    { method: 'POST' }
+  );
 }
 
 export async function getTeacherQuestionBank(page = 0, size = 10): Promise<{

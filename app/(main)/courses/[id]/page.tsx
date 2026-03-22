@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 import Button from '@/components/ui/Button';
+import PageState from '@/components/ui/PageState';
+import { formatDateTimeVi, formatVnd } from '@/lib/utils/format';
+import dashboardStyles from '../../dashboard/page.module.css';
+import MainSidebar from '../../components/MainSidebar';
 import styles from './page.module.css';
 import {
   enrollCourse,
@@ -35,38 +37,38 @@ export default function CourseDetailPage() {
   const [reviewMessage, setReviewMessage] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  useEffect(() => {
-    const fetchCourse = async () => {
-      if (!Number.isFinite(courseId)) {
-        setError('ID khóa học không hợp lệ.');
-        setLoading(false);
-        return;
-      }
+  const loadCourseData = useCallback(async () => {
+    if (!Number.isFinite(courseId)) {
+      setError('ID khóa học không hợp lệ.');
+      setLoading(false);
+      return;
+    }
 
-      setLoading(true);
-      setLoadingReviews(true);
-      setError('');
-      try {
-        const [data, reviewData, myCourses] = await Promise.all([
-          getCourseDetail(courseId),
-          getCourseReviews(courseId).catch(() => [] as CourseReview[]),
-          getMyCourses().catch(() => []),
-        ]);
-        setCourse(data);
-        setIsEnrolled(
-          Boolean(data.isEnrolled) || myCourses.some((myCourse) => myCourse.id === data.id)
-        );
-        setReviews(reviewData);
-      } catch (err: any) {
-        setError(err.message || 'Không thể tải chi tiết khóa học.');
-      } finally {
-        setLoading(false);
-        setLoadingReviews(false);
-      }
-    };
-
-    fetchCourse();
+    setLoading(true);
+    setLoadingReviews(true);
+    setError('');
+    try {
+      const [data, reviewData, myCourses] = await Promise.all([
+        getCourseDetail(courseId),
+        getCourseReviews(courseId).catch(() => [] as CourseReview[]),
+        getMyCourses().catch(() => []),
+      ]);
+      setCourse(data);
+      setIsEnrolled(
+        Boolean(data.isEnrolled) || myCourses.some((myCourse) => myCourse.id === data.id)
+      );
+      setReviews(reviewData);
+    } catch (err: any) {
+      setError(err.message || 'Không thể tải chi tiết khóa học.');
+    } finally {
+      setLoading(false);
+      setLoadingReviews(false);
+    }
   }, [courseId]);
+
+  useEffect(() => {
+    loadCourseData();
+  }, [loadCourseData]);
 
   const handleEnroll = async () => {
     if (!course) return;
@@ -111,25 +113,32 @@ export default function CourseDetailPage() {
 
   if (loading) {
     return (
-      <>
-        <Navbar />
-        <main className={styles.main}>
-          <div className={styles.container}>Đang tải chi tiết khóa học...</div>
+      <div className={dashboardStyles.container}>
+        <MainSidebar active="courses" />
+        <main className={`${dashboardStyles.main} ${styles.main}`}>
+          <PageState
+            type="loading"
+            title="Đang tải chi tiết khóa học"
+            message="Hệ thống đang đồng bộ thông tin khóa học và danh sách bài học."
+          />
         </main>
-        <Footer />
-      </>
+      </div>
     );
   }
 
   if (error || !course) {
     return (
-      <>
-        <Navbar />
-        <main className={styles.main}>
-          <div className={styles.container}>{error || 'Không tìm thấy khóa học.'}</div>
+      <div className={dashboardStyles.container}>
+        <MainSidebar active="courses" />
+        <main className={`${dashboardStyles.main} ${styles.main}`}>
+          <PageState
+            type="error"
+            message={error || 'Không tìm thấy khóa học.'}
+            actionLabel="Thử lại"
+            onAction={loadCourseData}
+          />
         </main>
-        <Footer />
-      </>
+      </div>
     );
   }
 
@@ -139,10 +148,9 @@ export default function CourseDetailPage() {
     : 0;
 
   return (
-    <>
-      <Navbar />
-
-      <main className={styles.main}>
+    <div className={dashboardStyles.container}>
+      <MainSidebar active="courses" />
+      <main className={`${dashboardStyles.main} ${styles.main}`}>
         <div className={styles.container}>
           <div className={styles.content}>
             <nav className={styles.breadcrumb}>
@@ -191,7 +199,7 @@ export default function CourseDetailPage() {
             <section className={styles.section}>
               <h2>Giảng viên</h2>
               <div className={styles.instructor}>
-                <div className={styles.instructorAvatar}>👨‍🏫</div>
+                <div className={styles.instructorAvatar}>GV</div>
                 <div className={styles.instructorInfo}>
                   <h3>{course.instructorName || 'Đang cập nhật'}</h3>
                   <p className={styles.instructorTitle}>ThinkAI Instructor</p>
@@ -205,7 +213,7 @@ export default function CourseDetailPage() {
                 <div className={styles.reviewSummary}>
                   <div className={styles.reviewScore}>
                     <span className={styles.scoreNumber}>{averageRating.toFixed(1)}</span>
-                    <span className={styles.stars}>⭐️⭐️⭐️⭐️⭐️</span>
+                    <span className={styles.stars}>{averageRating.toFixed(1)} / 5</span>
                     <span className={styles.totalReviews}>{reviews.length} đánh giá</span>
                   </div>
                 </div>
@@ -232,29 +240,35 @@ export default function CourseDetailPage() {
                       }
                       placeholder="Nhập nhận xét về khóa học..."
                     />
-                    <button type="submit" disabled={submittingReview}>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      type="submit"
+                      className={styles.reviewSubmitBtn}
+                      disabled={submittingReview}
+                    >
                       {submittingReview ? 'Đang gửi...' : 'Gửi đánh giá'}
-                    </button>
+                    </Button>
                   </div>
                   {reviewMessage && <p className={styles.reviewMessage}>{reviewMessage}</p>}
                 </form>
 
                 {loadingReviews ? (
-                  <p>Đang tải đánh giá...</p>
+                  <PageState type="loading" message="Đang tải đánh giá khóa học..." />
                 ) : (
                   <div className={styles.reviewList}>
                     {reviews.length === 0 ? (
-                      <p>Chưa có đánh giá nào cho khóa học này.</p>
+                      <PageState type="empty" message="Chưa có đánh giá nào cho khóa học này." />
                     ) : (
                       reviews.slice(0, 6).map((review) => (
                         <article key={review.id} className={styles.reviewItem}>
                           <div className={styles.reviewItemHeader}>
                             <strong>{review.userName || 'Học viên ThinkAI'}</strong>
-                            <span>{'⭐️'.repeat(Math.max(1, Math.min(5, review.rating)))}</span>
+                            <span>{Math.max(1, Math.min(5, review.rating))} / 5</span>
                           </div>
                           <p>{review.reviewText}</p>
                           {review.createdAt && (
-                            <small>{new Date(review.createdAt).toLocaleString('vi-VN')}</small>
+                            <small>{formatDateTimeVi(review.createdAt)}</small>
                           )}
                         </article>
                       ))
@@ -275,7 +289,7 @@ export default function CourseDetailPage() {
               <div className={styles.priceRow}>
                 <span className={styles.currentPrice}>
                   {typeof course.price === 'number'
-                    ? `${course.price.toLocaleString()}đ`
+                    ? formatVnd(course.price)
                     : 'Đang cập nhật'}
                 </span>
                 {isEnrolled && <span className={styles.discount}>Đã đăng ký</span>}
@@ -304,17 +318,15 @@ export default function CourseDetailPage() {
               <div className={styles.includes}>
                 <h4>Khóa học bao gồm:</h4>
                 <ul>
-                  <li>📘 {course.lessons.length} bài học</li>
-                  <li>👤 Giảng viên: {course.instructorName || 'Đang cập nhật'}</li>
-                  <li>📈 Theo dõi tiến độ học</li>
+                  <li>{course.lessons.length} bài học</li>
+                  <li>Giảng viên: {course.instructorName || 'Đang cập nhật'}</li>
+                  <li>Theo dõi tiến độ học tập</li>
                 </ul>
               </div>
             </div>
           </aside>
         </div>
       </main>
-
-      <Footer />
-    </>
+    </div>
   );
 }

@@ -1,147 +1,109 @@
 .main {
-  padding-top: 80px;
-  background-color: var(--bg-primary);
+  width: 100%;
+  max-width: none !important;
+  padding: 24px 18px 30px;
   min-height: 100vh;
 }
 
 .container {
   display: flex;
-  gap: 32px;
-  max-width: 1200px;
+  gap: 12px;
+  max-width: 1220px;
   margin: 0 auto;
-  padding: 32px 24px 64px;
 }
 
-/* ==================== CONTENT ==================== */
 .content {
   flex: 1;
-  max-width: 720px;
+  min-width: 0;
 }
 
-/* Breadcrumb */
 .breadcrumb {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  margin-bottom: 12px;
   color: var(--text-muted);
-  margin-bottom: 24px;
+  font-size: 0.8rem;
 }
 
 .breadcrumb a {
   color: var(--text-muted);
 }
 
-.breadcrumb a:hover {
-  color: var(--accent);
-}
-
-/* Header */
 .header {
-  margin-bottom: 32px;
+  margin-bottom: 12px;
+  padding: 16px;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 18px;
+  background: rgba(var(--surface-rgb), 0.82);
+  box-shadow: var(--shadow-subtle);
 }
 
 .header h1 {
-  font-family: var(--font-heading);
-  font-size: 36px;
-  font-style: italic;
-  line-height: 1.2;
-  margin-bottom: 16px;
+  font-size: 1.86rem;
+  line-height: 1.1;
+  margin-bottom: 8px;
 }
 
 .subtitle {
-  font-size: 16px;
   color: var(--text-secondary);
-  line-height: 1.6;
-  margin-bottom: 16px;
+  font-size: 0.9rem;
+  line-height: 1.58;
+  margin-bottom: 10px;
 }
 
 .meta {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  font-size: 14px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meta span {
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
   color: var(--text-secondary);
+  background: rgba(var(--surface-rgb), 0.86);
 }
 
-.rating {
-  color: var(--accent);
-}
-
-.rating a {
-  color: var(--accent);
-  text-decoration: underline;
-}
-
-/* Section */
 .section {
-  margin-bottom: 40px;
+  margin-bottom: 10px;
+  padding: 16px;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 18px;
+  background: rgba(var(--surface-rgb), 0.82);
+  box-shadow: var(--shadow-subtle);
 }
 
 .section h2 {
-  font-family: var(--font-heading);
-  font-size: 24px;
-  font-style: italic;
-  margin-bottom: 20px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 10px;
 }
 
-/* Learning Grid */
-.learningGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  padding: 24px;
-  background: var(--bg-surface);
-  border: 1px solid #E5E7EB;
-  border-radius: var(--radius-md);
-}
-
-.learningItem {
-  display: flex;
-  gap: 12px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.checkIcon {
-  color: var(--accent);
-  font-weight: bold;
-}
-
-/* Curriculum */
 .sectionHeader {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.sectionHeader h2 {
-  margin-bottom: 0;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
 .curriculumMeta {
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.expandAll {
-  margin-left: auto;
-  background: none;
-  border: none;
-  color: var(--accent);
-  font-size: 14px;
-  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.76rem;
 }
 
 .curriculum {
-  border: 1px solid #E5E7EB;
-  border-radius: var(--radius-md);
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 12px;
   overflow: hidden;
+  background: rgba(var(--surface-rgb), 0.9);
 }
 
 .curriculumSection {
-  border-bottom: 1px solid #E5E7EB;
+  border-bottom: var(--line-width) solid var(--line-soft);
 }
 
 .curriculumSection:last-child {
@@ -149,252 +111,172 @@
 }
 
 .sectionTitle {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
   align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  background: #FAFAFA;
-  font-weight: 500;
-  cursor: pointer;
+  padding: 10px 12px;
+  font-size: 0.86rem;
 }
 
 .expandIcon {
-  color: var(--text-muted);
+  min-width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.12);
 }
 
 .sectionMeta {
-  margin-left: auto;
-  font-size: 13px;
+  font-size: 0.74rem;
   color: var(--text-muted);
-  font-weight: 400;
 }
 
-.sectionItems {
-  background: var(--bg-surface);
-}
-
-.lessonItem {
+.instructor {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 20px 12px 48px;
-  font-size: 14px;
-  border-top: 1px solid #F3F4F6;
-}
-
-.playIcon {
-  color: var(--text-muted);
-}
-
-.completedIcon {
-  color: var(--success);
-}
-
-.lessonDuration {
-  margin-left: auto;
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-/* Description */
-.description {
-  font-size: 15px;
-  line-height: 1.7;
-  color: var(--text-secondary);
-}
-
-.description p {
-  margin-bottom: 16px;
-}
-
-.description h4 {
-  color: var(--text-primary);
-  margin: 24px 0 12px;
-}
-
-.description ul {
-  margin-left: 20px;
-}
-
-.description li {
-  margin-bottom: 8px;
-}
-
-/* Instructor */
-.instructor {
-  display: flex;
-  gap: 20px;
-  padding: 24px;
-  background: var(--bg-surface);
-  border: 1px solid #E5E7EB;
-  border-radius: var(--radius-md);
+  padding: 10px;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 12px;
+  background: rgba(var(--surface-rgb), 0.9);
 }
 
 .instructorAvatar {
-  width: 80px;
-  height: 80px;
-  background: #F3F4F6;
-  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
-  flex-shrink: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.12);
 }
 
 .instructorInfo h3 {
-  font-size: 18px;
-  margin-bottom: 4px;
+  font-size: 0.95rem;
+  margin-bottom: 2px;
 }
 
 .instructorTitle {
-  color: var(--accent);
-  font-size: 14px;
-  margin-bottom: 12px;
+  font-size: 0.76rem;
+  color: var(--text-muted);
 }
 
-.instructorStats {
-  display: flex;
-  gap: 16px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin-bottom: 12px;
-}
-
-.instructorBio {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--text-secondary);
-}
-
-/* Reviews */
 .reviews {
-  padding: 24px;
-  background: var(--bg-surface);
-  border: 1px solid #E5E7EB;
-  border-radius: var(--radius-md);
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 12px;
+  background: rgba(var(--surface-rgb), 0.9);
+  padding: 12px;
 }
 
 .reviewSummary {
-  display: flex;
-  gap: 32px;
+  margin-bottom: 8px;
 }
 
 .reviewScore {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .scoreNumber {
-  display: block;
-  font-size: 48px;
-  font-weight: 600;
+  font-size: 1.6rem;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
 .stars {
-  display: block;
-  color: #FFC107;
-  margin-bottom: 4px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 999px;
+  padding: 4px 8px;
 }
 
 .totalReviews {
-  font-size: 13px;
+  font-size: 0.76rem;
   color: var(--text-muted);
 }
 
-.reviewBars {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.reviewBar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-}
-
-.barTrack {
-  flex: 1;
-  height: 8px;
-  background: #E5E7EB;
-  border-radius: 4px;
-}
-
-.barFill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 4px;
-}
-
 .reviewForm {
-  margin-top: 20px;
-  border-top: 1px solid #E5E7EB;
-  padding-top: 16px;
+  border-top: var(--line-width) solid var(--line-soft);
+  margin-top: 8px;
+  padding-top: 10px;
 }
 
 .reviewInputs {
   display: grid;
   grid-template-columns: 110px 1fr 140px;
-  gap: 10px;
+  gap: 8px;
 }
 
 .reviewInputs select,
-.reviewInputs input,
-.reviewInputs button {
+.reviewInputs input {
   border-radius: 10px;
-  border: 1px solid #D1D5DB;
-  padding: 10px 12px;
-  font-size: 14px;
+  border: var(--line-width) solid var(--line-soft);
+  padding: 8px 10px;
+  font-size: 0.82rem;
 }
 
-.reviewInputs button {
-  cursor: pointer;
-  background: var(--text-primary);
-  color: #fff;
-  border-color: var(--text-primary);
+.reviewInputs input,
+.reviewInputs select {
+  background: rgba(var(--surface-rgb), 0.94);
+  color: var(--text-primary);
 }
 
-.reviewInputs button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+.reviewSubmitBtn {
+  font-size: 0.82rem;
+  padding: 8px 10px;
 }
 
 .reviewMessage {
   margin-top: 8px;
-  font-size: 14px;
+  font-size: 0.78rem;
   color: var(--text-secondary);
 }
 
 .reviewList {
-  margin-top: 16px;
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .reviewItem {
-  border: 1px solid #E5E7EB;
+  border: var(--line-width) solid var(--line-soft);
   border-radius: 10px;
-  padding: 12px;
-  background: #FAFAFA;
+  padding: 10px;
+  background: rgba(var(--surface-rgb), 0.95);
 }
 
 .reviewItemHeader {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: 8px;
   margin-bottom: 4px;
+  font-size: 0.82rem;
+}
+
+.reviewItem p {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
 }
 
 .reviewItem small {
   color: var(--text-muted);
+  font-size: 0.72rem;
 }
 
-/* ==================== SIDEBAR ==================== */
 .sidebar {
   width: 340px;
   flex-shrink: 0;
@@ -402,161 +284,114 @@
 
 .pricingCard {
   position: sticky;
-  top: 100px;
-  background: var(--bg-surface);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
+  top: 20px;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 18px;
+  background: rgba(var(--surface-rgb), 0.84);
+  box-shadow: var(--shadow-subtle);
   overflow: hidden;
 }
 
 .videoPreview {
-  height: 180px;
-  background: linear-gradient(135deg, #1E3A5F 0%, #0F1F33 100%);
+  height: 144px;
+  background: linear-gradient(150deg, rgba(var(--auth-overlay-rgb), 0.9) 0%, rgba(var(--auth-ink-rgb), 0.95) 100%);
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  gap: 12px;
-  color: white;
-  cursor: pointer;
+  align-items: center;
+  color: var(--text-inverse);
+  gap: 8px;
+  font-size: 0.84rem;
 }
 
 .playButton {
-  width: 60px;
-  height: 60px;
-  background: rgba(255,255,255,0.2);
-  border-radius: 50%;
-  display: flex;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--surface-rgb), 0.38);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-}
-
-.videoPreview span {
-  font-size: 14px;
+  font-size: 0.86rem;
 }
 
 .priceRow {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding: 20px;
+  padding: 12px 14px 8px;
 }
 
 .currentPrice {
-  font-size: 28px;
+  font-size: 1.3rem;
   font-weight: 700;
   color: var(--text-primary);
 }
 
-.originalPrice {
-  font-size: 16px;
-  color: var(--text-muted);
-  text-decoration: line-through;
-}
-
 .discount {
-  background: var(--accent);
-  color: white;
+  border: 1px solid rgba(var(--success-rgb), 0.32);
+  border-radius: 999px;
   padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 0.7rem;
+  color: var(--success);
+  background: rgba(var(--success-soft-rgb), 0.24);
+  font-weight: 700;
 }
 
 .enrollBtn {
-  width: calc(100% - 40px);
-  margin: 0 20px 16px;
+  width: calc(100% - 28px);
+  margin: 0 14px 10px;
 }
 
 .guarantee {
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-muted);
-  padding: 0 20px 20px;
-  border-bottom: 1px solid #E5E7EB;
+  margin: 0 14px 10px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
 }
 
 .includes {
-  padding: 20px;
+  padding: 0 14px 14px;
 }
 
 .includes h4 {
-  font-size: 14px;
-  margin-bottom: 12px;
+  font-size: 0.82rem;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
 }
 
 .includes ul {
   list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .includes li {
-  font-size: 14px;
+  font-size: 0.82rem;
   color: var(--text-secondary);
-  margin-bottom: 10px;
 }
 
-.actions {
-  display: flex;
-  gap: 12px;
-  padding: 0 20px 20px;
-  border-bottom: 1px solid #E5E7EB;
-}
-
-.shareBtn, .giftBtn {
-  flex: 1;
-  padding: 10px;
-  background: none;
-  border: 1px solid #E5E7EB;
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.businessCTA {
-  padding: 20px;
-  text-align: center;
-  font-size: 14px;
-}
-
-.businessCTA p {
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.businessCTA span {
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.businessCTA a {
-  display: block;
-  color: var(--accent);
-  margin-top: 8px;
-}
-
-/* ==================== RESPONSIVE ==================== */
-@media (max-width: 1024px) {
-  .sidebar {
-    display: none;
-  }
-}
-
-@media (max-width: 768px) {
-  .content {
-    max-width: 100%;
-  }
-  
-  .header h1 {
-    font-size: 28px;
-  }
-  
-  .learningGrid {
-    grid-template-columns: 1fr;
-  }
-  
-  .reviewSummary {
+@media (max-width: 1020px) {
+  .container {
     flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+
+  .pricingCard {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .main {
+    padding: 14px 10px 22px;
+  }
+
+  .header h1 {
+    font-size: 1.48rem;
   }
 
   .reviewInputs {

@@ -1,0 +1,51 @@
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.profileLink {
+  text-decoration: none;
+}
+
+.userInfo {
+  min-width: 0;
+}
+
+.logoutBtn {
+  padding: 8px 12px;
+  font-size: 0.72rem;
+}
+
+.mobileNav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobileNav {
+    display: flex;
+    width: 100%;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 8px 12px 0;
+  }
+
+  .mobileNavItem {
+    border: var(--line-width) solid var(--line-soft);
+    border-radius: 999px;
+    background: rgba(var(--surface-rgb), 0.9);
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 8px 12px;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+
+  .mobileNavItemActive {
+    color: var(--text-primary);
+    border-color: var(--line-strong);
+    background: rgba(var(--active-rgb), 0.86);
+  }
+}

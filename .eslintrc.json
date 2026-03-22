@@ -1,3 +1,21 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": [
+              "@/lib/api",
+              "@/lib/api/*",
+              "@/lib/hooks",
+              "@/lib/hooks/*"
+            ],
+            "message": "Use services/* as the single API layer for app/components."
+          }
+        ]
+      }
+    ]
+  }
 }

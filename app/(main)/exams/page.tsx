@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
+import dashboardStyles from '../dashboard/page.module.css';
+import MainSidebar from '../components/MainSidebar';
 import styles from './page.module.css';
+import PageState from '@/components/ui/PageState';
+import { formatDateTimeVi } from '@/lib/utils/format';
 import { getMyCourses, type MyCourseItem } from '@/services/courses';
 import {
   getCourseExams,
@@ -21,33 +23,36 @@ export default function ExamsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const [myCourses, examHistory] = await Promise.all([
-          getMyCourses(),
-          getExamHistory().catch(() => []),
-        ]);
-        setCourses(myCourses);
-        setHistory(examHistory);
+  const loadInitialData = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [myCourses, examHistory] = await Promise.all([
+        getMyCourses(),
+        getExamHistory().catch(() => []),
+      ]);
+      setCourses(myCourses);
+      setHistory(examHistory);
 
-        if (myCourses.length > 0) {
-          const firstCourseId = myCourses[0].id;
-          setSelectedCourseId(firstCourseId);
-          const examList = await getCourseExams(firstCourseId);
-          setExams(examList);
-        }
-      } catch (err: any) {
-        setError(err.message || 'Không thể tải danh sách bài thi.');
-      } finally {
-        setLoading(false);
+      if (myCourses.length > 0) {
+        const firstCourseId = myCourses[0].id;
+        setSelectedCourseId(firstCourseId);
+        const examList = await getCourseExams(firstCourseId);
+        setExams(examList);
+      } else {
+        setSelectedCourseId(null);
+        setExams([]);
       }
-    };
-
-    fetchInitialData();
+    } catch (err: any) {
+      setError(err.message || 'Không thể tải danh sách bài thi.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
 
   const handleCourseChange = async (courseId: number) => {
     setSelectedCourseId(courseId);
@@ -64,15 +69,22 @@ export default function ExamsPage() {
   };
 
   return (
-    <>
-      <Navbar />
-      <main className={styles.main}>
+    <div className={dashboardStyles.container}>
+      <MainSidebar active="exams" />
+      <main className={`${dashboardStyles.main} ${styles.main}`}>
         <section className={styles.header}>
           <h1>Danh sách bài thi</h1>
           <p>Chọn khóa học đã đăng ký để làm bài thi theo lộ trình.</p>
         </section>
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && (
+          <PageState
+            type="error"
+            message={error}
+            actionLabel="Tải lại dữ liệu"
+            onAction={loadInitialData}
+          />
+        )}
 
         {courses.length > 0 ? (
           <section className={styles.courseSelector}>
@@ -102,9 +114,9 @@ export default function ExamsPage() {
           <div className={styles.card}>
             <h2>Bài thi khả dụng</h2>
             {loading ? (
-              <p>Đang tải...</p>
+              <PageState type="loading" message="Đang tải danh sách bài thi..." />
             ) : exams.length === 0 ? (
-              <p>Chưa có bài thi cho khóa học này.</p>
+              <PageState type="empty" message="Chưa có bài thi cho khóa học này." />
             ) : (
               <ul className={styles.list}>
                 {exams.map((exam) => (
@@ -129,14 +141,14 @@ export default function ExamsPage() {
           <div className={styles.card}>
             <h2>Lịch sử làm bài</h2>
             {history.length === 0 ? (
-              <p>Chưa có lịch sử làm bài.</p>
+              <PageState type="empty" message="Chưa có lịch sử làm bài." />
             ) : (
               <ul className={styles.list}>
                 {history.slice(0, 8).map((item) => (
                   <li key={item.attemptId} className={styles.historyItem}>
                     <div>
                       <h3>{item.examTitle}</h3>
-                      <small>{new Date(item.submittedAt).toLocaleString('vi-VN')}</small>
+                      <small>{formatDateTimeVi(item.submittedAt)}</small>
                     </div>
                     <span className={styles.score}>{item.score}</span>
                   </li>
@@ -146,7 +158,6 @@ export default function ExamsPage() {
           </div>
         </section>
       </main>
-      <Footer />
-    </>
+    </div>
   );
 }

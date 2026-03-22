@@ -41,7 +41,6 @@ export default function ForgotPasswordPage() {
         <div className={styles.formContent}>
           {/* Logo */}
           <Link href="/" className={styles.logo}>
-            <span className={styles.logoIcon}>🎯</span>
             <span className={styles.logoText}>ThinkAI</span>
           </Link>
 
@@ -56,7 +55,7 @@ export default function ForgotPasswordPage() {
           {/* Success */}
           {success && (
             <div className={styles.successAlert}>
-              <span>✉️</span> {success}
+              {success}
             </div>
           )}
 
@@ -96,12 +95,15 @@ export default function ForgotPasswordPage() {
               <p className={styles.successHint}>
                 Kiểm tra hộp thư email (bao gồm thư mục Spam). Link sẽ hết hạn sau 30 phút.
               </p>
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
                 className={styles.resendBtn}
                 onClick={() => setSuccess('')}
               >
                 Gửi lại email
-              </button>
+              </Button>
             </div>
           )}
 
@@ -116,7 +118,7 @@ export default function ForgotPasswordPage() {
       <div className={styles.imageSide}>
         <div className={styles.imageContent}>
           <div className={styles.assistantBadge}>
-            <span>🎯</span> ThinkAI Assistant
+            ThinkAI Assistant
           </div>
           <div className={styles.quote}>
             <div className={styles.quoteLine}></div>

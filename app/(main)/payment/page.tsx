@@ -2,13 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import dashboardStyles from '../dashboard/page.module.css';
+import MainSidebar from '../components/MainSidebar';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button';
+import { formatVnd } from '@/lib/utils/format';
 
 const paymentMethods = [
-  { id: 'card', icon: '💳', title: 'Thẻ tín dụng / Ghi nợ', subtitle: 'Visa, Mastercard, JCB' },
-  { id: 'qr', icon: '📱', title: 'Chuyển khoản ngân hàng (QR)', subtitle: 'Quét mã VietQR nhanh chóng' },
-  { id: 'wallet', icon: '📲', title: 'Ví điện tử (Momo / ZaloPay)', subtitle: 'Liên kết qua ứng dụng ví' },
+  { id: 'card', icon: 'Thẻ', title: 'Thẻ tín dụng / Ghi nợ', subtitle: 'Visa, Mastercard, JCB' },
+  { id: 'qr', icon: 'QR', title: 'Chuyển khoản ngân hàng (QR)', subtitle: 'Quét mã VietQR nhanh chóng' },
+  { id: 'wallet', icon: 'Ví', title: 'Ví điện tử (Momo / ZaloPay)', subtitle: 'Liên kết qua ứng dụng ví' },
 ];
 
 const orderData = {
@@ -24,20 +27,14 @@ export default function PaymentPage() {
   const [coupon, setCoupon] = useState('');
 
   return (
-    <div className={styles.container}>
-      {/* Header */}
-      <header className={styles.header}>
-        <Link href="/" className={styles.logo}>
-          <span className={styles.logoIcon}>✨</span>
-          <span className={styles.logoText}>ThinkAI</span>
-        </Link>
-        
+    <div className={`${dashboardStyles.container} ${styles.container}`}>
+      <MainSidebar active="payment" />
+      <main className={`${dashboardStyles.main} ${styles.main}`}>
         <div className={styles.secureTag}>
-          <span>🔒</span> Thanh toán an toàn
+          Thanh toán an toàn
         </div>
-      </header>
 
-      <main className={styles.main}>
+        <div className={styles.content}>
         {/* Left - Payment Form */}
         <div className={styles.paymentForm}>
           <h1>Thông tin thanh toán</h1>
@@ -45,7 +42,7 @@ export default function PaymentPage() {
 
           {/* Payment Methods */}
           <section className={styles.section}>
-            <h2>💳 Phương thức thanh toán</h2>
+            <h2>Phương thức thanh toán</h2>
             
             <div className={styles.methodList}>
               {paymentMethods.map((method) => (
@@ -67,7 +64,8 @@ export default function PaymentPage() {
                   </div>
                   {method.id === 'card' && (
                     <div className={styles.cardLogos}>
-                      <span>💳</span>
+                      <span>Visa</span>
+                      <span>Mastercard</span>
                     </div>
                   )}
                 </label>
@@ -78,7 +76,7 @@ export default function PaymentPage() {
           {/* Card Details */}
           {selectedMethod === 'card' && (
             <section className={styles.section}>
-              <h2>💳 Chi tiết thẻ</h2>
+              <h2>Chi tiết thẻ</h2>
               
               <div className={styles.formGroup}>
                 <label>Tên chủ thẻ</label>
@@ -88,7 +86,6 @@ export default function PaymentPage() {
               <div className={styles.formGroup}>
                 <label>Số thẻ</label>
                 <div className={styles.cardInput}>
-                  <span>💳</span>
                   <input type="text" placeholder="0000 0000 0000 0000" className={styles.input} />
                 </div>
               </div>
@@ -99,9 +96,8 @@ export default function PaymentPage() {
                   <input type="text" placeholder="MM/YY" className={styles.input} />
                 </div>
                 <div className={styles.formGroup}>
-                  <label>CVV ℹ️</label>
+                  <label>CVV</label>
                   <div className={styles.cvvInput}>
-                    <span>🔒</span>
                     <input type="password" placeholder="•••" className={styles.input} />
                   </div>
                 </div>
@@ -112,7 +108,6 @@ export default function PaymentPage() {
           {selectedMethod === 'qr' && (
             <section className={styles.section}>
               <div className={styles.qrPlaceholder}>
-                <span>📱</span>
                 <p>Mã QR sẽ hiển thị sau khi nhấn &quot;Thanh toán ngay&quot;</p>
               </div>
             </section>
@@ -121,8 +116,8 @@ export default function PaymentPage() {
           {selectedMethod === 'wallet' && (
             <section className={styles.section}>
               <div className={styles.walletOptions}>
-                <button className={styles.walletBtn}>Momo</button>
-                <button className={styles.walletBtn}>ZaloPay</button>
+                <Button variant="secondary" size="sm" className={styles.walletBtn}>Momo</Button>
+                <Button variant="secondary" size="sm" className={styles.walletBtn}>ZaloPay</Button>
               </div>
             </section>
           )}
@@ -133,15 +128,15 @@ export default function PaymentPage() {
           <h2>Đơn hàng của bạn</h2>
           
           <div className={styles.orderItem}>
-            <div className={styles.orderIcon}>🎓</div>
+            <div className={styles.orderIcon}>PRO</div>
             <div className={styles.orderInfo}>
               <span className={styles.orderName}>{orderData.name}</span>
               <span className={styles.orderCycle}>Chu kỳ: {orderData.cycle}</span>
               <Link href="#" className={styles.orderLink}>Mở khóa tất cả tính năng AI</Link>
             </div>
             <div className={styles.orderPrices}>
-              <span className={styles.orderPrice}>{orderData.price.toLocaleString()}đ</span>
-              <span className={styles.orderOriginal}>{orderData.originalPrice.toLocaleString()}đ</span>
+              <span className={styles.orderPrice}>{formatVnd(orderData.price)}</span>
+              <span className={styles.orderOriginal}>{formatVnd(orderData.originalPrice)}</span>
             </div>
           </div>
 
@@ -154,18 +149,18 @@ export default function PaymentPage() {
               onChange={(e) => setCoupon(e.target.value)}
               className={styles.couponInput}
             />
-            <button className={styles.couponBtn}>Áp dụng</button>
+            <Button type="button" variant="secondary" size="sm" className={styles.couponBtn}>Áp dụng</Button>
           </div>
 
           {/* Summary */}
           <div className={styles.summaryRows}>
             <div className={styles.summaryRow}>
               <span>Tạm tính</span>
-              <span>{orderData.price.toLocaleString()}đ</span>
+              <span>{formatVnd(orderData.price)}</span>
             </div>
             <div className={styles.summaryRow}>
               <span>Giảm giá</span>
-              <span className={styles.discount}>-{orderData.discount.toLocaleString()}đ</span>
+              <span className={styles.discount}>-{formatVnd(orderData.discount)}</span>
             </div>
             <div className={styles.summaryRow}>
               <span>Thuế (VAT)</span>
@@ -176,7 +171,7 @@ export default function PaymentPage() {
           <div className={styles.totalRow}>
             <span>Tổng cộng</span>
             <div>
-              <span className={styles.totalPrice}>{orderData.price.toLocaleString()}đ</span>
+              <span className={styles.totalPrice}>{formatVnd(orderData.price)}</span>
               <span className={styles.totalCycle}>Thanh toán định kỳ hàng năm</span>
             </div>
           </div>
@@ -186,7 +181,7 @@ export default function PaymentPage() {
           </Button>
 
           <div className={styles.secureInfo}>
-            <p>🔒 Bảo mật SSL 256-bit</p>
+            <p>Bảo mật SSL 256-bit</p>
             <div className={styles.paymentLogos}>
               <span>VISA</span>
               <span>MC</span>
@@ -194,6 +189,7 @@ export default function PaymentPage() {
             </div>
           </div>
         </aside>
+        </div>
       </main>
     </div>
   );

@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
+import dashboardStyles from '../dashboard/page.module.css';
+import MainSidebar from '../components/MainSidebar';
 import styles from './page.module.css';
+import PageState from '@/components/ui/PageState';
+import Button from '@/components/ui/Button';
+import { formatVnd } from '@/lib/utils/format';
 import {
   getCourses,
   type CourseListItem,
@@ -49,6 +52,10 @@ export default function CoursesPage() {
     fetchCourses();
   }, [query]);
 
+  const reloadCourses = () => {
+    setQuery((prev) => ({ ...prev }));
+  };
+
   const handleSearch = () => {
     setQuery((prev) => ({
       ...prev,
@@ -68,10 +75,9 @@ export default function CoursesPage() {
   };
 
   return (
-    <>
-      <Navbar />
-
-      <main className={styles.main}>
+    <div className={dashboardStyles.container}>
+      <MainSidebar active="courses" />
+      <main className={`${dashboardStyles.main} ${styles.main}`}>
         <section className={styles.hero}>
           <h1>
             Khám phá tri thức
@@ -81,7 +87,6 @@ export default function CoursesPage() {
           <p>Danh sách khóa học được đồng bộ trực tiếp từ hệ thống ThinkAI.</p>
 
           <div className={styles.searchBox}>
-            <span className={styles.searchIcon}>🔍</span>
             <input
               type="text"
               placeholder="Tìm kiếm khóa học..."
@@ -90,7 +95,9 @@ export default function CoursesPage() {
               onChange={(e) => setKeywordInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
-            <button className={styles.clearBtn} onClick={handleSearch}>Tìm</button>
+            <Button variant="secondary" size="sm" type="button" className={styles.clearBtn} onClick={handleSearch}>
+              Tìm
+            </Button>
           </div>
         </section>
 
@@ -98,7 +105,10 @@ export default function CoursesPage() {
           <aside className={styles.sidebar}>
             <div className={styles.filterHeader}>
               <h3>Trạng thái</h3>
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
                 className={styles.clearBtn}
                 onClick={() => {
                   setKeywordInput('');
@@ -112,7 +122,7 @@ export default function CoursesPage() {
                 }}
               >
                 Đặt lại
-              </button>
+              </Button>
             </div>
             <div className={styles.filterGroup}>
               <h4>THÔNG TIN</h4>
@@ -145,10 +155,19 @@ export default function CoursesPage() {
               </div>
             </div>
 
-            {loading && <p>Đang tải danh sách khóa học...</p>}
-            {error && <p>{error}</p>}
+            {loading && (
+              <PageState type="loading" message="Đang tải danh sách khóa học từ hệ thống." />
+            )}
+            {!loading && error && (
+              <PageState
+                type="error"
+                message={error}
+                actionLabel="Thử lại"
+                onAction={reloadCourses}
+              />
+            )}
 
-            {!loading && !error && (
+            {!loading && !error && courses.length > 0 && (
               <div className={styles.courseGrid}>
                 {courses.map((course) => (
                   <Link href={`/courses/${course.id}`} key={course.id} className={styles.courseCard}>
@@ -157,18 +176,16 @@ export default function CoursesPage() {
                     </div>
                     <div className={styles.courseInfo}>
                       <div className={styles.ratingRow}>
-                        <span className={styles.star}>👥</span>
+                        <span className={styles.reviews}>Học viên:</span>
                         <span className={styles.rating}>{course.enrolledCount}</span>
-                        <span className={styles.reviews}>học viên</span>
                       </div>
                       <h3>{course.title}</h3>
                       <p>{course.lessonsCount} bài học</p>
                       <div className={styles.courseFooter}>
                         <div className={styles.instructor}>
-                          <span className={styles.avatar}>👤</span>
                           <span>{course.instructor?.fullName || 'Đang cập nhật'}</span>
                         </div>
-                        <span className={styles.price}>{course.price.toLocaleString()}đ</span>
+                        <span className={styles.price}>{formatVnd(course.price)}</span>
                       </div>
                     </div>
                   </Link>
@@ -176,8 +193,29 @@ export default function CoursesPage() {
               </div>
             )}
 
+            {!loading && !error && courses.length === 0 && (
+              <PageState
+                type="empty"
+                message="Không tìm thấy khóa học phù hợp với bộ lọc hiện tại."
+                actionLabel="Đặt lại bộ lọc"
+                onAction={() => {
+                  setKeywordInput('');
+                  setQuery({
+                    page: 0,
+                    size: 9,
+                    keyword: '',
+                    sortBy: 'createdAt',
+                    sortDir: 'desc',
+                  });
+                }}
+              />
+            )}
+
             <div className={styles.pagination}>
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
                 className={styles.pageBtn}
                 disabled={(pageData?.page || 0) <= 0}
                 onClick={() =>
@@ -188,11 +226,14 @@ export default function CoursesPage() {
                 }
               >
                 ‹
-              </button>
-              <button className={`${styles.pageBtn} ${styles.active}`}>
+              </Button>
+              <Button variant="secondary" size="sm" type="button" className={`${styles.pageBtn} ${styles.active}`}>
                 {(pageData?.page || 0) + 1}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
                 className={styles.pageBtn}
                 disabled={(pageData?.page || 0) + 1 >= (pageData?.totalPages || 1)}
                 onClick={() =>
@@ -203,13 +244,11 @@ export default function CoursesPage() {
                 }
               >
                 ›
-              </button>
+              </Button>
             </div>
           </div>
         </section>
       </main>
-
-      <Footer />
-    </>
+    </div>
   );
 }

@@ -1,0 +1,336 @@
+.main {
+  padding: 110px 0 56px;
+}
+
+.container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.hero {
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(var(--accent-tint-rgb), 0.18) 0%, rgba(var(--accent-tint-rgb), 0) 35%),
+    rgba(var(--surface-rgb), 0.82);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(10px);
+  padding: 24px 22px;
+  margin-bottom: 12px;
+}
+
+.heroTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tag {
+  border-radius: 999px;
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  background: rgba(var(--accent-soft-rgb), 0.75);
+  color: var(--accent-dark);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+}
+
+.updatedAt {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+}
+
+.hero h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.9rem, 3.3vw, 2.7rem);
+  line-height: 1.08;
+}
+
+.hero p {
+  margin: 0;
+  max-width: 920px;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.68;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 10px;
+}
+
+.primary {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionCard {
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 18px;
+  background: rgba(var(--surface-rgb), 0.84);
+  box-shadow: var(--shadow-subtle);
+  padding: 16px 14px;
+}
+
+.sectionCard h2 {
+  margin: 0 0 8px;
+  font-size: 1.08rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+
+.sectionCard p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.7;
+}
+
+.sectionCard p + p {
+  margin-top: 8px;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.infoCard {
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 14px;
+  background: rgba(var(--surface-rgb), 0.9);
+  padding: 12px;
+}
+
+.infoCard h3 {
+  margin: 0 0 6px;
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+
+.infoCard p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.infoCard span {
+  margin-top: 7px;
+  display: inline-flex;
+  border-radius: 999px;
+  border: var(--line-width) solid var(--line-soft);
+  padding: 3px 8px;
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.faqSection {
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 18px;
+  background: rgba(var(--surface-rgb), 0.84);
+  box-shadow: var(--shadow-subtle);
+  padding: 16px 14px;
+}
+
+.faqSection h2 {
+  margin: 0 0 8px;
+  font-size: 1.08rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+
+.faqList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.faqItem {
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 12px;
+  background: rgba(var(--surface-rgb), 0.92);
+  padding: 0 10px;
+}
+
+.faqItem summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding: 9px 0;
+}
+
+.faqItem summary::-webkit-details-marker {
+  display: none;
+}
+
+.faqItem p {
+  margin: 0 0 10px;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.62;
+}
+
+.aside {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.asideCard {
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 16px;
+  background: rgba(var(--surface-rgb), 0.84);
+  box-shadow: var(--shadow-subtle);
+  padding: 12px;
+}
+
+.asideCard h3 {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+
+.asideCard ul {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.asideCard li {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.relatedLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.relatedLinks a {
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 10px;
+  background: rgba(var(--surface-rgb), 0.92);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 8px 9px;
+}
+
+.relatedLinks a:hover {
+  border-color: var(--line-strong);
+}
+
+.actions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.primaryAction,
+.secondaryAction {
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.primaryAction {
+  border: 1px solid transparent;
+  background: var(--gradient-primary);
+  color: var(--text-inverse);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+}
+
+.primaryAction:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(var(--accent-rgb), 0.2);
+  filter: saturate(0.97);
+}
+
+.primaryAction:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.secondaryAction {
+  border: var(--line-width) solid var(--line-soft);
+  background: rgba(var(--surface-rgb), 0.92);
+  color: var(--text-primary);
+}
+
+.secondaryAction:hover {
+  border-color: var(--line-strong);
+}
+
+@media (max-width: 1020px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .aside {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cardGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .main {
+    padding-top: 98px;
+  }
+
+  .container {
+    padding: 0 14px;
+  }
+
+  .hero {
+    border-radius: 16px;
+    padding: 16px 14px;
+  }
+
+  .heroTop {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sectionCard,
+  .faqSection {
+    border-radius: 14px;
+    padding: 12px 10px;
+  }
+
+  .aside {
+    grid-template-columns: 1fr;
+  }
+
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+}

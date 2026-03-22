@@ -36,15 +36,20 @@ components/
 └── ui/                  # Button, Card (reusable)
 
 services/
-├── api.ts               # API client (fetch wrapper + JWT)
+├── api.ts               # API client (fetch wrapper + JWT + FormData)
 ├── auth.ts              # Đăng ký, đăng nhập, quên mật khẩu
-└── user.ts              # Profile, đổi mật khẩu
+├── user.ts              # Profile, đổi mật khẩu
+├── courses.ts           # Luồng khóa học học viên
+├── exams.ts             # Luồng luyện thi
+├── ai-tutor.ts          # Luồng AI tutor
+├── teacher.ts           # Luồng teacher workspace
+└── admin.ts             # Luồng admin
 
 lib/
-├── api/                 # API layer (hooks-based)
-├── hooks/               # Custom React hooks
-└── types/               # TypeScript interfaces
+└── types/               # TypeScript interfaces dùng chung
 ```
+
+Chuẩn hiện tại: `app/*` và `components/*` chỉ dùng API qua `services/*`.
 
 ## Cài đặt & Chạy
 

@@ -30,7 +30,6 @@ export default function ResetPasswordPage() {
         <div className={styles.formSide}>
           <div className={styles.formContent}>
             <Link href="/" className={styles.logo}>
-              <span className={styles.logoIcon}>🎯</span>
               <span className={styles.logoText}>ThinkAI</span>
             </Link>
             <div className={styles.errorState}>
@@ -45,7 +44,7 @@ export default function ResetPasswordPage() {
         <div className={styles.imageSide}>
           <div className={styles.imageContent}>
             <div className={styles.assistantBadge}>
-              <span>🎯</span> ThinkAI Assistant
+              ThinkAI Assistant
             </div>
             <div className={styles.quote}>
               <div className={styles.quoteLine}></div>
@@ -100,7 +99,6 @@ export default function ResetPasswordPage() {
         <div className={styles.formContent}>
           {/* Logo */}
           <Link href="/" className={styles.logo}>
-            <span className={styles.logoIcon}>🎯</span>
             <span className={styles.logoText}>ThinkAI</span>
           </Link>
 
@@ -115,7 +113,7 @@ export default function ResetPasswordPage() {
           {/* Success */}
           {success && (
             <div className={styles.successAlert}>
-              <span>✅</span> {success}
+              {success}
               <p className={styles.redirectHint}>Đang chuyển về trang đăng nhập...</p>
             </div>
           )}
@@ -177,7 +175,7 @@ export default function ResetPasswordPage() {
       <div className={styles.imageSide}>
         <div className={styles.imageContent}>
           <div className={styles.assistantBadge}>
-            <span>🎯</span> ThinkAI Assistant
+            ThinkAI Assistant
           </div>
           <div className={styles.quote}>
             <div className={styles.quoteLine}></div>

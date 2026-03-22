@@ -1,8 +1,14 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
-import Link from 'next/link';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import dashboardStyles from '../dashboard/page.module.css';
 import styles from './page.module.css';
+import { ApiException } from '@/services/api';
+import MainSidebar from '../components/MainSidebar';
+import PageState from '@/components/ui/PageState';
+import Button from '@/components/ui/Button';
+import { formatDateTimeVi } from '@/lib/utils/format';
 import {
   deleteChat,
   getAISettings,
@@ -48,6 +54,7 @@ function logToMessages(log: AiChatLog): Message[] {
 }
 
 export default function AITutorPage() {
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [sending, setSending] = useState(false);
@@ -71,39 +78,47 @@ export default function AITutorPage() {
     return history;
   };
 
-  const loadChatDetail = async (chatId: number) => {
+  const loadChatDetail = useCallback(async (chatId: number) => {
     const detail = await getChatDetail(chatId);
     setMessages(logToMessages(detail));
     setSelectedLogId(chatId);
-  };
+  }, []);
+
+  const loadInitialData = useCallback(async () => {
+    setChatLoading(true);
+    setError('');
+    try {
+      const [history, aiSettings] = await Promise.all([
+        getChatHistory(),
+        getAISettings().catch(() => defaultSettings),
+      ]);
+      setChatLogs(history);
+      setSettings({
+        ...defaultSettings,
+        ...aiSettings,
+      });
+
+      if (history[0]) {
+        await loadChatDetail(history[0].id);
+      } else {
+        setSelectedLogId(null);
+        setMessages([]);
+      }
+    } catch (err: any) {
+      if (err instanceof ApiException && err.status === 401) {
+        setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        setTimeout(() => router.push('/login'), 1200);
+      } else {
+        setError(err.message || 'Không thể tải dữ liệu AI Tutor.');
+      }
+    } finally {
+      setChatLoading(false);
+    }
+  }, [loadChatDetail, router]);
 
   useEffect(() => {
-    const fetchInitialData = async () => {
-      setChatLoading(true);
-      setError('');
-      try {
-        const [history, aiSettings] = await Promise.all([
-          getChatHistory(),
-          getAISettings().catch(() => defaultSettings),
-        ]);
-        setChatLogs(history);
-        setSettings({
-          ...defaultSettings,
-          ...aiSettings,
-        });
-
-        if (history[0]) {
-          await loadChatDetail(history[0].id);
-        }
-      } catch (err: any) {
-        setError(err.message || 'Không thể tải dữ liệu AI Tutor.');
-      } finally {
-        setChatLoading(false);
-      }
-    };
-
-    fetchInitialData();
-  }, []);
+    loadInitialData();
+  }, [loadInitialData]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -224,33 +239,25 @@ export default function AITutorPage() {
   };
 
   return (
-    <div className={styles.container}>
-      <header className={styles.header}>
-        <Link href="/" className={styles.logo}>
-          <span className={styles.logoIcon}>🎯</span>
-          <span className={styles.logoText}>ThinkAI</span>
-        </Link>
+    <div className={`${dashboardStyles.container} ${styles.container}`}>
+      <MainSidebar active="ai-tutor" />
 
-        <nav className={styles.nav}>
-          <Link href="/courses">Lộ trình học</Link>
-          <Link href="/exams">Luyện thi</Link>
-          <Link href="/dashboard">Tiến độ</Link>
-        </nav>
-
-        <div className={styles.headerActions}>
-          <Link href="/settings" className={styles.upgradeBtn}>
-            Cài đặt →
-          </Link>
-        </div>
-      </header>
-
-      <main className={styles.main}>
+      <main className={`${dashboardStyles.main} ${styles.main}`}>
         <section className={styles.welcome}>
           <h1>Gia sư AI hỗ trợ học tập theo thời gian thực</h1>
           <p>Chat, tóm tắt bài học, chỉnh ngôn ngữ phản hồi và quản lý lịch sử hội thoại.</p>
         </section>
 
-        {error && <p className={styles.errorText}>{error}</p>}
+        {!chatLoading && error && chatLogs.length === 0 && messages.length === 0 ? (
+          <PageState
+            type="error"
+            message={error}
+            actionLabel="Thử tải lại"
+            onAction={loadInitialData}
+          />
+        ) : (
+          error && <p className={styles.errorText}>{error}</p>
+        )}
         {notice && <p className={styles.noticeText}>{notice}</p>}
 
         <section className={styles.utilityGrid}>
@@ -289,9 +296,9 @@ export default function AITutorPage() {
                 </select>
               </label>
             </div>
-            <button className={styles.actionBtn} onClick={handleSaveSettings} disabled={savingSettings}>
+            <Button variant="primary" size="sm" type="button" onClick={handleSaveSettings} disabled={savingSettings}>
               {savingSettings ? 'Đang lưu...' : 'Lưu cài đặt AI'}
-            </button>
+            </Button>
           </div>
 
           <form className={styles.utilityCard} onSubmit={handleSummarize}>
@@ -303,9 +310,9 @@ export default function AITutorPage() {
                 onChange={(e) => setSummaryContent(e.target.value)}
                 rows={4}
               />
-              <button className={styles.actionBtn} type="submit" disabled={summaryLoading}>
+              <Button variant="primary" size="sm" type="submit" disabled={summaryLoading}>
                 {summaryLoading ? 'Đang tóm tắt...' : 'Tạo tóm tắt'}
-              </button>
+              </Button>
             </div>
 
             {summaryResult && (
@@ -327,29 +334,41 @@ export default function AITutorPage() {
           <aside className={styles.historyPanel}>
             <div className={styles.historyHeader}>
               <h3>Lịch sử chat</h3>
-              <button className={styles.smallBtn} onClick={handleCreateNewChat}>
+              <Button variant="secondary" size="sm" type="button" onClick={handleCreateNewChat}>
                 + Mới
-              </button>
+              </Button>
             </div>
 
             {chatLoading ? (
-              <p className={styles.muted}>Đang tải lịch sử...</p>
+              <PageState type="loading" message="Đang tải lịch sử hội thoại..." />
             ) : chatLogs.length === 0 ? (
-              <p className={styles.muted}>Chưa có hội thoại.</p>
+              <PageState type="empty" message="Chưa có hội thoại." />
             ) : (
               <ul className={styles.historyList}>
                 {chatLogs.map((chat) => (
                   <li key={chat.id} className={styles.historyItem}>
-                    <button
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      type="button"
                       className={`${styles.historyLink} ${selectedLogId === chat.id ? styles.historyActive : ''}`}
+                      aria-current={selectedLogId === chat.id ? 'true' : undefined}
                       onClick={() => loadChatDetail(chat.id)}
                     >
                       <span>{chat.userMessage.slice(0, 48) || 'Cuộc trò chuyện mới'}</span>
-                      <small>{new Date(chat.createdAt).toLocaleString('vi-VN')}</small>
-                    </button>
-                    <button className={styles.deleteBtn} onClick={() => handleDeleteChat(chat.id)}>
+                      <small>{formatDateTimeVi(chat.createdAt)}</small>
+                    </Button>
+                    <Button
+                      className={styles.deleteBtn}
+                      variant="secondary"
+                      size="sm"
+                      type="button"
+                      onClick={() => handleDeleteChat(chat.id)}
+                      aria-label="Xóa hội thoại"
+                      title="Xóa hội thoại"
+                    >
                       ✕
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -359,11 +378,11 @@ export default function AITutorPage() {
           <div className={styles.chatPanel}>
             <div className={styles.messages}>
               {messages.length === 0 ? (
-                <p className={styles.muted}>Chưa có hội thoại. Hãy gửi tin nhắn đầu tiên.</p>
+                <PageState type="empty" message="Chưa có hội thoại. Hãy gửi tin nhắn đầu tiên." />
               ) : (
                 messages.map((msg) => (
                   <div key={msg.id} className={`${styles.message} ${styles[msg.role]}`}>
-                    {msg.role === 'assistant' && <div className={styles.avatarIcon}>🎯</div>}
+                    {msg.role === 'assistant' && <div className={styles.avatarIcon}>AI</div>}
                     <div className={styles.messageContent}>
                       {msg.content.split('\n').map((line, idx) => (
                         <p key={`${msg.id}-${idx}`}>{line}</p>
@@ -371,12 +390,24 @@ export default function AITutorPage() {
 
                       {msg.role === 'assistant' && typeof msg.sourceLogId === 'number' && (
                         <div className={styles.feedbackRow}>
-                          <button className={styles.smallBtn} onClick={() => handleFeedback(msg.sourceLogId!, 1)}>
-                            👍
-                          </button>
-                          <button className={styles.smallBtn} onClick={() => handleFeedback(msg.sourceLogId!, -1)}>
-                            👎
-                          </button>
+                          <Button
+                            className={styles.smallBtn}
+                            variant="secondary"
+                            size="sm"
+                            type="button"
+                            onClick={() => handleFeedback(msg.sourceLogId!, 1)}
+                          >
+                            Hữu ích
+                          </Button>
+                          <Button
+                            className={styles.smallBtn}
+                            variant="secondary"
+                            size="sm"
+                            type="button"
+                            onClick={() => handleFeedback(msg.sourceLogId!, -1)}
+                          >
+                            Chưa phù hợp
+                          </Button>
                           {typeof msg.rating === 'number' && (
                             <span className={styles.muted}>
                               {msg.rating > 0 ? 'Đã thích' : 'Đã không thích'}
@@ -399,9 +430,9 @@ export default function AITutorPage() {
                   placeholder="Hỏi ThinkAI bất cứ điều gì..."
                   className={styles.chatInput}
                 />
-                <button type="submit" className={styles.sendBtn} disabled={sending}>
-                  {sending ? '...' : '➤'}
-                </button>
+                <Button type="submit" variant="warm" size="sm" className={styles.sendBtn} disabled={sending}>
+                  {sending ? '...' : 'Gửi'}
+                </Button>
               </div>
               <p className={styles.disclaimer}>ThinkAI có thể mắc lỗi, hãy kiểm tra lại thông tin quan trọng.</p>
             </form>

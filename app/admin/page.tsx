@@ -3,6 +3,9 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import styles from './page.module.css';
+import PageState from '@/components/ui/PageState';
+import Button from '@/components/ui/Button';
+import { formatVnd } from '@/lib/utils/format';
 import {
   createAdminCourse,
   deleteAdminCourse,
@@ -20,11 +23,11 @@ import {
 
 type TabId = 'overview' | 'users' | 'courses' | 'prompts';
 
-const sidebarItems: Array<{ id: TabId; icon: string; label: string }> = [
-  { id: 'overview', icon: '📊', label: 'Tổng quan' },
-  { id: 'users', icon: '👥', label: 'Người dùng' },
-  { id: 'courses', icon: '📚', label: 'Khóa học' },
-  { id: 'prompts', icon: '🤖', label: 'AI Prompts' },
+const sidebarItems: Array<{ id: TabId; label: string }> = [
+  { id: 'overview', label: 'Tổng quan' },
+  { id: 'users', label: 'Người dùng' },
+  { id: 'courses', label: 'Khóa học' },
+  { id: 'prompts', label: 'AI Prompts' },
 ];
 
 const defaultCourseForm: AdminCourseRequest = {
@@ -181,24 +184,39 @@ export default function AdminDashboardPage() {
   };
 
   const statsData = [
-    { icon: '👥', value: stats?.totalUsers || 0, label: 'Tổng người dùng' },
-    { icon: '📚', value: stats?.totalCourses || 0, label: 'Tổng khóa học' },
-    { icon: '🧾', value: stats?.totalEnrollments || 0, label: 'Tổng lượt đăng ký' },
-    { icon: '🤖', value: stats?.aiChatsToday || 0, label: 'AI chats hôm nay' },
+    { value: stats?.totalUsers || 0, label: 'Tổng người dùng' },
+    { value: stats?.totalCourses || 0, label: 'Tổng khóa học' },
+    { value: stats?.totalEnrollments || 0, label: 'Tổng lượt đăng ký' },
+    { value: stats?.aiChatsToday || 0, label: 'AI chats hôm nay' },
   ];
+
+  const showFatalError =
+    !loading &&
+    !!error &&
+    (
+      (activeTab === 'overview' && !stats) ||
+      (activeTab === 'users' && users.length === 0) ||
+      (activeTab === 'courses' && courses.length === 0)
+    );
 
   return (
     <div className={styles.container}>
       <aside className={styles.sidebar}>
         <Link href="/" className={styles.logo}>
-          <span className={styles.logoIcon}>T</span>
           <span className={styles.logoText}>ThinkAI</span>
         </Link>
 
-        <nav className={styles.nav}>
+        <nav className={styles.nav} role="tablist" aria-label="Bảng điều khiển admin">
           {sidebarItems.map((item) => (
-            <button
+            <Button
               key={item.id}
+              id={`admin-tab-${item.id}`}
+              variant="secondary"
+              size="sm"
+              type="button"
+              role="tab"
+              aria-selected={activeTab === item.id}
+              aria-controls={`admin-panel-${item.id}`}
               className={`${styles.navItem} ${activeTab === item.id ? styles.active : ''}`}
               onClick={() => {
                 setActiveTab(item.id);
@@ -206,18 +224,23 @@ export default function AdminDashboardPage() {
                 setNotice('');
               }}
             >
-              <span>{item.icon}</span>
               <span>{item.label}</span>
-            </button>
+            </Button>
           ))}
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <button className={styles.themeBtn} onClick={() => fetchTabData(activeTab)}>
-            🔄 Làm mới dữ liệu
-          </button>
+          <Button
+            variant="secondary"
+            size="sm"
+            type="button"
+            className={styles.themeBtn}
+            onClick={() => fetchTabData(activeTab)}
+          >
+            Làm mới dữ liệu
+          </Button>
           <div className={styles.adminInfo}>
-            <div className={styles.adminAvatar}>👤</div>
+            <div className={styles.adminAvatar}>A</div>
             <div>
               <span className={styles.adminName}>Quản trị viên</span>
               <span className={styles.adminEmail}>admin@thinkai.vn</span>
@@ -233,21 +256,41 @@ export default function AdminDashboardPage() {
             <p>Tích hợp API docs: dashboard, users, courses và AI prompts.</p>
           </div>
           <div className={styles.headerActions}>
-            <button className={styles.downloadBtn} onClick={() => fetchTabData(activeTab)}>
+            <Button
+              variant="primary"
+              size="sm"
+              type="button"
+              className={styles.downloadBtn}
+              onClick={() => fetchTabData(activeTab)}
+            >
               Cập nhật
-            </button>
+            </Button>
           </div>
         </header>
 
-        {error && <p style={{ color: '#b91c1c', marginBottom: '10px' }}>{error}</p>}
-        {notice && <p style={{ color: '#166534', marginBottom: '10px' }}>{notice}</p>}
-        {loading && <p>Đang tải dữ liệu...</p>}
+        {!showFatalError && error && <p className={styles.errorBanner}>{error}</p>}
+        {notice && <p className={styles.noticeBanner}>{notice}</p>}
+        {loading && (
+          <PageState type="loading" message={`Đang tải dữ liệu tab ${activeTab}...`} />
+        )}
+        {showFatalError && (
+          <PageState
+            type="error"
+            message={error}
+            actionLabel="Thử lại"
+            onAction={() => fetchTabData(activeTab)}
+          />
+        )}
 
         {!loading && activeTab === 'overview' && (
-          <div className={styles.statsGrid}>
+          <div
+            id="admin-panel-overview"
+            role="tabpanel"
+            aria-labelledby="admin-tab-overview"
+            className={styles.statsGrid}
+          >
             {statsData.map((stat) => (
               <div key={stat.label} className={styles.statCard}>
-                <div className={styles.statIcon}>{stat.icon}</div>
                 <div className={styles.statContent}>
                   <span className={styles.statValue}>{stat.value}</span>
                   <span className={styles.statLabel}>{stat.label}</span>
@@ -258,68 +301,84 @@ export default function AdminDashboardPage() {
         )}
 
         {!loading && activeTab === 'users' && (
-          <section className={styles.tableSection}>
+          <section
+            id="admin-panel-users"
+            role="tabpanel"
+            aria-labelledby="admin-tab-users"
+            className={styles.tableSection}
+          >
             <div className={styles.tableHeader}>
               <h3>Quản lý người dùng</h3>
             </div>
-
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>TÊN NGƯỜI DÙNG</th>
-                  <th>EMAIL</th>
-                  <th>VAI TRÒ</th>
-                  <th>TRẠNG THÁI</th>
-                  <th>HÀNH ĐỘNG</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.id}>
-                    <td>
-                      <div className={styles.userCell}>
-                        <div className={styles.userAvatar}>{user.fullName.charAt(0)}</div>
-                        <span>{user.fullName}</span>
-                      </div>
-                    </td>
-                    <td>{user.email}</td>
-                    <td>{user.role}</td>
-                    <td>
-                      <span className={`${styles.status} ${user.isActive ? styles.active : styles.offline}`}>
-                        {user.isActive ? 'Hoạt động' : 'Đã khóa'}
-                      </span>
-                    </td>
-                    <td>
-                      <button className={styles.actionBtn} onClick={() => handleToggleUserStatus(user)}>
-                        {user.isActive ? 'Khóa' : 'Mở'}
-                      </button>
-                    </td>
+            {users.length === 0 ? (
+              <PageState type="empty" message="Chưa có người dùng để hiển thị." />
+            ) : (
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>TÊN NGƯỜI DÙNG</th>
+                    <th>EMAIL</th>
+                    <th>VAI TRÒ</th>
+                    <th>TRẠNG THÁI</th>
+                    <th>HÀNH ĐỘNG</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {users.map((user) => (
+                    <tr key={user.id}>
+                      <td>
+                        <div className={styles.userCell}>
+                          <div className={styles.userAvatar}>{user.fullName.charAt(0)}</div>
+                          <span>{user.fullName}</span>
+                        </div>
+                      </td>
+                      <td>{user.email}</td>
+                      <td>{user.role}</td>
+                      <td>
+                        <span className={`${styles.status} ${user.isActive ? styles.active : styles.offline}`}>
+                          {user.isActive ? 'Hoạt động' : 'Đã khóa'}
+                        </span>
+                      </td>
+                      <td>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          type="button"
+                          className={styles.actionBtn}
+                          onClick={() => handleToggleUserStatus(user)}
+                        >
+                          {user.isActive ? 'Khóa' : 'Mở'}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </section>
         )}
 
         {!loading && activeTab === 'courses' && (
-          <>
-            <section className={styles.tableSection} style={{ marginBottom: '18px' }}>
+          <div
+            id="admin-panel-courses"
+            role="tabpanel"
+            aria-labelledby="admin-tab-courses"
+          >
+            <section className={`${styles.tableSection} ${styles.editorSection}`}>
               <div className={styles.tableHeader}>
                 <h3>{editingCourseId ? `Cập nhật khóa học #${editingCourseId}` : 'Tạo khóa học mới'}</h3>
               </div>
 
               <form onSubmit={handleCourseSubmit}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                <div className={styles.inputGridTwo}>
                   <input
-                    className={styles.searchBar}
-                    style={{ padding: '10px 12px' }}
+                    className={`${styles.searchBar} ${styles.formInput}`}
                     placeholder="Tiêu đề"
                     value={courseForm.title}
                     onChange={(e) => setCourseForm((prev) => ({ ...prev, title: e.target.value }))}
                   />
                   <input
-                    className={styles.searchBar}
-                    style={{ padding: '10px 12px' }}
+                    className={`${styles.searchBar} ${styles.formInput}`}
                     type="number"
                     placeholder="instructorId"
                     value={courseForm.instructorId || ''}
@@ -329,17 +388,15 @@ export default function AdminDashboardPage() {
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 170px', gap: '10px', marginBottom: '10px' }}>
+                <div className={styles.inputGridPrice}>
                   <input
-                    className={styles.searchBar}
-                    style={{ padding: '10px 12px' }}
+                    className={`${styles.searchBar} ${styles.formInput}`}
                     placeholder="Thumbnail URL (tùy chọn)"
                     value={courseForm.thumbnailUrl || ''}
                     onChange={(e) => setCourseForm((prev) => ({ ...prev, thumbnailUrl: e.target.value }))}
                   />
                   <input
-                    className={styles.searchBar}
-                    style={{ padding: '10px 12px' }}
+                    className={`${styles.searchBar} ${styles.formInput}`}
                     type="number"
                     placeholder="Giá (VND)"
                     value={courseForm.price || 0}
@@ -348,21 +405,32 @@ export default function AdminDashboardPage() {
                 </div>
 
                 <textarea
-                  className={styles.searchBar}
-                  style={{ width: '100%', minHeight: '90px', padding: '10px 12px', marginBottom: '10px' }}
+                  className={`${styles.searchBar} ${styles.formTextarea}`}
                   placeholder="Mô tả khóa học"
                   value={courseForm.description}
                   onChange={(e) => setCourseForm((prev) => ({ ...prev, description: e.target.value }))}
                 />
 
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button className={styles.downloadBtn} type="submit" disabled={savingCourse}>
+                <div className={styles.formActions}>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className={styles.downloadBtn}
+                    type="submit"
+                    disabled={savingCourse}
+                  >
                     {savingCourse ? 'Đang lưu...' : editingCourseId ? 'Cập nhật khóa học' : 'Tạo khóa học'}
-                  </button>
+                  </Button>
                   {editingCourseId && (
-                    <button className={styles.tableActionBtn} type="button" onClick={resetCourseForm}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className={styles.tableActionBtn}
+                      type="button"
+                      onClick={resetCourseForm}
+                    >
                       Hủy chỉnh sửa
-                    </button>
+                    </Button>
                   )}
                 </div>
               </form>
@@ -372,48 +440,68 @@ export default function AdminDashboardPage() {
               <div className={styles.tableHeader}>
                 <h3>Danh sách khóa học</h3>
               </div>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>TÊN KHÓA HỌC</th>
-                    <th>GIÁ</th>
-                    <th>TRẠNG THÁI</th>
-                    <th>HÀNH ĐỘNG</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {courses.map((course) => (
-                    <tr key={course.id}>
-                      <td>{course.id}</td>
-                      <td>{course.title}</td>
-                      <td>{(course.price || 0).toLocaleString('vi-VN')}đ</td>
-                      <td>{course.status || (course.isPublished ? 'PUBLISHED' : 'DRAFT')}</td>
-                      <td style={{ display: 'flex', gap: '6px' }}>
-                        <button className={styles.tableActionBtn} onClick={() => handleEditCourse(course)}>
-                          Sửa
-                        </button>
-                        <button className={styles.tableActionBtn} onClick={() => handleDeleteCourse(course.id)}>
-                          Xóa
-                        </button>
-                      </td>
+              {courses.length === 0 ? (
+                <PageState type="empty" message="Chưa có khóa học trong hệ thống." />
+              ) : (
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>TÊN KHÓA HỌC</th>
+                      <th>GIÁ</th>
+                      <th>TRẠNG THÁI</th>
+                      <th>HÀNH ĐỘNG</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {courses.map((course) => (
+                      <tr key={course.id}>
+                        <td>{course.id}</td>
+                        <td>{course.title}</td>
+                        <td>{formatVnd(course.price || 0)}</td>
+                        <td>{course.status || (course.isPublished ? 'PUBLISHED' : 'DRAFT')}</td>
+                        <td className={styles.tableActionCell}>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            type="button"
+                            className={styles.tableActionBtn}
+                            onClick={() => handleEditCourse(course)}
+                          >
+                            Sửa
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            type="button"
+                            className={styles.tableActionBtn}
+                            onClick={() => handleDeleteCourse(course.id)}
+                          >
+                            Xóa
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </section>
-          </>
+          </div>
         )}
 
         {!loading && activeTab === 'prompts' && (
-          <section className={styles.tableSection}>
+          <section
+            id="admin-panel-prompts"
+            role="tabpanel"
+            aria-labelledby="admin-tab-prompts"
+            className={styles.tableSection}
+          >
             <div className={styles.tableHeader}>
               <h3>Cấu hình AI Prompts</h3>
             </div>
             <form onSubmit={handleSavePrompts}>
               <textarea
-                className={styles.searchBar}
-                style={{ width: '100%', minHeight: '120px', padding: '10px 12px', marginBottom: '10px' }}
+                className={`${styles.searchBar} ${styles.promptTextarea}`}
                 placeholder="tutorSystemPrompt"
                 value={aiPromptForm.tutorSystemPrompt}
                 onChange={(e) =>
@@ -421,23 +509,28 @@ export default function AdminDashboardPage() {
                 }
               />
               <textarea
-                className={styles.searchBar}
-                style={{ width: '100%', minHeight: '120px', padding: '10px 12px', marginBottom: '10px' }}
+                className={`${styles.searchBar} ${styles.promptTextarea}`}
                 placeholder="examGeneratorPrompt"
                 value={aiPromptForm.examGeneratorPrompt}
                 onChange={(e) =>
                   setAIPromptForm((prev) => ({ ...prev, examGeneratorPrompt: e.target.value }))
                 }
               />
-              <button className={styles.downloadBtn} type="submit" disabled={savingPrompts}>
+              <Button
+                variant="primary"
+                size="sm"
+                className={styles.downloadBtn}
+                type="submit"
+                disabled={savingPrompts}
+              >
                 {savingPrompts ? 'Đang lưu...' : 'Lưu AI prompts'}
-              </button>
+              </Button>
             </form>
           </section>
         )}
 
         <footer className={styles.footer}>
-          <p>© 2026 ThinkAI Admin Panel.</p>
+          <p>© 2026 ThinkAI Quản trị hệ thống.</p>
         </footer>
       </main>
     </div>

@@ -1,56 +1,50 @@
 .main {
-  padding-top: 80px;
+  width: 100%;
+  max-width: none !important;
+  padding: 26px 18px 30px;
 }
 
-/* ==================== HERO SECTION ==================== */
 .hero {
-  text-align: center;
-  padding: 64px 24px 48px;
-  background-color: var(--bg-primary);
+  text-align: left;
+  padding: 4px 4px 16px;
 }
 
 .hero h1 {
-  font-family: var(--font-heading);
-  font-size: 48px;
-  font-weight: 400;
-  margin-bottom: 16px;
+  font-size: 2.2rem;
+  line-height: 1.06;
+  margin-bottom: 10px;
 }
 
 .hero h1 em {
-  font-style: italic;
   color: var(--accent);
+  font-style: italic;
 }
 
 .hero > p {
   color: var(--text-secondary);
-  font-size: 16px;
-  line-height: 1.6;
-  margin-bottom: 32px;
+  font-size: 0.94rem;
+  margin-bottom: 14px;
 }
 
 .searchBox {
-  max-width: 600px;
-  margin: 0 auto;
+  max-width: 620px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 20px;
-  background: var(--bg-surface);
-  border: 1px solid #E5E7EB;
-  border-radius: var(--radius-full);
+  gap: 8px;
+  padding: 8px;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 14px;
+  background: rgba(var(--surface-rgb), 0.82);
   box-shadow: var(--shadow-subtle);
-}
-
-.searchIcon {
-  font-size: 18px;
-  opacity: 0.5;
 }
 
 .searchInput {
   flex: 1;
   border: none;
   background: transparent;
-  font-size: 16px;
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  color: var(--text-primary);
   outline: none;
 }
 
@@ -58,70 +52,65 @@
   color: var(--text-muted);
 }
 
-/* ==================== CONTENT ==================== */
-.content {
-  display: flex;
-  gap: 32px;
-  max-width: var(--container-max);
-  margin: 0 auto;
-  padding: 32px 24px 64px;
+.clearBtn {
+  font-size: 0.8rem;
+  padding: 7px 12px;
 }
 
-/* ==================== SIDEBAR ==================== */
+.content {
+  display: flex;
+  gap: 12px;
+  max-width: var(--container-max);
+}
+
 .sidebar {
   width: 240px;
   flex-shrink: 0;
+  border-radius: 16px;
+  border: var(--line-width) solid var(--line-soft);
+  background: rgba(var(--surface-rgb), 0.72);
+  box-shadow: var(--shadow-subtle);
+  padding: 14px;
+  height: fit-content;
 }
 
 .filterHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 14px;
 }
 
 .filterHeader h3 {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.clearBtn {
-  background: none;
-  border: none;
-  color: var(--accent);
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.filterGroup {
-  margin-bottom: 24px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 
 .filterGroup h4 {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 0.7rem;
+  font-weight: 700;
   color: var(--text-muted);
-  letter-spacing: 0.5px;
-  margin-bottom: 12px;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
 }
 
 .checkbox {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: var(--text-primary);
-  cursor: pointer;
-  margin-bottom: 10px;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
 }
 
 .checkbox input {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   accent-color: var(--accent);
 }
 
-/* ==================== COURSE SECTION ==================== */
 .courseSection {
   flex: 1;
 }
@@ -130,11 +119,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .courseHeader p {
-  font-size: 14px;
+  font-size: 0.87rem;
   color: var(--text-secondary);
 }
 
@@ -146,143 +135,115 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
 }
 
 .sortBy select {
-  padding: 8px 12px;
-  border: 1px solid #E5E7EB;
-  border-radius: var(--radius-sm);
-  background: var(--bg-surface);
-  font-size: 14px;
+  padding: 8px 10px;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 10px;
+  background: rgba(var(--surface-rgb), 0.9);
+  font-size: 0.84rem;
 }
 
-/* ==================== COURSE GRID ==================== */
 .courseGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-bottom: 40px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .courseCard {
-  background: var(--bg-surface);
-  border-radius: var(--radius-md);
+  border-radius: 16px;
+  border: var(--line-width) solid var(--line-soft);
   overflow: hidden;
-  box-shadow: var(--shadow-subtle);
   text-decoration: none;
-  transition: all var(--transition-base);
+  background: rgba(var(--surface-rgb), 0.86);
+  box-shadow: var(--shadow-subtle);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .courseCard:hover {
+  transform: translateY(-2px);
   box-shadow: var(--shadow-card);
-  transform: translateY(-4px);
 }
 
 .courseImage {
-  height: 160px;
-  background: linear-gradient(135deg, #2D3748 0%, #1A202C 100%);
+  height: 132px;
+  background: linear-gradient(160deg, rgba(var(--auth-overlay-rgb), 0.88) 0%, rgba(var(--auth-ink-rgb), 0.94) 100%);
   position: relative;
 }
 
 .categoryTag {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  background: var(--accent);
-  color: white;
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.newTag {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: var(--success);
-  color: white;
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: 600;
+  top: 10px;
+  left: 10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(var(--surface-rgb), 0.9);
+  color: var(--accent-dark);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
 .courseInfo {
-  padding: 16px;
+  padding: 12px;
 }
 
 .ratingRow {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-bottom: 8px;
-}
-
-.star {
-  color: #FFC107;
+  gap: 6px;
+  margin-bottom: 6px;
 }
 
 .rating {
-  font-weight: 600;
-  font-size: 14px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--accent);
 }
 
 .reviews {
-  font-size: 13px;
+  font-size: 0.77rem;
   color: var(--text-muted);
 }
 
 .courseInfo h3 {
-  font-family: var(--font-heading);
-  font-size: 18px;
-  font-style: italic;
-  line-height: 1.3;
-  margin-bottom: 8px;
+  font-size: 1.05rem;
+  margin-bottom: 4px;
   color: var(--text-primary);
 }
 
 .courseInfo p {
-  font-size: 14px;
+  font-size: 0.83rem;
   color: var(--text-secondary);
-  line-height: 1.5;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .courseFooter {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid #F3F4F6;
+  border-top: var(--line-width) solid var(--line-soft);
+  padding-top: 10px;
 }
 
 .instructor {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  max-width: 64%;
+  font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
-.avatar {
-  width: 28px;
-  height: 28px;
-  background: #F3F4F6;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-}
-
 .price {
-  font-weight: 600;
-  color: var(--accent);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
-/* ==================== PAGINATION ==================== */
 .pagination {
   display: flex;
   justify-content: center;
@@ -291,19 +252,11 @@
 }
 
 .pageBtn {
-  width: 36px;
-  height: 36px;
-  border: 1px solid #E5E7EB;
-  border-radius: 50%;
-  background: var(--bg-surface);
-  font-size: 14px;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.pageBtn:hover:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--accent);
+  min-width: 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--text-secondary);
 }
 
 .pageBtn.active {
@@ -313,38 +266,42 @@
 }
 
 .pageBtn:disabled {
-  opacity: 0.4;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-/* ==================== RESPONSIVE ==================== */
-@media (max-width: 1024px) {
+@media (max-width: 1140px) {
   .courseGrid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 860px) {
   .content {
     flex-direction: column;
   }
-  
+
   .sidebar {
     width: 100%;
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
   }
-  
-  .filterGroup {
-    min-width: 150px;
+}
+
+@media (max-width: 640px) {
+  .main {
+    padding: 14px 10px 20px;
   }
-  
+
+  .hero h1 {
+    font-size: 1.72rem;
+  }
+
+  .courseHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
   .courseGrid {
     grid-template-columns: 1fr;
-  }
-  
-  .hero h1 {
-    font-size: 32px;
   }
 }

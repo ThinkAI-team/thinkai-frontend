@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
-import Navbar from '@/components/layout/Navbar';
+import dashboardStyles from '../../../dashboard/page.module.css';
+import MainSidebar from '../../../components/MainSidebar';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button';
+import PageState from '@/components/ui/PageState';
 import { getExamResult, type ExamResultResponse } from '@/services/exams';
 
 export default function ExamResultPage() {
@@ -18,28 +20,28 @@ export default function ExamResultPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchResult = async () => {
-      if (!Number.isFinite(attemptId)) {
-        setError('Thiếu attemptId để xem kết quả.');
-        setLoading(false);
-        return;
-      }
+  const loadResult = useCallback(async () => {
+    if (!Number.isFinite(attemptId)) {
+      setError('Thiếu attemptId để xem kết quả.');
+      setLoading(false);
+      return;
+    }
 
-      setLoading(true);
-      setError('');
-      try {
-        const data = await getExamResult(attemptId);
-        setResult(data);
-      } catch (err: any) {
-        setError(err.message || 'Không thể tải kết quả bài thi.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchResult();
+    setLoading(true);
+    setError('');
+    try {
+      const data = await getExamResult(attemptId);
+      setResult(data);
+    } catch (err: any) {
+      setError(err.message || 'Không thể tải kết quả bài thi.');
+    } finally {
+      setLoading(false);
+    }
   }, [attemptId]);
+
+  useEffect(() => {
+    loadResult();
+  }, [loadResult]);
 
   const totalQuestions = result?.answers.length || 0;
   const correctAnswers = useMemo(
@@ -53,30 +55,52 @@ export default function ExamResultPage() {
   const offset = circumference - (percentage / 100) * circumference;
 
   if (loading) {
-    return <div className={styles.main}>Đang tải kết quả...</div>;
+    return (
+      <div className={dashboardStyles.container}>
+        <MainSidebar active="exams" />
+        <main className={`${dashboardStyles.main} ${styles.main}`}>
+          <PageState
+            type="loading"
+            title="Đang tải kết quả bài thi"
+            message="Hệ thống đang lấy điểm số và phân tích câu trả lời."
+          />
+        </main>
+      </div>
+    );
   }
 
   if (error || !result) {
-    return <div className={styles.main}>{error || 'Không có dữ liệu kết quả.'}</div>;
+    return (
+      <div className={dashboardStyles.container}>
+        <MainSidebar active="exams" />
+        <main className={`${dashboardStyles.main} ${styles.main}`}>
+          <PageState
+            type="error"
+            message={error || 'Không có dữ liệu kết quả.'}
+            actionLabel="Thử lại"
+            onAction={loadResult}
+          />
+        </main>
+      </div>
+    );
   }
 
   return (
-    <>
-      <Navbar />
-
-      <main className={styles.main}>
+    <div className={dashboardStyles.container}>
+      <MainSidebar active="exams" />
+      <main className={`${dashboardStyles.main} ${styles.main}`}>
         <div className={styles.container}>
           <div className={styles.resultCard}>
             <div className={styles.resultHeader}>
               <div className={styles.leftContent}>
-                <span className={styles.badge}>🎯 Kết quả bài thi</span>
+                <span className={styles.badge}>Kết quả bài thi</span>
                 <h1>Hoàn thành bài thi</h1>
                 <p>
                   Kết quả đã được chấm. Bạn có thể xem chi tiết từng câu bên dưới.
                 </p>
                 <div className={styles.actions}>
                   <Link href={`/exams/${examId}`}>
-                    <Button variant="primary">🔄 Làm lại bài thi</Button>
+                    <Button variant="primary">Làm lại bài thi</Button>
                   </Link>
                   <Link href="/exams">
                     <Button variant="secondary">Danh sách bài thi</Button>
@@ -91,7 +115,7 @@ export default function ExamResultPage() {
                     cy="80"
                     r="60"
                     fill="none"
-                    stroke="#E5E7EB"
+                    stroke="var(--line-soft)"
                     strokeWidth="12"
                   />
                   <circle
@@ -99,7 +123,7 @@ export default function ExamResultPage() {
                     cy="80"
                     r="60"
                     fill="none"
-                    stroke="#3B82F6"
+                    stroke="var(--accent)"
                     strokeWidth="12"
                     strokeLinecap="round"
                     strokeDasharray={circumference}
@@ -116,21 +140,21 @@ export default function ExamResultPage() {
 
             <div className={styles.statsGrid}>
               <div className={styles.statCard}>
-                <span className={styles.statIcon}>✅</span>
+                <span className={styles.statIcon}>Đúng</span>
                 <div>
                   <p className={styles.statLabel}>Câu trả lời đúng</p>
                   <p className={styles.statValue}>{correctAnswers}</p>
                 </div>
               </div>
               <div className={styles.statCard}>
-                <span className={`${styles.statIcon} ${styles.incorrect}`}>❌</span>
+                <span className={`${styles.statIcon} ${styles.incorrect}`}>Sai</span>
                 <div>
                   <p className={styles.statLabel}>Câu trả lời sai</p>
                   <p className={styles.statValue}>{incorrectAnswers}</p>
                 </div>
               </div>
               <div className={styles.statCard}>
-                <span className={`${styles.statIcon} ${styles.time}`}>📊</span>
+                <span className={`${styles.statIcon} ${styles.time}`}>Tổng</span>
                 <div>
                   <p className={styles.statLabel}>Tổng câu hỏi</p>
                   <p className={styles.statValue}>{totalQuestions}</p>
@@ -185,6 +209,6 @@ export default function ExamResultPage() {
           </section>
         </div>
       </main>
-    </>
+    </div>
   );
 }

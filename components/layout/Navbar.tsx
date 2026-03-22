@@ -1,8 +1,8 @@
 'use client';
-/* eslint-disable @next/next/no-img-element */
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import styles from './Navbar.module.css';
 import Button from '../ui/Button';
@@ -34,6 +34,17 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  useEffect(() => {
+    if (!dropdownOpen) return undefined;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [dropdownOpen]);
+
   const handleLogout = () => {
     logout();
     setUser(null);
@@ -57,7 +68,6 @@ export default function Navbar() {
       <div className={styles.container}>
         {/* Logo */}
         <Link href="/" className={styles.logo}>
-          <span className={styles.logoIcon}>🎯</span>
           <span className={styles.logoText}>ThinkAI</span>
         </Link>
 
@@ -66,30 +76,43 @@ export default function Navbar() {
           <li><Link href="/courses">Khóa học</Link></li>
           <li><Link href="/exams">Luyện thi</Link></li>
           <li><Link href="/ai-tutor">Gia sư AI</Link></li>
-          <li><Link href="/pricing">Bảng giá</Link></li>
+          <li><Link href="/payment">Bảng giá</Link></li>
         </ul>
 
         {/* Auth Section */}
         {user ? (
           <div className={styles.userSection} ref={dropdownRef}>
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
+              type="button"
               className={styles.avatarBtn}
               onClick={() => setDropdownOpen(!dropdownOpen)}
               aria-label="Menu người dùng"
+              aria-haspopup="menu"
+              aria-expanded={dropdownOpen}
+              aria-controls="navbar-user-menu"
             >
               <span className={styles.avatar}>
                 {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.fullName} className={styles.avatarImg} />
+                  <Image
+                    src={user.avatarUrl}
+                    alt={user.fullName}
+                    width={30}
+                    height={30}
+                    unoptimized
+                    className={styles.avatarImg}
+                  />
                 ) : (
                   getInitial()
                 )}
               </span>
               <span className={styles.userName}>{user.fullName}</span>
               <span className={styles.chevron}>▾</span>
-            </button>
+            </Button>
 
             {dropdownOpen && (
-              <div className={styles.dropdown}>
+              <div className={styles.dropdown} id="navbar-user-menu" role="menu">
                 <div className={styles.dropdownHeader}>
                   <span className={styles.dropdownName}>{user.fullName}</span>
                   <span className={styles.dropdownEmail}>{user.email}</span>
@@ -99,23 +122,26 @@ export default function Navbar() {
                   href="/profile"
                   className={styles.dropdownItem}
                   onClick={() => setDropdownOpen(false)}
+                  role="menuitem"
                 >
-                  👤 Trang cá nhân
+                  Trang cá nhân
                 </Link>
                 <Link
                   href={dashboardPath}
                   className={styles.dropdownItem}
                   onClick={() => setDropdownOpen(false)}
+                  role="menuitem"
                 >
-                  📊 Dashboard
+                  Tổng quan
                 </Link>
                 {(normalizedRole === 'TEACHER' || normalizedRole === 'ADMIN') && (
                   <Link
                     href="/teacher"
                     className={styles.dropdownItem}
                     onClick={() => setDropdownOpen(false)}
+                    role="menuitem"
                   >
-                    🎓 Teacher Portal
+                    Khu vực giảng viên
                   </Link>
                 )}
                 {normalizedRole === 'ADMIN' && (
@@ -123,14 +149,22 @@ export default function Navbar() {
                     href="/admin"
                     className={styles.dropdownItem}
                     onClick={() => setDropdownOpen(false)}
+                    role="menuitem"
                   >
-                    🛡️ Admin Panel
+                    Quản trị hệ thống
                   </Link>
                 )}
                 <div className={styles.dropdownDivider} />
-                <button className={styles.dropdownLogout} onClick={handleLogout}>
-                  🚪 Đăng xuất
-                </button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  className={styles.dropdownLogout}
+                  onClick={handleLogout}
+                  role="menuitem"
+                >
+                  Đăng xuất
+                </Button>
               </div>
             )}
           </div>
