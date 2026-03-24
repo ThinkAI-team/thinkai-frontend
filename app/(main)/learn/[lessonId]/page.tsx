@@ -65,7 +65,8 @@ export default function LearningRoomPage() {
   const lessonRef = useRef(lesson);
   lessonRef.current = lesson;
 
-  const handleComplete = async (isAuto = false) => {
+  const handleComplete = async (e?: React.MouseEvent<HTMLButtonElement>) => {
+    const isAuto = e?.currentTarget?.dataset?.auto === 'true';
     const currentLesson = lessonRef.current;
     if (!currentLesson || currentLesson.isCompleted) return;
     if (isAuto && hasAutoCompleted.current) return;
@@ -130,7 +131,8 @@ export default function LearningRoomPage() {
         events: {
           onStateChange: (event: any) => {
             if (event.data === (window as any).YT.PlayerState.ENDED) {
-              handleComplete(true);
+              const btn = document.querySelector('[data-auto="true"]') as HTMLButtonElement;
+              if (btn) btn.click();
             }
           },
         },
@@ -241,6 +243,7 @@ export default function LearningRoomPage() {
                   size="sm"
                   type="button"
                   className={styles.actionBtn}
+                  data-auto="true"
                   onClick={handleComplete}
                 >
                   {lesson.isCompleted ? 'Đã hoàn thành' : 'Đánh dấu hoàn thành'}
