@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import PageState from '@/components/ui/PageState';
@@ -14,6 +14,42 @@ import {
   type LessonDetail,
 } from '@/services/learning';
 
+const getVideoId = (url: string): string | null => {
+  if (!url) return null;
+  if (url.includes('youtube.com/embed/')) {
+    return url.split('youtube.com/embed/')[1]?.split('?')[0] || null;
+  }
+  if (url.includes('youtube.com/watch?v=')) {
+    return url.split('v=')[1]?.split('&')[0] || null;
+  }
+  if (url.includes('youtu.be/')) {
+    return url.split('youtu.be/')[1]?.split('?')[0] || null;
+  }
+  return null;
+};
+
+let ytApiReady = false;
+let ytApiCallbacks: Array<() => void> = [];
+
+const loadYouTubeAPI = () => {
+  if (typeof window === 'undefined') return;
+  if (ytApiReady) return;
+  if (document.getElementById('youtube-api')) {
+    ytApiCallbacks.push(() => {});
+    return;
+  }
+  const tag = document.createElement('script');
+  tag.id = 'youtube-api';
+  tag.src = 'https://www.youtube.com/iframe_api';
+  const firstScriptTag = document.getElementsByTagName('script')[0];
+  firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+  (window as any).onYouTubeIframeAPIReady = () => {
+    ytApiReady = true;
+    ytApiCallbacks.forEach((cb) => cb());
+    ytApiCallbacks = [];
+  };
+};
+
 export default function LearningRoomPage() {
   const params = useParams<{ lessonId: string }>();
   const lessonId = Number(params.lessonId);
@@ -23,6 +59,27 @@ export default function LearningRoomPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const playerRef = useRef<any>(null);
+  const videoIdRef = useRef<string | null>(null);
+  const hasAutoCompleted = useRef(false);
+  const lessonRef = useRef(lesson);
+  lessonRef.current = lesson;
+
+  const handleComplete = async (isAuto = false) => {
+    const currentLesson = lessonRef.current;
+    if (!currentLesson || currentLesson.isCompleted) return;
+    if (isAuto && hasAutoCompleted.current) return;
+    try {
+      const result = await completeLesson(currentLesson.id, {
+        watchTimeSeconds: currentLesson.watchTimeSeconds || currentLesson.durationSeconds || 0,
+      });
+      setMessage(isAuto ? `Đã xem xong video. Bài học hoàn thành! Tiến độ: ${result.courseProgress}%` : `Đã đánh dấu hoàn thành. Tiến độ khóa học: ${result.courseProgress}%`);
+      setLesson((prev) => (prev ? { ...prev, isCompleted: true } : prev));
+      if (isAuto) hasAutoCompleted.current = true;
+    } catch (err: any) {
+      setMessage(err.message || 'Không thể cập nhật tiến độ.');
+    }
+  };
 
   const loadLessonData = useCallback(async () => {
     if (!Number.isFinite(lessonId)) {
@@ -49,18 +106,50 @@ export default function LearningRoomPage() {
     loadLessonData();
   }, [loadLessonData]);
 
-  const handleComplete = async () => {
-    if (!lesson) return;
-    try {
-      const result = await completeLesson(lesson.id, {
-        watchTimeSeconds: lesson.watchTimeSeconds || lesson.durationSeconds || 0,
-      });
-      setMessage(`Đã đánh dấu hoàn thành. Tiến độ khóa học: ${result.courseProgress}%`);
-      setLesson((prev) => (prev ? { ...prev, isCompleted: true } : prev));
-    } catch (err: any) {
-      setMessage(err.message || 'Không thể cập nhật tiến độ.');
+  useEffect(() => {
+    if (lesson?.type !== 'VIDEO') return;
+    const videoId = getVideoId(lesson.contentUrl || '');
+    if (!videoId) return;
+    hasAutoCompleted.current = false;
+    videoIdRef.current = null;
+    if (playerRef.current) {
+      try { playerRef.current.destroy(); } catch (_) {}
+      playerRef.current = null;
     }
-  };
+    loadYouTubeAPI();
+    let cancelled = false;
+    const initPlayer = () => {
+      if (cancelled) return;
+      const el = document.getElementById('youtube-player');
+      if (!el) {
+        requestAnimationFrame(initPlayer);
+        return;
+      }
+      playerRef.current = new (window as any).YT.Player('youtube-player', {
+        videoId,
+        events: {
+          onStateChange: (event: any) => {
+            if (event.data === (window as any).YT.PlayerState.ENDED) {
+              handleComplete(true);
+            }
+          },
+        },
+      });
+      videoIdRef.current = videoId;
+    };
+    if (ytApiReady) {
+      requestAnimationFrame(initPlayer);
+    } else {
+      ytApiCallbacks.push(initPlayer);
+    }
+    return () => {
+      cancelled = true;
+      if (playerRef.current) {
+        try { playerRef.current.destroy(); } catch (_) {}
+        playerRef.current = null;
+      }
+    };
+  }, [lesson?.id, lesson?.type, lesson?.contentUrl]);
 
   if (loading) {
     return (
@@ -126,15 +215,7 @@ export default function LearningRoomPage() {
 
           <div className={styles.videoPlayer}>
             {lesson.type === 'VIDEO' ? (
-              <iframe
-                src={lesson.contentUrl || ''}
-                title={lesson.title}
-                width="100%"
-                height="100%"
-                className={styles.videoFrame}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+              <div key={lesson.id} id="youtube-player" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
             ) : lesson.type === 'PDF' ? (
               <div className={styles.pdfViewer}>
                 <p>PDF Viewer</p>

@@ -275,6 +275,71 @@
   color: var(--text-secondary);
 }
 
+.sourceToggle {
+  display: flex;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.radioLabel input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+.fileInputWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fileInputWrapper input[type="file"] {
+  width: 100%;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-size: 0.82rem;
+  background: rgba(var(--surface-rgb), 0.92);
+  color: var(--text-primary);
+}
+
+.fileName {
+  font-size: 0.78rem;
+  color: var(--success);
+  padding: 4px 8px;
+  background: rgba(var(--success-soft-rgb), 0.24);
+  border-radius: 6px;
+  word-break: break-all;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.fileInputLabel {
+  display: block;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: rgba(var(--surface-rgb), 0.92);
+  cursor: pointer;
+}
+
+.fileInputText {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
 @media (max-width: 1100px) {
   .columns {
     grid-template-columns: 1fr;

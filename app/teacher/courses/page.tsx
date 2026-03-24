@@ -54,6 +54,8 @@ export default function TeacherCoursesPage() {
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
   const [lessonForm, setLessonForm] = useState(defaultLessonForm);
   const [lessonFile, setLessonFile] = useState<File | null>(null);
+  const [contentSourceType, setContentSourceType] = useState<'url' | 'file'>('url');
+  const [contentFile, setContentFile] = useState<File | null>(null);
   const [lessonOrderJson, setLessonOrderJson] = useState('[{"lessonId":1,"orderIndex":1}]');
   const [selectedCourseDetail, setSelectedCourseDetail] = useState<TeacherCourse | null>(null);
   const showBlockingLoading = loading && courses.length === 0;
@@ -202,16 +204,23 @@ export default function TeacherCoursesPage() {
       return;
     }
     try {
+      let finalContentUrl = lessonForm.contentUrl;
+      if (contentSourceType === 'file' && contentFile) {
+        const uploadResult = await uploadTeacherLessonFile(lessonForm.courseId, contentFile);
+        finalContentUrl = uploadResult.url;
+        setContentFile(null);
+      }
       await createTeacherLesson(lessonForm.courseId, {
         title: lessonForm.title,
         type: lessonForm.type,
-        contentUrl: lessonForm.contentUrl || undefined,
+        contentUrl: finalContentUrl || undefined,
         contentText: lessonForm.contentText || undefined,
         durationSeconds: Number(lessonForm.durationSeconds) || undefined,
         orderIndex: Number(lessonForm.orderIndex) || undefined,
       });
       setNotice('Đã tạo lesson cho khóa học.');
       setLessonForm((prev) => ({ ...defaultLessonForm, courseId: prev.courseId }));
+      setContentFile(null);
     } catch (err: any) {
       setError(err.message || 'Không thể tạo lesson.');
     }
@@ -379,18 +388,60 @@ export default function TeacherCoursesPage() {
               <select
                 value={lessonForm.type}
                 onChange={(e) =>
-                  setLessonForm((prev) => ({ ...prev, type: e.target.value as LessonRequest['type'] }))
+                  setLessonForm((prev) => ({ ...prev, type: e.target.value as LessonRequest['type'], contentUrl: '' }))
                 }
               >
                 <option value="VIDEO">VIDEO</option>
                 <option value="PDF">PDF</option>
                 <option value="QUIZ">QUIZ</option>
               </select>
-              <input
-                placeholder="contentUrl"
-                value={lessonForm.contentUrl}
-                onChange={(e) => setLessonForm((prev) => ({ ...prev, contentUrl: e.target.value }))}
-              />
+              {(lessonForm.type === 'VIDEO' || lessonForm.type === 'PDF') && (
+                <>
+                  <div className={styles.sourceToggle}>
+                    <label className={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name="contentSource"
+                        checked={contentSourceType === 'url'}
+                        onChange={() => setContentSourceType('url')}
+                      />
+                      Nhập URL
+                    </label>
+                    <label className={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name="contentSource"
+                        checked={contentSourceType === 'file'}
+                        onChange={() => setContentSourceType('file')}
+                      />
+                      Upload từ máy
+                    </label>
+                  </div>
+                  {contentSourceType === 'url' ? (
+                    <input
+                      placeholder="contentUrl"
+                      value={lessonForm.contentUrl}
+                      onChange={(e) => setLessonForm((prev) => ({ ...prev, contentUrl: e.target.value }))}
+                    />
+                  ) : (
+                    <label className={styles.fileInputLabel}>
+                      <input
+                        type="file"
+                        id="lessonContentFile"
+                        accept={lessonForm.type === 'VIDEO' ? 'video/*' : 'application/pdf'}
+                        className={styles.hiddenInput}
+                        onChange={(e) => setContentFile(e.target.files?.[0] || null)}
+                      />
+                      <span className={styles.fileInputText}>
+                        {contentFile ? contentFile.name : `Chọn file ${lessonForm.type === 'VIDEO' ? 'video' : 'PDF'}...`}
+                      </span>
+                    </label>
+                  )}
+                  {contentSourceType === 'file' && contentFile && (
+                    <span className={styles.fileName}>{contentFile.name}</span>
+                  )}
+                </>
+              )}
               <textarea
                 placeholder="contentText (tuỳ chọn)"
                 value={lessonForm.contentText}
