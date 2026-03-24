@@ -1,0 +1,210 @@
+.navbar {
+  position: fixed;
+  top: 12px;
+  left: 14px;
+  right: 14px;
+  z-index: 110;
+  border-radius: 16px;
+  border: var(--line-width) solid var(--line-soft);
+  background: rgba(var(--panel-rgb), 0.92);
+  box-shadow: var(--shadow-subtle);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.logoIcon {
+  width: 24px;
+  height: 24px;
+}
+
+.logoText {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.navLinks {
+  display: flex;
+  list-style: none;
+  gap: 8px;
+}
+
+.navLinks a {
+  display: inline-flex;
+  padding: 8px 11px;
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all var(--transition-fast);
+}
+
+.navLinks a:hover {
+  color: var(--text-primary);
+  background: var(--bg-active);
+}
+
+.authButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.userSection {
+  position: relative;
+}
+
+.avatarBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  transition: all var(--transition-fast);
+  font-family: var(--font-body);
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: linear-gradient(145deg, rgba(var(--accent-tint-rgb), 0.72), rgba(var(--surface-rgb), 0.95));
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  overflow: hidden;
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.userName {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.chevron {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  border-radius: 12px;
+  border: var(--line-width) solid var(--line-soft);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-card);
+  padding: 6px 0;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdownHeader {
+  padding: 10px 12px;
+}
+
+.dropdownName {
+  display: block;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+}
+
+.dropdownEmail {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: var(--line-soft);
+  margin: 4px 0;
+}
+
+.dropdownItem {
+  display: block;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.dropdownItem:hover {
+  background: rgba(var(--accent-soft-rgb), 0.8);
+  color: var(--accent);
+}
+
+.dropdownLogout {
+  display: flex;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-family: var(--font-body);
+  color: var(--error);
+  transition: background var(--transition-fast);
+  border-radius: 0;
+  justify-content: flex-start;
+  box-shadow: none;
+}
+
+.dropdownLogout:hover {
+  background: rgba(var(--error-soft-rgb), 0.56);
+  transform: none;
+  box-shadow: none;
+}
+
+@media (max-width: 860px) {
+  .navbar {
+    left: 10px;
+    right: 10px;
+  }
+
+  .navLinks {
+    display: none;
+  }
+
+  .authButtons {
+    gap: 6px;
+  }
+
+  .userName {
+    display: none;
+  }
+}

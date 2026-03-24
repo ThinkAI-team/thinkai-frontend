@@ -1,0 +1,268 @@
+.main {
+  max-width: none;
+}
+
+.container {
+  min-height: 100vh;
+  padding: 18px 12px;
+}
+
+.content {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.loading {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+
+.pageHeader {
+  margin-bottom: 10px;
+  padding: 14px;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 16px;
+  background: rgba(var(--surface-rgb), 0.8);
+  box-shadow: var(--shadow-subtle);
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.pageHeader h1 {
+  font-size: 1.8rem;
+  margin-bottom: 4px;
+}
+
+.pageHeader p {
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+}
+
+.section {
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 18px;
+  background: rgba(var(--surface-rgb), 0.82);
+  box-shadow: var(--shadow-subtle);
+  padding: 14px;
+  margin-bottom: 10px;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.sectionHeader h3 {
+  font-family: var(--font-body);
+  font-size: 0.96rem;
+  font-weight: 700;
+}
+
+.profileHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(var(--accent-tint-rgb), 0.84), rgba(var(--surface-cool-alt-rgb), 0.84));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar span {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.profileMeta h2 {
+  font-size: 1.2rem;
+  margin-bottom: 2px;
+}
+
+.roleBadge {
+  display: inline-block;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+  background: rgba(var(--surface-rgb), 0.9);
+}
+
+.email {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.infoGrid {
+  display: flex;
+  flex-direction: column;
+}
+
+.infoItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: var(--line-width) solid var(--line-soft);
+}
+
+.infoItem:last-child {
+  border-bottom: none;
+}
+
+.infoLabel {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.infoValue {
+  font-size: 0.84rem;
+  color: var(--text-primary);
+}
+
+.notSet {
+  color: var(--text-muted);
+}
+
+.editBtn {
+  font-size: 0.78rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inputGroup label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 10px;
+  background: rgba(var(--surface-rgb), 0.92);
+  font-size: 0.88rem;
+}
+
+.input:focus {
+  outline: none;
+  border-color: rgba(var(--accent-rgb), 0.38);
+}
+
+.inputError {
+  border-color: rgba(var(--error-rgb), 0.44);
+}
+
+.fieldError {
+  font-size: 0.74rem;
+  color: var(--error);
+}
+
+.formActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.cancelBtn {
+  min-width: 84px;
+}
+
+.successAlert,
+.errorAlert {
+  padding: 9px 10px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+}
+
+.successAlert {
+  border: 1px solid rgba(var(--success-rgb), 0.24);
+  background: rgba(var(--success-soft-rgb), 0.24);
+  color: var(--success);
+}
+
+.errorAlert {
+  border: 1px solid rgba(var(--error-rgb), 0.24);
+  background: rgba(var(--error-soft-rgb), 0.2);
+  color: var(--error);
+}
+
+.infoText {
+  border: 1px solid rgba(var(--accent-rgb), 0.24);
+  background: rgba(var(--accent-soft-rgb), 0.66);
+  color: var(--accent-dark);
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 12px 8px;
+  }
+
+  .profileHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .infoItem {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .formActions {
+    width: 100%;
+  }
+
+  .formActions button {
+    width: 100%;
+  }
+}

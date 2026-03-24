@@ -1,0 +1,382 @@
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.mobileNav {
+  display: none;
+}
+
+.profileLink {
+  text-decoration: none;
+}
+
+.userInfo {
+  min-width: 0;
+}
+
+.logoutBtn {
+  padding: 8px 12px;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.refreshBtn {
+  padding: 8px 12px;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.error,
+.notice,
+.muted {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+}
+
+.error {
+  color: var(--error);
+}
+
+.notice {
+  color: var(--success);
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.statusBadge {
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.statusPublished {
+  border: 1px solid rgba(var(--success-rgb), 0.28);
+  background: rgba(var(--success-soft-rgb), 0.24);
+  color: var(--success);
+}
+
+.statusDraft {
+  border: 1px solid rgba(var(--warning-rgb), 0.32);
+  background: rgba(var(--warning-soft-rgb), 0.26);
+  color: var(--warning);
+}
+
+.actionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.calendarHint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.kpiList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kpiRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.kpiRow strong {
+  color: var(--text-primary);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.panel {
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 18px;
+  padding: 12px;
+  background: rgba(var(--surface-rgb), 0.84);
+  box-shadow: var(--shadow-subtle);
+}
+
+.panel h3 {
+  margin: 0 0 8px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form input,
+.form textarea,
+.form select,
+.uploadArea textarea,
+.uploadAreaBlock textarea {
+  width: 100%;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  font-family: inherit;
+  background: rgba(var(--surface-rgb), 0.92);
+  color: var(--text-primary);
+}
+
+.form input:focus,
+.form textarea:focus,
+.form select:focus,
+.uploadArea textarea:focus,
+.uploadAreaBlock textarea:focus {
+  outline: none;
+  border-color: rgba(var(--accent-rgb), 0.38);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
+}
+
+.primaryBtn,
+.secondaryBtn {
+  padding: 8px 11px;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.secondaryBtn {
+  border-radius: 999px;
+}
+
+.divider {
+  margin: 10px 0;
+  border: none;
+  border-top: var(--line-width) dashed var(--line-soft);
+}
+
+.uploadArea {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.uploadAreaBlock {
+  margin-top: 6px;
+  display: block;
+}
+
+.uploadAreaBlock .primaryBtn {
+  margin-top: 6px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table th,
+.table td {
+  border-bottom: var(--line-width) solid var(--line-soft);
+  padding: 8px 6px;
+  text-align: left;
+  vertical-align: top;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+  .table {
+    min-width: 720px;
+  }
+}
+
+.table th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.listItem {
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(var(--surface-rgb), 0.92);
+}
+
+.detailCard {
+  margin-top: 10px;
+}
+
+.listItem strong {
+  color: var(--text-primary);
+}
+
+.listItem p {
+  margin: 4px 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.listItem small {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.listAction {
+  margin-top: 6px;
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.sourceToggle {
+  display: flex;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.radioLabel input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+.fileInputWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fileInputWrapper input[type="file"] {
+  width: 100%;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-size: 0.82rem;
+  background: rgba(var(--surface-rgb), 0.92);
+  color: var(--text-primary);
+}
+
+.fileName {
+  font-size: 0.78rem;
+  color: var(--success);
+  padding: 4px 8px;
+  background: rgba(var(--success-soft-rgb), 0.24);
+  border-radius: 6px;
+  word-break: break-all;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.fileInputLabel {
+  display: block;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: rgba(var(--surface-rgb), 0.92);
+  cursor: pointer;
+}
+
+.fileInputText {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+@media (max-width: 1100px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobileNav {
+    display: flex;
+    width: 100%;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 8px 12px 0;
+  }
+
+  .mobileNavItem {
+    border: var(--line-width) solid var(--line-soft);
+    border-radius: 999px;
+    background: rgba(var(--surface-rgb), 0.9);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+
+  .mobileNavItemActive {
+    color: var(--text-primary);
+    border-color: var(--line-strong);
+    background: rgba(var(--active-rgb), 0.86);
+  }
+
+  .actionGroup {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+}

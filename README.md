@@ -1,91 +1,205 @@
-![Build Status](https://gitlab.com/pages/<project>/badges/master/build.svg)
+# ThinkAI Frontend
+
+[![Status](https://img.shields.io/badge/status-active-22c55e)]()
+[![Version](https://img.shields.io/badge/version-2.0-blue)]()
+[![API](https://img.shields.io/badge/API%20Base-8081-f97316)]()
+
+![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=next.js)
+![React](https://img.shields.io/badge/React-19-20232A?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)
+![CSS Modules](https://img.shields.io/badge/CSS-Modules-1572B6?logo=css3)
+![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js)
+
+> Frontend cho nền tảng học tập thông minh ThinkAI, phục vụ đồng thời học viên, giảng viên và quản trị viên trên cùng một hệ thống.
 
 ---
 
-Example [Next.js](https://nextjs.org) website using GitLab Pages.
+## Project Introduction
 
-Learn more about GitLab Pages at https://pages.gitlab.io and the official
-documentation https://docs.gitlab.com/ce/user/project/pages/.
+### Vision
+
+ThinkAI Frontend được xây dựng để giảm ma sát trong toàn bộ hành trình học tập: học, luyện thi, quản lý nội dung, theo dõi tiến độ và tương tác với AI Tutor.
+
+### User Roles
+
+- Student: học khóa học, làm bài thi, theo dõi tiến độ, sử dụng AI Tutor.
+- Teacher: quản lý khóa học, lesson, question bank, đề thi.
+- Admin: quản lý users, courses, dashboard tổng quan và AI prompts.
 
 ---
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+## Core Features
 
-- [GitLab CI](#gitlab-ci)
-- [Building locally](#building-locally)
-- [Add base path in Next.js when unique domain is disabled](#add-base-path-in-nextjs-when-unique-domain-is-disabled)
-- [GitLab User or Group Pages](#gitlab-user-or-group-pages)
-- [Did you fork this project?](#did-you-fork-this-project)
-- [Troubleshooting](#troubleshooting)
+### Student Workspace
 
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+- Dashboard học tập tại `/dashboard`
+- Khóa học và phòng học tại `/courses`, `/learn/[lessonId]`
+- Luyện thi tại `/exams`
+- AI Tutor tại `/ai-tutor`
+- Hồ sơ và cài đặt tại `/profile`, `/settings`
 
-## GitLab CI
+### Teacher Workspace
 
-This project's static Pages are built by [GitLab CI][ci], following the steps
-defined in [`.gitlab-ci.yml`](.gitlab-ci.yml):
+- Tổng quan tại `/teacher`
+- Quản lý khóa học tại `/teacher/courses`
+- Quản lý ngân hàng câu hỏi tại `/teacher/questions`
+- Quản lý đề thi tại `/teacher/exams`
 
-contents of .gitlab-ci.yml in codeblock
+### Admin Workspace
 
-## Building locally
+- Tổng quan quản trị tại `/admin`
+- Quản lý người dùng
+- Quản lý khóa học
+- Cấu hình AI prompts
 
-To work locally with this project, you'll have to follow the steps below:
+---
 
-1. Fork, clone or download this project
-1. Install dependencies: `npm install`
-1. Preview your project: `npm run dev`
-1. Add content
+## Technology Stack
 
-Read more at the Next.js [documentation](https://nextjs.org/docs).
+| Layer | Technology | Notes |
+| --- | --- | --- |
+| Frontend Framework | Next.js 15 (App Router) | React 19, dynamic routes |
+| Language | TypeScript | Strict typing |
+| Styling | CSS Modules | Design tokens + shared UI |
+| Data/API | Fetch wrapper (`services/api.ts`) | JWT header, unwrap data, normalize error |
+| Runtime | Node.js 20+ | Local development & build |
 
-## Add base path in Next.js when unique domain is disabled
+---
 
-If you [disable the unique domain](https://docs.gitlab.com/user/project/pages/#unique-domains),
-the site will be hosted under `yourname.gitlab.io/examplerepository/`,
-you will need to configure Next.js to use the `basePath`.
+## Project Structure
 
-In `next.config.mjs`, the value for `basePath` should be your project’s name,
-starting with a forward slash - for example, `/examplerepository`.
-This ensures Next.js understands that your website’s root is `/examplerepository` instead of the default `/`,
-especially when your project is hosted at `https://gitlab.com/yourname/examplerepository/`.
+```txt
+app/
+  (auth)/                 # login/register/forgot/reset
+  (main)/                 # student workspace
+  teacher/                # teacher workspace
+  admin/                  # admin workspace
+  [slug]/                 # static info pages
+  layout.tsx              # SSR theme bootstrap
 
-```js:title=next.config.mjs
-const nextConfig = {
-  basePath: '/examplerepository',
-};
-export default nextConfig;
+components/
+  layout/                 # Navbar, Footer
+  ui/                     # Button, Card, PageState
+
+services/
+  api.ts
+  auth.ts
+  user.ts
+  courses.ts
+  reviews.ts
+  learning.ts
+  exams.ts
+  ai-tutor.ts
+  teacher.ts
+  admin.ts
+
+lib/
+  types/
+  utils/format.ts
 ```
 
-## GitLab User or Group Pages
+Nguyên tắc: page/component chỉ gọi API qua `services/*`.
 
-To use this project as your user/group website, you will need one additional
-step: just rename your project to `namespace.gitlab.io`, where `namespace` is
-your `username` or `groupname`. This can be done by navigating to your
-project's **Settings**.
+---
 
-Read more about [user/group Pages][userpages] and [project Pages][projpages].
+## API Integration
 
-## Did you fork this project?
+Trạng thái tích hợp API được theo dõi tại:
 
-If you forked this project for your own use, please go to your project's
-**Settings** and remove the forking relationship, which won't be necessary
-unless you want to contribute back to the upstream project.
+- [docs/API_CONTRACT_MATRIX.md](./docs/API_CONTRACT_MATRIX.md)
+
+Tài liệu này mô tả `MATCH / DRIFT / UNDOCUMENTED` giữa frontend contract và API docs team.
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20+
+- npm 10+
+
+### Install
+
+```bash
+npm install
+```
+
+### Environment
+
+Tạo `.env.local`:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8081
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
+```
+
+### Run
+
+```bash
+npm run dev
+```
+
+Frontend chạy tại `http://localhost:3000`.
+
+---
+
+## Available Scripts
+
+```bash
+npm run dev
+npm run lint
+npm run build
+npm run start
+```
+
+---
+
+## UI and Engineering Notes
+
+- Toàn bộ action button dùng `components/ui/Button`
+- Avatar dùng `next/image`
+- Format ngày/tiền dùng `lib/utils/format.ts`
+- Theme đồng bộ SSR/client qua cookie + localStorage
+- A11y cơ bản cho tab/navigation (`aria-current`, `tablist`, `tabpanel`)
+
+---
 
 ## Troubleshooting
 
-1. CSS is missing! That means two things:
+### Hydration mismatch theme
 
-   Either that you have wrongly set up the CSS URL in your templates, or
-   your static generator has a configuration option that needs to be explicitly
-   set in order to serve static assets under a relative URL.
+- Theme đã được xử lý SSR-safe trong `app/layout.tsx`.
+- Nếu còn warning: hard refresh, clear cache, thử Incognito.
 
-[ci]: https://about.gitlab.com/gitlab-ci/
-[<project>]: http://link-to-project-main-page
-[install]: http://link-to-install-page
-[documentation]: http://link-to-main-documentation-page
-[userpages]: https://docs.gitlab.com/ce/user/project/pages/introduction.html#user-or-group-pages
-[projpages]: https://docs.gitlab.com/ce/user/project/pages/introduction.html#project-pages
+### Cannot reach backend
 
-----
+Kiểm tra:
+
+1. Backend đang chạy ở `:8081`
+2. `NEXT_PUBLIC_API_URL` đúng
+3. CORS backend cho phép origin frontend
+
+---
+
+## Quality Gate
+
+Trước khi push/PR:
+
+```bash
+npm run lint
+npm run build
+```
+
+Khuyến nghị bổ sung E2E smoke test cho các luồng role-based quan trọng.
+
+---
+
+## Team Workflow
+
+Khi thay đổi API contract:
+
+1. Cập nhật `services/*`
+2. Rà soát các page bị ảnh hưởng
+3. Cập nhật `docs/API_CONTRACT_MATRIX.md`
+4. Chạy lại `lint + build`
