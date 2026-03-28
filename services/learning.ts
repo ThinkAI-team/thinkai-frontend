@@ -28,6 +28,8 @@ export interface LessonDetail {
   orderIndex?: number;
   isCompleted: boolean;
   watchTimeSeconds?: number;
+  currentTimeSeconds?: number;
+  lessonProgressPercent?: number;
   courseId: number;
   courseTitle?: string;
   previousLessonId?: number | null;
@@ -58,6 +60,32 @@ export async function completeLesson(
 ): Promise<CompleteLessonResponse> {
   return apiRequest<CompleteLessonResponse>(`/courses/lessons/${lessonId}/complete`, {
     method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+// === Video Progress Tracking ===
+
+export interface UpdateVideoProgressRequest {
+  watchTimeSeconds: number;
+  currentTimeSeconds?: number;
+}
+
+export interface UpdateVideoProgressResponse {
+  lessonId: number;
+  watchTimeSeconds: number;
+  currentTimeSeconds: number;
+  isCompleted: boolean;
+  lessonProgressPercent: number;
+  courseProgressPercent: number;
+}
+
+export async function updateVideoProgress(
+  lessonId: number,
+  payload: UpdateVideoProgressRequest
+): Promise<UpdateVideoProgressResponse> {
+  return apiRequest<UpdateVideoProgressResponse>(`/courses/lessons/${lessonId}/progress`, {
+    method: 'PUT',
     body: JSON.stringify(payload),
   });
 }
