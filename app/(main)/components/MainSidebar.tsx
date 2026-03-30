@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button';
 import dashboardStyles from '../dashboard/page.module.css';
 import styles from './MainSidebar.module.css';
 
-type SidebarKey = 'dashboard' | 'courses' | 'exams' | 'ai-tutor' | 'payment' | 'profile' | 'settings';
+type SidebarKey = 'dashboard' | 'courses' | 'exams' | 'ai-tutor' | 'my-courses' | 'payment' | 'profile' | 'settings';
 
 interface SidebarUser {
   fullName: string;
@@ -94,8 +94,8 @@ export default function MainSidebar({ active }: MainSidebarProps) {
             <Link href="/ai-tutor" className={navClass(active, 'ai-tutor')} aria-current={active === 'ai-tutor' ? 'page' : undefined}>
               Gia sư AI
             </Link>
-            <Link href="/payment" className={navClass(active, 'payment')} aria-current={active === 'payment' ? 'page' : undefined}>
-              Bảng giá
+            <Link href="/my-courses" className={navClass(active, 'my-courses')} aria-current={active === 'my-courses' ? 'page' : undefined}>
+              Khóa học của tôi
             </Link>
             <Link href="/profile" className={navClass(active, 'profile')} aria-current={active === 'profile' ? 'page' : undefined}>
               Hồ sơ
