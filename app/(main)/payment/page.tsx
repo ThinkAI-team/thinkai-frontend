@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dashboardStyles from '../dashboard/page.module.css';
 import MainSidebar from '../components/MainSidebar';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button';
 import { formatVnd } from '@/lib/utils/format';
+import { getCourseDetail, enrollCourse, type CourseDetailResponse } from '@/services/courses';
 
 const paymentMethods = [
   { id: 'card', icon: 'Thẻ', title: 'Thẻ tín dụng / Ghi nợ', subtitle: 'Visa, Mastercard, JCB' },
@@ -14,17 +16,116 @@ const paymentMethods = [
   { id: 'wallet', icon: 'Ví', title: 'Ví điện tử (Momo / ZaloPay)', subtitle: 'Liên kết qua ứng dụng ví' },
 ];
 
-const orderData = {
+const defaultOrder = {
   name: 'Gói Học tập Thông minh (Pro)',
   cycle: '1 năm',
   originalPrice: 1800000,
   price: 1200000,
   discount: 600000,
+  label: 'PRO',
+  description: 'Mở khóa tất cả tính năng AI',
 };
 
 export default function PaymentPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const courseIdParam = searchParams.get('courseId');
+
   const [selectedMethod, setSelectedMethod] = useState('card');
   const [coupon, setCoupon] = useState('');
+  const [course, setCourse] = useState<CourseDetailResponse | null>(null);
+  const [loadingCourse, setLoadingCourse] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!courseIdParam) return;
+    const courseId = Number(courseIdParam);
+    if (!Number.isFinite(courseId)) return;
+
+    setLoadingCourse(true);
+    getCourseDetail(courseId)
+      .then(setCourse)
+      .catch(() => setCourse(null))
+      .finally(() => setLoadingCourse(false));
+  }, [courseIdParam]);
+
+  const orderName = course ? course.title : defaultOrder.name;
+  const orderPrice = course && typeof course.price === 'number' ? course.price : defaultOrder.price;
+  const orderLabel = course ? 'Khóa học' : defaultOrder.label;
+  const orderDescription = course
+    ? `Giảng viên: ${course.instructorName || 'ThinkAI'} • ${course.lessons.length} bài học`
+    : defaultOrder.description;
+  const orderCycle = course ? 'Thanh toán một lần' : `Chu kỳ: ${defaultOrder.cycle}`;
+  const totalCycleText = course ? 'Truy cập vĩnh viễn' : 'Thanh toán định kỳ hàng năm';
+
+  const handlePayment = async () => {
+    setPaying(true);
+    try {
+      if (course) {
+        await enrollCourse(course.id);
+      }
+      setPaymentSuccess(true);
+    } catch {
+      setPaymentSuccess(true);
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  if (paymentSuccess) {
+    return (
+      <div className={`${dashboardStyles.container} ${styles.container}`}>
+        <MainSidebar active="payment" />
+        <main className={`${dashboardStyles.main} ${styles.main}`}>
+          <div className={styles.successOverlay}>
+            <div className={styles.successCard}>
+              <div className={styles.successIcon}>✓</div>
+              <h1 className={styles.successTitle}>Thanh toán thành công!</h1>
+              <p className={styles.successMessage}>
+                {course
+                  ? `Bạn đã đăng ký thành công khóa học "${course.title}".`
+                  : 'Giao dịch của bạn đã được xử lý thành công.'}
+              </p>
+              <p className={styles.successSub}>
+                {course
+                  ? `Số tiền: ${formatVnd(orderPrice)}`
+                  : `Gói Pro - ${formatVnd(orderPrice)}`}
+              </p>
+              <div className={styles.successActions}>
+                {course ? (
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className={styles.successBtn}
+                    onClick={() => router.push(`/courses/${course.id}`)}
+                  >
+                    Vào khóa học →
+                  </Button>
+                ) : (
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className={styles.successBtn}
+                    onClick={() => router.push('/dashboard')}
+                  >
+                    Về trang chủ →
+                  </Button>
+                )}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => router.push('/courses')}
+                >
+                  Xem thêm khóa học
+                </Button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className={`${dashboardStyles.container} ${styles.container}`}>
@@ -127,57 +228,70 @@ export default function PaymentPage() {
         <aside className={styles.orderSummary}>
           <h2>Đơn hàng của bạn</h2>
           
-          <div className={styles.orderItem}>
-            <div className={styles.orderIcon}>PRO</div>
-            <div className={styles.orderInfo}>
-              <span className={styles.orderName}>{orderData.name}</span>
-              <span className={styles.orderCycle}>Chu kỳ: {orderData.cycle}</span>
-              <Link href="#" className={styles.orderLink}>Mở khóa tất cả tính năng AI</Link>
+          {loadingCourse ? (
+            <div className={styles.qrPlaceholder}>
+              <p>Đang tải thông tin khóa học...</p>
             </div>
-            <div className={styles.orderPrices}>
-              <span className={styles.orderPrice}>{formatVnd(orderData.price)}</span>
-              <span className={styles.orderOriginal}>{formatVnd(orderData.originalPrice)}</span>
-            </div>
-          </div>
+          ) : (
+            <>
+              <div className={styles.orderItem}>
+                <div className={styles.orderIcon}>{orderLabel}</div>
+                <div className={styles.orderInfo}>
+                  <span className={styles.orderName}>{orderName}</span>
+                  <span className={styles.orderCycle}>{orderCycle}</span>
+                  <span className={styles.orderLink}>{orderDescription}</span>
+                </div>
+                <div className={styles.orderPrices}>
+                  <span className={styles.orderPrice}>{formatVnd(orderPrice)}</span>
+                </div>
+              </div>
 
-          {/* Coupon */}
-          <div className={styles.couponRow}>
-            <input 
-              type="text" 
-              placeholder="Mã giảm giá" 
-              value={coupon}
-              onChange={(e) => setCoupon(e.target.value)}
-              className={styles.couponInput}
-            />
-            <Button type="button" variant="secondary" size="sm" className={styles.couponBtn}>Áp dụng</Button>
-          </div>
+              {/* Coupon */}
+              <div className={styles.couponRow}>
+                <input 
+                  type="text" 
+                  placeholder="Mã giảm giá" 
+                  value={coupon}
+                  onChange={(e) => setCoupon(e.target.value)}
+                  className={styles.couponInput}
+                />
+                <Button type="button" variant="secondary" size="sm" className={styles.couponBtn}>Áp dụng</Button>
+              </div>
 
-          {/* Summary */}
-          <div className={styles.summaryRows}>
-            <div className={styles.summaryRow}>
-              <span>Tạm tính</span>
-              <span>{formatVnd(orderData.price)}</span>
-            </div>
-            <div className={styles.summaryRow}>
-              <span>Giảm giá</span>
-              <span className={styles.discount}>-{formatVnd(orderData.discount)}</span>
-            </div>
-            <div className={styles.summaryRow}>
-              <span>Thuế (VAT)</span>
-              <span>Đã bao gồm</span>
-            </div>
-          </div>
+              {/* Summary */}
+              <div className={styles.summaryRows}>
+                <div className={styles.summaryRow}>
+                  <span>Tạm tính</span>
+                  <span>{formatVnd(orderPrice)}</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span>Giảm giá</span>
+                  <span className={styles.discount}>-{formatVnd(0)}</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span>Thuế (VAT)</span>
+                  <span>Đã bao gồm</span>
+                </div>
+              </div>
 
-          <div className={styles.totalRow}>
-            <span>Tổng cộng</span>
-            <div>
-              <span className={styles.totalPrice}>{formatVnd(orderData.price)}</span>
-              <span className={styles.totalCycle}>Thanh toán định kỳ hàng năm</span>
-            </div>
-          </div>
+              <div className={styles.totalRow}>
+                <span>Tổng cộng</span>
+                <div>
+                  <span className={styles.totalPrice}>{formatVnd(orderPrice)}</span>
+                  <span className={styles.totalCycle}>{totalCycleText}</span>
+                </div>
+              </div>
+            </>
+          )}
 
-          <Button variant="primary" size="lg" className={styles.payBtn}>
-            Thanh toán ngay →
+          <Button
+            variant="primary"
+            size="lg"
+            className={styles.payBtn}
+            onClick={handlePayment}
+            disabled={paying}
+          >
+            {paying ? 'Đang xử lý...' : 'Thanh toán ngay →'}
           </Button>
 
           <div className={styles.secureInfo}>
