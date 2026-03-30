@@ -17,6 +17,7 @@ import {
   publishTeacherCourse,
   reorderTeacherLessons,
   updateTeacherCourse,
+  uploadTeacherCourseThumbnail,
   uploadTeacherLessonFile,
   type LessonRequest,
   type TeacherCourse,
@@ -51,6 +52,8 @@ export default function TeacherCoursesPage() {
   const [notice, setNotice] = useState('');
 
   const [courseForm, setCourseForm] = useState(defaultCourseForm);
+  const [thumbnailSourceType, setThumbnailSourceType] = useState<'url' | 'file'>('url');
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
   const [lessonForm, setLessonForm] = useState(defaultLessonForm);
   const [lessonFile, setLessonFile] = useState<File | null>(null);
@@ -102,6 +105,8 @@ export default function TeacherCoursesPage() {
 
   const resetCourseForm = () => {
     setCourseForm(defaultCourseForm);
+    setThumbnailSourceType('url');
+    setThumbnailFile(null);
     setEditingCourseId(null);
   };
 
@@ -120,22 +125,50 @@ export default function TeacherCoursesPage() {
     setNotice('');
     try {
       if (editingCourseId) {
-        await updateTeacherCourse(editingCourseId, {
-          title: courseForm.title,
-          description: courseForm.description,
-          thumbnailUrl: courseForm.thumbnailUrl || undefined,
-          price: Number(courseForm.price),
-        });
-        setNotice('Đã cập nhật khóa học.');
+        if (thumbnailSourceType === 'file' && thumbnailFile) {
+          const uploadResult = await uploadTeacherCourseThumbnail(editingCourseId, thumbnailFile);
+          await updateTeacherCourse(editingCourseId, {
+            title: courseForm.title,
+            description: courseForm.description,
+            thumbnailUrl: uploadResult.url,
+            price: Number(courseForm.price),
+          });
+          setNotice('Đã cập nhật khóa học và upload thumbnail.');
+        } else {
+          await updateTeacherCourse(editingCourseId, {
+            title: courseForm.title,
+            description: courseForm.description,
+            thumbnailUrl: courseForm.thumbnailUrl || undefined,
+            price: Number(courseForm.price),
+          });
+          setNotice('Đã cập nhật khóa học.');
+        }
       } else {
-        await createTeacherCourse({
-          title: courseForm.title,
-          description: courseForm.description,
-          thumbnailUrl: courseForm.thumbnailUrl || undefined,
-          price: Number(courseForm.price),
-        });
-        setNotice('Đã tạo khóa học mới.');
+        if (thumbnailSourceType === 'file' && thumbnailFile) {
+          const tempCourse = await createTeacherCourse({
+            title: courseForm.title,
+            description: courseForm.description,
+            price: Number(courseForm.price),
+          });
+          const uploadResult = await uploadTeacherCourseThumbnail(tempCourse.id, thumbnailFile);
+          await updateTeacherCourse(tempCourse.id, {
+            title: courseForm.title,
+            description: courseForm.description,
+            thumbnailUrl: uploadResult.url,
+            price: Number(courseForm.price),
+          });
+          setNotice('Đã tạo khóa học và upload thumbnail.');
+        } else {
+          await createTeacherCourse({
+            title: courseForm.title,
+            description: courseForm.description,
+            thumbnailUrl: courseForm.thumbnailUrl || undefined,
+            price: Number(courseForm.price),
+          });
+          setNotice('Đã tạo khóa học mới.');
+        }
       }
+      
       resetCourseForm();
       await loadData();
     } catch (err: any) {
@@ -151,6 +184,8 @@ export default function TeacherCoursesPage() {
       thumbnailUrl: course.thumbnailUrl || '',
       price: Number(course.price) || 0,
     });
+    setThumbnailSourceType('url');
+    setThumbnailFile(null);
   };
 
   const handleDeleteCourse = async (courseId: number) => {
@@ -332,11 +367,53 @@ export default function TeacherCoursesPage() {
                 rows={4}
                 required
               />
-              <input
-                placeholder="Thumbnail URL"
-                value={courseForm.thumbnailUrl}
-                onChange={(e) => setCourseForm((prev) => ({ ...prev, thumbnailUrl: e.target.value }))}
-              />
+              <div className={styles.sourceToggle}>
+                <label className={styles.radioLabel}>
+                  <input
+                    type="radio"
+                    name="thumbnailSource"
+                    checked={thumbnailSourceType === 'url'}
+                    onChange={() => setThumbnailSourceType('url')}
+                  />
+                  Nhập URL
+                </label>
+                <label className={styles.radioLabel}>
+                  <input
+                    type="radio"
+                    name="thumbnailSource"
+                    checked={thumbnailSourceType === 'file'}
+                    onChange={() => setThumbnailSourceType('file')}
+                  />
+                  Upload từ máy
+                </label>
+              </div>
+              {thumbnailSourceType === 'url' ? (
+                <input
+                  placeholder="Thumbnail URL"
+                  value={courseForm.thumbnailUrl}
+                  onChange={(e) => setCourseForm((prev) => ({ ...prev, thumbnailUrl: e.target.value }))}
+                />
+              ) : (
+                <>
+                  <label className={styles.fileInputLabel}>
+                    <input
+                      type="file"
+                      id="thumbnailFile"
+                      accept="image/*"
+                      className={styles.hiddenInput}
+                      onChange={(e) => setThumbnailFile(e.target.files?.[0] || null)}
+                    />
+                    <span className={styles.fileInputText}>
+                      {thumbnailFile ? thumbnailFile.name : 'Chọn ảnh thumbnail...'}
+                    </span>
+                  </label>
+                  {thumbnailFile && (
+                    <div className={styles.imagePreview}>
+                      <img src={URL.createObjectURL(thumbnailFile)} alt="Thumbnail preview" />
+                    </div>
+                  )}
+                </>
+              )}
               <input
                 type="number"
                 placeholder="Giá"

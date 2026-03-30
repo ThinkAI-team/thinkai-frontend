@@ -159,6 +159,16 @@ export async function uploadTeacherLessonFile(courseId: number, file: File): Pro
   );
 }
 
+export async function uploadTeacherCourseThumbnail(courseId: number, file: File): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  return apiRequestFormData<{ url: string }>(
+    `/teacher/courses/${courseId}/thumbnail`,
+    formData,
+    { method: 'POST' }
+  );
+}
+
 export async function reorderTeacherLessons(
   courseId: number,
   lessonOrders: LessonOrderUpdate[]

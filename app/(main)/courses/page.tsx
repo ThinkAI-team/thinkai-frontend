@@ -171,7 +171,14 @@ export default function CoursesPage() {
               <div className={styles.courseGrid}>
                 {courses.map((course) => (
                   <Link href={`/courses/${course.id}`} key={course.id} className={styles.courseCard}>
-                    <div className={styles.courseImage}>
+                    <div 
+                      className={styles.courseImage} 
+                      style={course.thumbnail ? { 
+                        backgroundImage: `url(${course.thumbnail})`, 
+                        backgroundSize: 'cover', 
+                        backgroundPosition: 'center' 
+                      } : {}}
+                    >
                       <span className={styles.categoryTag}>KHÓA HỌC</span>
                     </div>
                     <div className={styles.courseInfo}>
