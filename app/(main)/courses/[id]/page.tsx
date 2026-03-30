@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import PageState from '@/components/ui/PageState';
 import { formatDateTimeVi, formatVnd } from '@/lib/utils/format';
@@ -10,7 +10,6 @@ import dashboardStyles from '../../dashboard/page.module.css';
 import MainSidebar from '../../components/MainSidebar';
 import styles from './page.module.css';
 import {
-  enrollCourse,
   getCourseDetail,
   getMyCourses,
   type CourseDetailResponse,
@@ -23,12 +22,12 @@ import {
 
 export default function CourseDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const courseId = Number(params.id);
 
   const [course, setCourse] = useState<CourseDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [enrolling, setEnrolling] = useState(false);
   const [message, setMessage] = useState('');
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [reviews, setReviews] = useState<CourseReview[]>([]);
@@ -70,19 +69,9 @@ export default function CourseDetailPage() {
     loadCourseData();
   }, [loadCourseData]);
 
-  const handleEnroll = async () => {
+  const handleEnroll = () => {
     if (!course) return;
-    setEnrolling(true);
-    setMessage('');
-    try {
-      await enrollCourse(course.id);
-      setIsEnrolled(true);
-      setMessage('Đăng ký khóa học thành công.');
-    } catch (err: any) {
-      setMessage(err.message || 'Không thể đăng ký khóa học.');
-    } finally {
-      setEnrolling(false);
-    }
+    router.push(`/payment?courseId=${course.id}`);
   };
 
   const handleSubmitReview = async (e: React.FormEvent) => {
@@ -301,9 +290,8 @@ export default function CourseDetailPage() {
                   size="lg"
                   className={styles.enrollBtn}
                   onClick={handleEnroll}
-                  disabled={enrolling}
                 >
-                  {enrolling ? 'Đang xử lý...' : 'Đăng ký ngay'}
+                  Đăng ký ngay
                 </Button>
               ) : firstLessonId ? (
                 <Link href={`/learn/${firstLessonId}`}>
