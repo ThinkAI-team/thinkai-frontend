@@ -1,4 +1,11 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+const AUTH_ENDPOINTS_NO_REDIRECT = new Set([
+  '/auth/login',
+  '/auth/register',
+  '/auth/google',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+]);
 
 interface ApiError {
   status: number;
@@ -109,10 +116,32 @@ async function requestCore<T>(
 
   const response = await fetch(url, config);
   if (!response.ok) {
-    throw new ApiException(await parseApiError(response));
+    const errorData = await parseApiError(response);
+    if (errorData.status === 401) {
+      redirectToLoginIfNeeded(endpoint);
+    }
+    throw new ApiException(errorData);
   }
 
   return parseApiSuccess<T>(response);
+}
+
+function redirectToLoginIfNeeded(endpoint: string): void {
+  if (typeof window === 'undefined') return;
+  if (AUTH_ENDPOINTS_NO_REDIRECT.has(endpoint)) return;
+
+  const currentPath = window.location.pathname;
+  if (
+    currentPath === '/login' ||
+    currentPath === '/register' ||
+    currentPath === '/forgot-password' ||
+    currentPath === '/reset-password'
+  ) {
+    return;
+  }
+
+  const next = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+  window.location.replace(`/login?next=${next}`);
 }
 
 export async function apiRequest<T>(
