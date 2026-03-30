@@ -10,9 +10,15 @@ import {
   completeLesson,
   getLearningRoomLayout,
   getLessonDetail,
+  updateVideoProgress,
   type LearningRoomLayout,
   type LessonDetail,
 } from '@/services/learning';
+
+const isYouTubeUrl = (url: string): boolean => {
+  if (!url) return false;
+  return url.includes('youtube.com') || url.includes('youtu.be');
+};
 
 const getVideoId = (url: string): string | null => {
   if (!url) return null;
@@ -35,7 +41,7 @@ const loadYouTubeAPI = () => {
   if (typeof window === 'undefined') return;
   if (ytApiReady) return;
   if (document.getElementById('youtube-api')) {
-    ytApiCallbacks.push(() => {});
+    ytApiCallbacks.push(() => { });
     return;
   }
   const tag = document.createElement('script');
@@ -59,7 +65,9 @@ export default function LearningRoomPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [courseProgress, setCourseProgress] = useState(0);
   const playerRef = useRef<any>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const videoIdRef = useRef<string | null>(null);
   const hasAutoCompleted = useRef(false);
   const lessonRef = useRef(lesson);
@@ -96,6 +104,7 @@ export default function LearningRoomPage() {
       setLesson(lessonData);
       const layoutData = await getLearningRoomLayout(lessonData.courseId);
       setLayout(layoutData);
+      setCourseProgress(layoutData.progressPercent || 0);
     } catch (err: any) {
       setError(err.message || 'Không thể tải bài học.');
     } finally {
@@ -109,25 +118,34 @@ export default function LearningRoomPage() {
 
   useEffect(() => {
     if (lesson?.type !== 'VIDEO') return;
+    if (!isYouTubeUrl(lesson.contentUrl || '')) return;
     const videoId = getVideoId(lesson.contentUrl || '');
     if (!videoId) return;
     hasAutoCompleted.current = false;
     videoIdRef.current = null;
     if (playerRef.current) {
-      try { playerRef.current.destroy(); } catch (_) {}
+      try { playerRef.current.destroy(); } catch (_) { }
       playerRef.current = null;
     }
     loadYouTubeAPI();
     let cancelled = false;
+    const playerId = `youtube-player-${lesson.id}`;
     const initPlayer = () => {
       if (cancelled) return;
-      const el = document.getElementById('youtube-player');
+      const el = document.getElementById(playerId);
       if (!el) {
         requestAnimationFrame(initPlayer);
         return;
       }
-      playerRef.current = new (window as any).YT.Player('youtube-player', {
+      playerRef.current = new (window as any).YT.Player(playerId, {
         videoId,
+        host: 'https://www.youtube-nocookie.com',
+        playerVars: {
+          origin: window.location.origin,
+          rel: 0,
+          modestbranding: 1,
+          enablejsapi: 1,
+        },
         events: {
           onStateChange: (event: any) => {
             if (event.data === (window as any).YT.PlayerState.ENDED) {
@@ -147,11 +165,68 @@ export default function LearningRoomPage() {
     return () => {
       cancelled = true;
       if (playerRef.current) {
-        try { playerRef.current.destroy(); } catch (_) {}
+        try { playerRef.current.destroy(); } catch (_) { }
         playerRef.current = null;
       }
     };
   }, [lesson?.id, lesson?.type, lesson?.contentUrl]);
+
+  // === Progress Tracking: gọi API mỗi 10s ===
+  useEffect(() => {
+    if (!lesson || lesson.type !== 'VIDEO') return;
+    const interval = setInterval(() => {
+      let watchTime = 0;
+      let currentTime = 0;
+
+      if (isYouTubeUrl(lesson.contentUrl || '')) {
+        // YouTube player
+        if (playerRef.current?.getCurrentTime && playerRef.current?.getPlayerState) {
+          const state = playerRef.current.getPlayerState();
+          if (state === 1) { // PLAYING
+            currentTime = Math.floor(playerRef.current.getCurrentTime());
+            watchTime = currentTime;
+          } else return; // không gửi nếu đang pause
+        } else return;
+      } else {
+        // HTML5 video
+        const video = videoRef.current;
+        if (video && !video.paused) {
+          currentTime = Math.floor(video.currentTime);
+          watchTime = currentTime;
+        } else return;
+      }
+
+      updateVideoProgress(lesson.id, { watchTimeSeconds: watchTime, currentTimeSeconds: currentTime })
+        .then((res) => {
+          setCourseProgress(res.courseProgressPercent);
+          if (res.isCompleted && !lessonRef.current?.isCompleted) {
+            setLesson((prev) => prev ? { ...prev, isCompleted: true } : prev);
+            setMessage(`Đã xem xong video. Bài học hoàn thành! Tiến độ: ${res.courseProgressPercent}%`);
+          }
+        })
+        .catch(() => {}); // silent fail
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [lesson?.id, lesson?.type, lesson?.contentUrl]);
+
+  // === Resume playback: set video position từ currentTimeSeconds ===
+  useEffect(() => {
+    if (!lesson || lesson.type !== 'VIDEO') return;
+    const resumeTime = lesson.currentTimeSeconds || 0;
+    if (resumeTime <= 0) return;
+
+    if (!isYouTubeUrl(lesson.contentUrl || '')) {
+      // HTML5 video resume
+      const video = videoRef.current;
+      if (video) {
+        const handleLoaded = () => { video.currentTime = resumeTime; };
+        video.addEventListener('loadedmetadata', handleLoaded, { once: true });
+        return () => video.removeEventListener('loadedmetadata', handleLoaded);
+      }
+    }
+    // YouTube resume handled in YT.Player onReady
+  }, [lesson?.id, lesson?.currentTimeSeconds]);
 
   if (loading) {
     return (
@@ -178,7 +253,7 @@ export default function LearningRoomPage() {
     );
   }
 
-  const progress = layout?.progressPercent || 0;
+  const progress = courseProgress;
 
   return (
     <div className={styles.container}>
@@ -217,7 +292,22 @@ export default function LearningRoomPage() {
 
           <div className={styles.videoPlayer}>
             {lesson.type === 'VIDEO' ? (
-              <div key={lesson.id} id="youtube-player" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
+              isYouTubeUrl(lesson.contentUrl || '') ? (
+                <div key={lesson.id} id={`youtube-player-${lesson.id}`} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
+              ) : (
+                <video
+                  key={lesson.id}
+                  ref={videoRef}
+                  src={lesson.contentUrl || undefined}
+                  controls
+                  controlsList="nodownload"
+                  style={{ width: '100%', height: '100%', backgroundColor: '#000' }}
+                  onEnded={() => {
+                    const btn = document.querySelector('[data-auto="true"]') as HTMLButtonElement;
+                    if (btn) btn.click();
+                  }}
+                />
+              )
             ) : lesson.type === 'PDF' ? (
               <div className={styles.pdfViewer}>
                 <p>PDF Viewer</p>
