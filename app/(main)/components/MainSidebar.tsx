@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button';
 import dashboardStyles from '../dashboard/page.module.css';
 import styles from './MainSidebar.module.css';
 
-type SidebarKey = 'dashboard' | 'courses' | 'exams' | 'ai-tutor' | 'my-courses' | 'profile' | 'settings';
+type SidebarKey = 'dashboard' | 'courses' | 'exams' | 'ai-tutor' | 'my-courses' | 'payment' | 'profile' | 'settings';
 
 interface SidebarUser {
   fullName: string;
