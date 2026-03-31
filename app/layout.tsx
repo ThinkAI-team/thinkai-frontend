@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Script from "next/script";
 import { cookies } from "next/headers";
+import AiTutorFloatingLauncher from "@/components/ai-tutor/AiTutorFloatingLauncher";
 
 export const metadata: Metadata = {
   title: "ThinkAI - Nền tảng Học Tiếng Anh Thông Minh",
-  description: "Luyện thi TOEIC/IELTS với AI Tutor 24/7. Học mọi lúc, mọi nơi.",
+  description: "Luyện thi TOEIC/IELTS với Bò Trang 24/7. Học mọi lúc, mọi nơi.",
   keywords: ["TOEIC", "IELTS", "học tiếng Anh", "AI", "gia sư ảo"],
 };
 
@@ -35,6 +36,7 @@ export default async function RootLayout({
           `}
         </Script>
         {children}
+        <AiTutorFloatingLauncher />
         <Script src="https://accounts.google.com/gsi/client" strategy="beforeInteractive" />
       </body>
     </html>

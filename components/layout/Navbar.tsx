@@ -75,7 +75,7 @@ export default function Navbar() {
         <ul className={styles.navLinks}>
           <li><Link href="/courses">Khóa học</Link></li>
           <li><Link href="/exams">Luyện thi</Link></li>
-          <li><Link href="/ai-tutor">Gia sư AI</Link></li>
+          <li><Link href="/ai-tutor">Bò Trang</Link></li>
           <li><Link href="/payment">Bảng giá</Link></li>
         </ul>
 
