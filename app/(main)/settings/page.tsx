@@ -24,7 +24,7 @@ type MessageType = 'success' | 'error' | '';
 
 const tabs: Array<{ id: SettingsTab; label: string }> = [
   { id: 'profile', label: 'Hồ sơ' },
-  { id: 'ai', label: 'AI Tutor' },
+  { id: 'ai', label: 'Bò Trang' },
   { id: 'notifications', label: 'Thông báo' },
   { id: 'security', label: 'Bảo mật' },
   { id: 'subscription', label: 'Gói đăng ký' },
@@ -151,9 +151,9 @@ export default function SettingsPage() {
     setSavingAISettings(true);
     try {
       await updateAISettings(aiSettings);
-      setGlobalMessage({ text: 'Đã cập nhật AI settings thành công', type: 'success' });
+      setGlobalMessage({ text: 'Đã cập nhật cài đặt Bò Trang thành công', type: 'success' });
     } catch (err: any) {
-      setGlobalMessage({ text: err.message || 'Lỗi cập nhật AI settings', type: 'error' });
+      setGlobalMessage({ text: err.message || 'Lỗi cập nhật cài đặt Bò Trang', type: 'error' });
     } finally {
       setSavingAISettings(false);
     }
@@ -171,7 +171,7 @@ export default function SettingsPage() {
           <PageState
             type="loading"
             title="Đang tải cài đặt"
-            message="Hệ thống đang đồng bộ hồ sơ, bảo mật và cấu hình AI Tutor."
+            message="Hệ thống đang đồng bộ hồ sơ, bảo mật và cấu hình Bò Trang."
           />
         </main>
       </div>
@@ -382,7 +382,7 @@ export default function SettingsPage() {
               {activeTab === 'ai' && (
                 <div id="settings-panel-ai" role="tabpanel" aria-labelledby="settings-tab-ai">
                   <section className={styles.section}>
-                    <h2>Cấu hình AI Tutor</h2>
+                    <h2>Cấu hình Bò Trang</h2>
                     <form onSubmit={handleAISettingsUpdate}>
                       <div className={styles.formRow}>
                         <div className={styles.formGroup}>

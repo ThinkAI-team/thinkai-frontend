@@ -9,6 +9,20 @@ export interface AdminDashboardStats {
   aiChatsToday: number;
 }
 
+export interface AiTraceMetric {
+  createdAt: string;
+  userId: number;
+  conversationId: string;
+  agentType: string;
+  action: string;
+  message: string;
+  result: string;
+  requiresMoreInfo: boolean;
+  latencyMs: number;
+  inputTokens: number;
+  outputTokens: number;
+}
+
 export interface AdminUser {
   id: number;
   fullName: string;
@@ -133,4 +147,27 @@ export async function deleteAdminCourse(courseId: number): Promise<void> {
   return apiRequest<void>(`/admin/courses/${courseId}`, {
     method: 'DELETE',
   });
+}
+
+export async function getAiTraces(conversationId?: string): Promise<AiTraceMetric[]> {
+  const endpoint = conversationId 
+    ? `/admin/ai/traces?conversationId=${conversationId}`
+    : '/admin/ai/traces';
+  return apiRequest<AiTraceMetric[]>(endpoint);
+}
+
+export async function getAiStats(): Promise<{
+  totalTraces: number;
+  avgLatencyMs: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  agentUsage: Record<string, number>;
+}> {
+  return apiRequest<{
+    totalTraces: number;
+    avgLatencyMs: number;
+    totalInputTokens: number;
+    totalOutputTokens: number;
+    agentUsage: Record<string, number>;
+  }>('/admin/ai/stats');
 }

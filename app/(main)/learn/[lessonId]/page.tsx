@@ -265,7 +265,7 @@ export default function LearningRoomPage() {
         <nav className={styles.nav}>
           <Link href="/courses" className={styles.navActive}>Khóa học</Link>
           <Link href="/exams">Bài thi</Link>
-          <Link href="/ai-tutor">Gia sư AI</Link>
+          <Link href="/ai-tutor">Bò Trang</Link>
         </nav>
 
         <div className={styles.headerRight}>
@@ -396,7 +396,7 @@ export default function LearningRoomPage() {
           <Link href="/ai-tutor" className={styles.aiTutorBtn}>
             <span className={styles.aiIcon}>AI</span>
             <div>
-              <span className={styles.aiLabel}>Hỏi Gia sư AI</span>
+              <span className={styles.aiLabel}>Hỏi Bò Trang</span>
               <span className={styles.aiStatus}>ONLINE</span>
             </div>
           </Link>
