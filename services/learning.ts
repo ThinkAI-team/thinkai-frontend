@@ -89,3 +89,13 @@ export async function updateVideoProgress(
     body: JSON.stringify(payload),
   });
 }
+
+// === PDF Auto-Complete ===
+
+export async function markPdfOpened(
+  lessonId: number
+): Promise<UpdateVideoProgressResponse> {
+  return apiRequest<UpdateVideoProgressResponse>(`/courses/lessons/${lessonId}/pdf-opened`, {
+    method: 'PUT',
+  });
+}
