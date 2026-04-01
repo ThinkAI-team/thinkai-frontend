@@ -340,6 +340,21 @@
   word-break: break-all;
 }
 
+.imagePreview {
+  margin-top: 8px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: var(--line-width) solid var(--line-soft);
+}
+
+.imagePreview img {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 200px;
+  object-fit: cover;
+}
+
 @media (max-width: 1100px) {
   .columns {
     grid-template-columns: 1fr;

@@ -19,14 +19,18 @@ import {
   type AdminCourseRequest,
   type AdminDashboardStats,
   type AdminUser,
+  getAiTraces,
+  getAiStats,
+  type AiTraceMetric,
 } from '@/services/admin';
 
-type TabId = 'overview' | 'users' | 'courses' | 'prompts';
+type TabId = 'overview' | 'users' | 'courses' | 'prompts' | 'ai-traces';
 
 const sidebarItems: Array<{ id: TabId; label: string }> = [
   { id: 'overview', label: 'Tổng quan' },
   { id: 'users', label: 'Người dùng' },
   { id: 'courses', label: 'Khóa học' },
+  { id: 'ai-traces', label: 'AI Traces' },
   { id: 'prompts', label: 'AI Prompts' },
 ];
 
@@ -55,6 +59,14 @@ export default function AdminDashboardPage() {
     examGeneratorPrompt: '',
   });
   const [savingPrompts, setSavingPrompts] = useState(false);
+  const [aiTraces, setAiTraces] = useState<AiTraceMetric[]>([]);
+  const [aiStats, setAiStats] = useState<{
+    totalTraces: number;
+    avgLatencyMs: number;
+    totalInputTokens: number;
+    totalOutputTokens: number;
+    agentUsage: Record<string, number>;
+  } | null>(null);
 
   const fetchOverview = useCallback(async () => {
     const dashboardData = await getAdminDashboard();
@@ -78,6 +90,14 @@ export default function AdminDashboardPage() {
       if (tab === 'overview') await fetchOverview();
       if (tab === 'users') await fetchUsers();
       if (tab === 'courses') await fetchCourses();
+      if (tab === 'ai-traces') {
+        const [tracesData, statsData] = await Promise.all([
+          getAiTraces(),
+          getAiStats(),
+        ]);
+        setAiTraces(tracesData);
+        setAiStats(statsData);
+      }
       if (tab === 'prompts') {
         // API docs chỉ có PUT, nên giữ form rỗng để admin chủ động nhập mới.
       }
@@ -487,6 +507,75 @@ export default function AdminDashboardPage() {
               )}
             </section>
           </div>
+        )}
+
+        {!loading && activeTab === 'ai-traces' && (
+          <section
+            id="admin-panel-ai-traces"
+            role="tabpanel"
+            aria-labelledby="admin-tab-ai-traces"
+            className={styles.tableSection}
+          >
+            <div className={styles.tableHeader}>
+              <h3>AI Traces & Metrics</h3>
+            </div>
+            
+            {aiStats && (
+              <div className={styles.statsGrid} style={{ marginBottom: '20px' }}>
+                <div className={styles.statCard}>
+                  <div className={styles.statContent}>
+                    <span className={styles.statValue}>{aiStats.totalTraces}</span>
+                    <span className={styles.statLabel}>Total Traces</span>
+                  </div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={styles.statContent}>
+                    <span className={styles.statValue}>{aiStats.avgLatencyMs}ms</span>
+                    <span className={styles.statLabel}>Avg Latency</span>
+                  </div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={styles.statContent}>
+                    <span className={styles.statValue}>{aiStats.totalInputTokens}</span>
+                    <span className={styles.statLabel}>Input Tokens</span>
+                  </div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={styles.statContent}>
+                    <span className={styles.statValue}>{aiStats.totalOutputTokens}</span>
+                    <span className={styles.statLabel}>Output Tokens</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {aiTraces.length === 0 ? (
+              <PageState type="empty" message="Chưa có AI traces để hiển thị." />
+            ) : (
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Agent</th>
+                    <th>Action</th>
+                    <th>Latency</th>
+                    <th>Tokens</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {aiTraces.slice(0, 50).map((trace, idx) => (
+                    <tr key={idx}>
+                      <td>{trace.createdAt ? new Date(trace.createdAt).toLocaleString() : '-'}</td>
+                      <td>{trace.agentType || '-'}</td>
+                      <td>{trace.action || '-'}</td>
+                      <td>{trace.latencyMs ? `${trace.latencyMs}ms` : '-'}</td>
+                      <td>{trace.inputTokens || 0} / {trace.outputTokens || 0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </section>
         )}
 
         {!loading && activeTab === 'prompts' && (

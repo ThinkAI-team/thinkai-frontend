@@ -149,8 +149,12 @@
 
 .historyItem {
   display: flex;
-  gap: 6px;
-  align-items: stretch;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.historyMain {
+  flex: 1;
 }
 
 .historyLink {
@@ -178,11 +182,25 @@
   font-size: 0.72rem;
 }
 
+.historyPreview {
+  margin: 6px 2px 0;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
 .historyActive {
   border-color: rgba(var(--accent-rgb), 0.32);
   background: rgba(var(--surface-cool-rgb), 0.95);
 }
 
+.historyActions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.renameBtn,
 .deleteBtn {
   min-width: 34px;
   width: 34px;
@@ -190,6 +208,30 @@
   border-color: rgba(var(--error-rgb), 0.24);
   color: var(--error);
   background: rgba(var(--error-soft-alt-rgb), 0.7);
+}
+
+.renameBtn {
+  border-color: var(--line-soft);
+  color: var(--text-secondary);
+  background: rgba(var(--surface-rgb), 0.92);
+}
+
+.renameRow {
+  margin-top: 6px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.renameInput {
+  flex: 1;
+  min-width: 0;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 10px;
+  padding: 6px 8px;
+  font-size: 0.78rem;
+  background: rgba(var(--surface-rgb), 0.95);
+  color: var(--text-primary);
 }
 
 .chatPanel {
@@ -205,6 +247,7 @@
   flex-direction: column;
   gap: 12px;
   margin-bottom: 10px;
+  padding-bottom: 6px;
 }
 
 .message {
@@ -228,6 +271,7 @@
   border: var(--line-width) solid var(--line-soft);
   border-radius: 4px 14px 14px 14px;
   max-width: 82%;
+  padding-right: 34px;
 }
 
 .avatarIcon {
@@ -244,17 +288,82 @@
 }
 
 .messageContent {
+  position: relative;
   padding: 10px 12px;
   font-size: 0.86rem;
   line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.copyBtn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(var(--surface-rgb), 0.85);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.copyBtn:hover {
+  color: var(--text-primary);
 }
 
 .messageContent p {
   margin: 0 0 5px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .messageContent p:last-child {
   margin-bottom: 0;
+}
+
+.typingBubble {
+  min-width: 80px;
+  padding: 10px 12px;
+}
+
+.waveDots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.waveDots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(var(--accent-rgb), 0.65);
+  animation: waveBounce 1.15s infinite ease-in-out;
+}
+
+.waveDots span:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.waveDots span:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+@keyframes waveBounce {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.45;
+  }
+  40% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
 }
 
 .feedbackRow {
@@ -290,6 +399,12 @@
   font-size: 0.9rem;
   background: transparent;
   color: var(--text-primary);
+}
+
+.attachBtn {
+  min-width: 52px;
+  height: 34px;
+  padding: 0 10px;
 }
 
 .sendBtn {

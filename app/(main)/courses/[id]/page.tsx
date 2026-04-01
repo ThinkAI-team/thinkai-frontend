@@ -270,9 +270,16 @@ export default function CourseDetailPage() {
 
           <aside className={styles.sidebar}>
             <div className={styles.pricingCard}>
-              <div className={styles.videoPreview}>
-                <div className={styles.playButton}>▶</div>
-                <span>Thông tin khóa học</span>
+              <div 
+                className={styles.videoPreview}
+                style={course.thumbnailUrl ? { 
+                  backgroundImage: `url(${course.thumbnailUrl})`, 
+                  backgroundSize: 'cover', 
+                  backgroundPosition: 'center' 
+                } : {}}
+              >
+                {!course.thumbnailUrl && <div className={styles.playButton}>▶</div>}
+                {!course.thumbnailUrl && <span>Thông tin khóa học</span>}
               </div>
 
               <div className={styles.priceRow}>

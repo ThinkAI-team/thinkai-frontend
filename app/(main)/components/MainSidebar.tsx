@@ -92,7 +92,7 @@ export default function MainSidebar({ active }: MainSidebarProps) {
               Luyện thi
             </Link>
             <Link href="/ai-tutor" className={navClass(active, 'ai-tutor')} aria-current={active === 'ai-tutor' ? 'page' : undefined}>
-              Gia sư AI
+              Bò Trang
             </Link>
             <Link href="/my-courses" className={navClass(active, 'my-courses')} aria-current={active === 'my-courses' ? 'page' : undefined}>
               Khóa học của tôi
@@ -166,7 +166,7 @@ export default function MainSidebar({ active }: MainSidebarProps) {
           className={mobileNavClass('ai-tutor')}
           aria-current={active === 'ai-tutor' ? 'page' : undefined}
         >
-          Gia sư AI
+          Bò Trang
         </Link>
         <Link
           href="/profile"
