@@ -86,7 +86,7 @@ export default function MyCoursesPage() {
 
               <div className={styles.courseGrid}>
                 {courses.map((course) => (
-                  <Link href={`/courses/${course.id}`} key={course.id} className={styles.courseCard}>
+                  <Link href={`/my-courses/${course.id}`} key={course.id} className={styles.courseCard}>
                     <div className={styles.courseImage}>
                       <span className={styles.progressTag}>
                         {Math.round(course.progressPercent)}%

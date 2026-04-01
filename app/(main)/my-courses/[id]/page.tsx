@@ -11,9 +11,7 @@ import MainSidebar from '../../components/MainSidebar';
 import styles from './page.module.css';
 import {
   getCourseDetail,
-  getMyCourses,
   unenrollCourse,
-  enrollCourse,
   type CourseDetailResponse,
 } from '@/services/courses';
 import {
@@ -22,7 +20,7 @@ import {
   type CourseReview,
 } from '@/services/reviews';
 
-export default function CourseDetailPage() {
+export default function MyCourseDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const courseId = Number(params.id);
@@ -31,14 +29,12 @@ export default function CourseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [isEnrolled, setIsEnrolled] = useState(false);
   const [reviews, setReviews] = useState<CourseReview[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 5, reviewText: '' });
   const [reviewMessage, setReviewMessage] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
   const [unenrolling, setUnenrolling] = useState(false);
-  const [enrolling, setEnrolling] = useState(false);
 
   const loadCourseData = useCallback(async () => {
     if (!Number.isFinite(courseId)) {
@@ -51,15 +47,15 @@ export default function CourseDetailPage() {
     setLoadingReviews(true);
     setError('');
     try {
-      const [data, reviewData, myCourses] = await Promise.all([
+      const [data, reviewData] = await Promise.all([
         getCourseDetail(courseId),
         getCourseReviews(courseId).catch(() => [] as CourseReview[]),
-        getMyCourses().catch(() => []),
       ]);
+      if (!data.isEnrolled) {
+        router.replace('/my-courses');
+        return;
+      }
       setCourse(data);
-      setIsEnrolled(
-        Boolean(data.isEnrolled) || myCourses.some((myCourse) => myCourse.id === data.id)
-      );
       setReviews(reviewData);
     } catch (err: any) {
       setError(err.message || 'Không thể tải chi tiết khóa học.');
@@ -67,35 +63,11 @@ export default function CourseDetailPage() {
       setLoading(false);
       setLoadingReviews(false);
     }
-  }, [courseId]);
+  }, [courseId, router]);
 
   useEffect(() => {
     loadCourseData();
   }, [loadCourseData]);
-
-  const handleEnroll = async () => {
-    if (!course) return;
-    
-    const price = course.price;
-    const isFree = price === 0 || price === null || price === undefined;
-    
-    if (isFree) {
-      setEnrolling(true);
-      try {
-        await enrollCourse(course.id);
-        setIsEnrolled(true);
-        setMessage('Đăng ký khóa học miễn phí thành công!');
-        loadCourseData();
-      } catch (err: any) {
-        setMessage(err.message || 'Không thể đăng ký.');
-      } finally {
-        setEnrolling(false);
-      }
-      return;
-    }
-    
-    router.push(`/payment?courseId=${course.id}`);
-  };
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,7 +98,7 @@ export default function CourseDetailPage() {
   if (loading) {
     return (
       <div className={dashboardStyles.container}>
-        <MainSidebar active="courses" />
+        <MainSidebar active="my-courses" />
         <main className={`${dashboardStyles.main} ${styles.main}`}>
           <PageState
             type="loading"
@@ -141,7 +113,7 @@ export default function CourseDetailPage() {
   if (error || !course) {
     return (
       <div className={dashboardStyles.container}>
-        <MainSidebar active="courses" />
+        <MainSidebar active="my-courses" />
         <main className={`${dashboardStyles.main} ${styles.main}`}>
           <PageState
             type="error"
@@ -160,8 +132,7 @@ export default function CourseDetailPage() {
     try {
       await unenrollCourse(courseId);
       setMessage('Đã hủy đăng ký khóa học thành công.');
-      setIsEnrolled(false);
-      loadCourseData();
+      router.replace('/my-courses');
     } catch (err: any) {
       setMessage(err.message || 'Không thể hủy đăng ký.');
     } finally {
@@ -176,14 +147,14 @@ export default function CourseDetailPage() {
 
   return (
     <div className={dashboardStyles.container}>
-      <MainSidebar active="courses" />
+      <MainSidebar active="my-courses" />
       <main className={`${dashboardStyles.main} ${styles.main}`}>
         <div className={styles.container}>
           <div className={styles.content}>
             <nav className={styles.breadcrumb}>
               <Link href="/">Trang chủ</Link>
               <span>›</span>
-              <Link href="/courses">Khóa học</Link>
+              <Link href="/my-courses">Khóa học của tôi</Link>
               <span>›</span>
               <span>Chi tiết</span>
             </nav>
@@ -326,37 +297,25 @@ export default function CourseDetailPage() {
                     ? formatVnd(course.price)
                     : 'Đang cập nhật'}
                 </span>
-                {isEnrolled && <span className={styles.discount}>Đã đăng ký</span>}
+                <span className={styles.discount}>Đã đăng ký</span>
               </div>
 
-              {!isEnrolled ? (
+              <>
+                <Link href={`/learn/${firstLessonId}`}>
+                  <Button variant="primary" size="lg" className={styles.enrollBtn}>
+                    Vào học ngay
+                  </Button>
+                </Link>
                 <Button
-                  variant="primary"
+                  variant="secondary"
                   size="lg"
                   className={styles.enrollBtn}
-                  onClick={handleEnroll}
-                  disabled={enrolling}
+                  onClick={handleUnenroll}
+                  disabled={unenrolling}
                 >
-                  {enrolling ? 'Đang đăng ký...' : 'Đăng ký ngay'}
+                  {unenrolling ? 'Đang hủy...' : 'Hủy đăng ký'}
                 </Button>
-              ) : firstLessonId ? (
-                <>
-                  <Link href={`/learn/${firstLessonId}`}>
-                    <Button variant="primary" size="lg" className={styles.enrollBtn}>
-                      Vào học ngay
-                    </Button>
-                  </Link>
-                  <Button
-                    variant="secondary"
-                    size="lg"
-                    className={styles.enrollBtn}
-                    onClick={handleUnenroll}
-                    disabled={unenrolling}
-                  >
-                    {unenrolling ? 'Đang hủy...' : 'Hủy đăng ký'}
-                  </Button>
-                </>
-              ) : null}
+              </>
 
               {message && <p className={styles.guarantee}>{message}</p>}
 

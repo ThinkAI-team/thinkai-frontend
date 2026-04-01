@@ -81,6 +81,8 @@ export interface AdminCourseRequest {
   price: number;
   instructorId: number;
   thumbnailUrl?: string;
+  isPublished?: boolean;
+  status?: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
 }
 
 function buildAdminCoursesQuery(query: AdminCoursesQuery = {}): string {
