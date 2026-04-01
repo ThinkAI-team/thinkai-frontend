@@ -59,8 +59,8 @@
   position: absolute;
   right: 0;
   bottom: 72px;
-  width: min(360px, calc(100vw - 18px));
-  height: min(520px, calc(100vh - 110px));
+  width: min(420px, calc(100vw - 18px));
+  height: min(600px, calc(100vh - 110px));
   border-radius: 16px;
   border: var(--line-width) solid var(--line-soft);
   background: rgba(var(--surface-rgb), 0.96);

@@ -113,6 +113,69 @@ export async function enrollCourse(courseId: number): Promise<EnrollmentResponse
   return apiRequest<EnrollmentResponse>(`/courses/${courseId}/enroll`, { method: 'POST' });
 }
 
+export async function unenrollCourse(courseId: number): Promise<void> {
+  return apiRequest<void>(`/enrollments/${courseId}`, { method: 'DELETE' });
+}
+
 export async function getMyCourses(): Promise<MyCourseItem[]> {
   return apiRequest<MyCourseItem[]>('/users/me/courses');
+}
+
+export interface PaymentResponse {
+  id: number;
+  orderCode: number;
+  userId: number;
+  courseId: number;
+  amount: number;
+  status: string;
+  paymentLinkId?: string;
+  checkoutUrl?: string;
+  qrCode?: string;
+  description?: string;
+  completedAt?: string;
+  createdAt: string;
+}
+
+export async function createPaymentLink(courseId: number): Promise<PaymentResponse> {
+  return apiRequest<PaymentResponse>('/api/v1/payments/create', {
+    method: 'POST',
+    body: JSON.stringify({ courseId }),
+  } as RequestInit);
+}
+
+export async function getPaymentStatus(orderCode: number): Promise<PaymentResponse> {
+  return apiRequest<PaymentResponse>(`/api/v1/payments/${orderCode}`);
+}
+
+// ===================== REVIEWS =====================
+
+export interface ReviewResponse {
+  id: number;
+  courseId: number;
+  userId: number;
+  userName: string;
+  rating: number;
+  reviewText: string;
+  createdAt: string;
+}
+
+export interface ReviewsData {
+  reviews: ReviewResponse[];
+  averageRating: number;
+  totalReviews: number;
+}
+
+export async function getCourseReviews(courseId: number): Promise<ReviewsData> {
+  return apiRequest<ReviewsData>(`/courses/${courseId}/reviews`);
+}
+
+export async function createReview(courseId: number, rating: number, reviewText: string): Promise<ReviewResponse> {
+  return apiRequest<ReviewResponse>(`/courses/${courseId}/reviews`, {
+    method: 'POST',
+    body: JSON.stringify({ rating, reviewText }),
+  } as RequestInit);
+}
+
+export async function checkHasReviewed(courseId: number): Promise<{ hasReviewed: boolean }> {
+  return apiRequest<{ hasReviewed: boolean }>(`/courses/${courseId}/reviews/check`);
 }

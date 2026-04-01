@@ -147,6 +147,12 @@ export default function LearningRoomPage() {
           enablejsapi: 1,
         },
         events: {
+          onReady: (event: any) => {
+            const resumeTime = lessonRef.current?.currentTimeSeconds || 0;
+            if (resumeTime > 0) {
+              event.target.seekTo(resumeTime, true);
+            }
+          },
           onStateChange: (event: any) => {
             if (event.data === (window as any).YT.PlayerState.ENDED) {
               const btn = document.querySelector('[data-auto="true"]') as HTMLButtonElement;

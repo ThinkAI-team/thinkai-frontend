@@ -15,8 +15,15 @@ export interface CreateCourseReviewRequest {
   reviewText: string;
 }
 
+interface ReviewsApiResponse {
+  reviews: CourseReview[];
+  averageRating: number;
+  totalReviews: number;
+}
+
 export async function getCourseReviews(courseId: number): Promise<CourseReview[]> {
-  return apiRequest<CourseReview[]>(`/courses/${courseId}/reviews`);
+  const data = await apiRequest<ReviewsApiResponse>(`/courses/${courseId}/reviews`);
+  return data.reviews || [];
 }
 
 export async function createCourseReview(

@@ -54,6 +54,22 @@ export default function ExamResultPage() {
   const circumference = 2 * Math.PI * 60;
   const offset = circumference - (percentage / 100) * circumference;
 
+  const getOptionFullText = (label: string, options: string[]) => {
+    if (!label) return '';
+    if (!options || options.length === 0) return label;
+    
+    // Tìm option bắt đầu bằng label (ví dụ "A. " hoặc chỉ "A")
+    const found = options.find(opt => {
+      const trimmed = opt.trim();
+      return trimmed.startsWith(`${label}.`) || 
+             trimmed.startsWith(`${label}:`) ||
+             trimmed === label ||
+             trimmed.startsWith(label + ' ');
+    });
+    
+    return found || label;
+  };
+
   if (loading) {
     return (
       <div className={dashboardStyles.container}>
@@ -191,16 +207,17 @@ export default function ExamResultPage() {
                   </span>
                   <div className={styles.questionContent}>
                     <p className={styles.questionNumber}>Câu hỏi {idx + 1}</p>
+                    <p className={styles.questionText}>{q.content}</p>
                     <div className={`${styles.answerBox} ${q.isCorrect ? styles.correctBg : styles.wrongBg}`}>
                       {q.isCorrect ? (
-                        <p>Đáp án của bạn: {q.selectedOption}</p>
+                        <p>Đáp án của bạn: {getOptionFullText(q.selectedOption, q.options)}</p>
                       ) : (
                         <>
-                          <p className={styles.wrongAnswer}>Bạn chọn: {q.selectedOption}</p>
-                          <p className={styles.correctAnswer}>Đáp án đúng: {q.correctOption}</p>
+                          <p className={styles.wrongAnswer}>Bạn chọn: {q.selectedOption ? getOptionFullText(q.selectedOption, q.options) : 'Chưa trả lời'}</p>
+                          <p className={styles.correctAnswer}>Đáp án đúng: {getOptionFullText(q.correctOption, q.options)}</p>
                         </>
                       )}
-                      {q.explanation && <p>Giải thích: {q.explanation}</p>}
+                      {q.explanation && <p className={styles.explanation}>Giải thích: {q.explanation}</p>}
                     </div>
                   </div>
                 </div>

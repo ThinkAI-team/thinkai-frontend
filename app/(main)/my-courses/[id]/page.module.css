@@ -1,0 +1,400 @@
+.main {
+  width: 100%;
+  max-width: none !important;
+  padding: 24px 18px 30px;
+  min-height: 100vh;
+}
+
+.container {
+  display: flex;
+  gap: 12px;
+  max-width: 1220px;
+  margin: 0 auto;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.breadcrumb a {
+  color: var(--text-muted);
+}
+
+.header {
+  margin-bottom: 12px;
+  padding: 16px;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 18px;
+  background: rgba(var(--surface-rgb), 0.82);
+  box-shadow: var(--shadow-subtle);
+}
+
+.header h1 {
+  font-size: 1.86rem;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.58;
+  margin-bottom: 10px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meta span {
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  background: rgba(var(--surface-rgb), 0.86);
+}
+
+.section {
+  margin-bottom: 10px;
+  padding: 16px;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 18px;
+  background: rgba(var(--surface-rgb), 0.82);
+  box-shadow: var(--shadow-subtle);
+}
+
+.section h2 {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.curriculumMeta {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+
+.curriculum {
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(var(--surface-rgb), 0.9);
+}
+
+.curriculumSection {
+  border-bottom: var(--line-width) solid var(--line-soft);
+}
+
+.curriculumSection:last-child {
+  border-bottom: none;
+}
+
+.sectionTitle {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  font-size: 0.86rem;
+}
+
+.expandIcon {
+  min-width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.12);
+}
+
+.sectionMeta {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.instructor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 12px;
+  background: rgba(var(--surface-rgb), 0.9);
+}
+
+.instructorAvatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.12);
+}
+
+.instructorInfo h3 {
+  font-size: 0.95rem;
+  margin-bottom: 2px;
+}
+
+.instructorTitle {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.reviews {
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 12px;
+  background: rgba(var(--surface-rgb), 0.9);
+  padding: 12px;
+}
+
+.reviewSummary {
+  margin-bottom: 8px;
+}
+
+.reviewScore {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.scoreNumber {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stars {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 999px;
+  padding: 4px 8px;
+}
+
+.totalReviews {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.reviewForm {
+  border-top: var(--line-width) solid var(--line-soft);
+  margin-top: 8px;
+  padding-top: 10px;
+}
+
+.reviewInputs {
+  display: grid;
+  grid-template-columns: 110px 1fr 140px;
+  gap: 8px;
+}
+
+.reviewInputs select,
+.reviewInputs input {
+  border-radius: 10px;
+  border: var(--line-width) solid var(--line-soft);
+  padding: 8px 10px;
+  font-size: 0.82rem;
+}
+
+.reviewInputs input,
+.reviewInputs select {
+  background: rgba(var(--surface-rgb), 0.94);
+  color: var(--text-primary);
+}
+
+.reviewSubmitBtn {
+  font-size: 0.82rem;
+  padding: 8px 10px;
+}
+
+.reviewMessage {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.reviewList {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reviewItem {
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 10px;
+  padding: 10px;
+  background: rgba(var(--surface-rgb), 0.95);
+}
+
+.reviewItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 0.82rem;
+}
+
+.reviewItem p {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+
+.reviewItem small {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.sidebar {
+  width: 340px;
+  flex-shrink: 0;
+}
+
+.pricingCard {
+  position: sticky;
+  top: 20px;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 18px;
+  background: rgba(var(--surface-rgb), 0.84);
+  box-shadow: var(--shadow-subtle);
+  overflow: hidden;
+}
+
+.videoPreview {
+  height: 144px;
+  background: linear-gradient(150deg, rgba(var(--auth-overlay-rgb), 0.9) 0%, rgba(var(--auth-ink-rgb), 0.95) 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-inverse);
+  gap: 8px;
+  font-size: 0.84rem;
+}
+
+.playButton {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--surface-rgb), 0.38);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.86rem;
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px 8px;
+}
+
+.currentPrice {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.discount {
+  border: 1px solid rgba(var(--success-rgb), 0.32);
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  color: var(--success);
+  background: rgba(var(--success-soft-rgb), 0.24);
+  font-weight: 700;
+}
+
+.enrollBtn {
+  width: calc(100% - 28px);
+  margin: 0 14px 10px;
+}
+
+.guarantee {
+  margin: 0 14px 10px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.includes {
+  padding: 0 14px 14px;
+}
+
+.includes h4 {
+  font-size: 0.82rem;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+}
+
+.includes ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.includes li {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 1020px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+
+  .pricingCard {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .main {
+    padding: 14px 10px 22px;
+  }
+
+  .header h1 {
+    font-size: 1.48rem;
+  }
+
+  .reviewInputs {
+    grid-template-columns: 1fr;
+  }
+}

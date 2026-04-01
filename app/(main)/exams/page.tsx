@@ -145,12 +145,17 @@ export default function ExamsPage() {
             ) : (
               <ul className={styles.list}>
                 {history.slice(0, 8).map((item) => (
-                  <li key={item.attemptId} className={styles.historyItem}>
-                    <div>
-                      <h3>{item.examTitle}</h3>
-                      <small>{formatDateTimeVi(item.submittedAt)}</small>
-                    </div>
-                    <span className={styles.score}>{item.score}</span>
+                  <li key={item.attemptId}>
+                    <Link
+                      href={`/exams/${item.examId}/result?attemptId=${item.attemptId}`}
+                      className={styles.historyItem}
+                    >
+                      <div>
+                        <h3>{item.examTitle}</h3>
+                        <small>{formatDateTimeVi(item.submittedAt)}</small>
+                      </div>
+                      <span className={styles.score}>{item.score}</span>
+                    </Link>
                   </li>
                 ))}
               </ul>

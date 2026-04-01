@@ -40,6 +40,8 @@ const defaultCourseForm: AdminCourseRequest = {
   price: 0,
   instructorId: 0,
   thumbnailUrl: '',
+  isPublished: false,
+  status: 'DRAFT',
 };
 
 export default function AdminDashboardPage() {
@@ -169,6 +171,8 @@ export default function AdminDashboardPage() {
       price: course.price || 0,
       instructorId: course.instructorId || 0,
       thumbnailUrl: course.thumbnailUrl || '',
+      isPublished: course.isPublished ?? false,
+      status: course.status || 'DRAFT',
     });
   };
 
@@ -424,6 +428,32 @@ export default function AdminDashboardPage() {
                   />
                 </div>
 
+                <div className={styles.inputGridTwo}>
+                  <select
+                    className={`${styles.searchBar} ${styles.formInput}`}
+                    value={courseForm.status || 'DRAFT'}
+                    onChange={(e) =>
+                      setCourseForm((prev) => ({
+                        ...prev,
+                        status: e.target.value as 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED',
+                      }))
+                    }
+                  >
+                    <option value="DRAFT">Draft</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="REJECTED">Rejected</option>
+                  </select>
+                  <label className={styles.radioLabel}>
+                    <input
+                      type="checkbox"
+                      checked={courseForm.isPublished || false}
+                      onChange={(e) => setCourseForm((prev) => ({ ...prev, isPublished: e.target.checked }))}
+                    />
+                    Xuất bản
+                  </label>
+                </div>
+
                 <textarea
                   className={`${styles.searchBar} ${styles.formTextarea}`}
                   placeholder="Mô tả khóa học"
@@ -556,20 +586,36 @@ export default function AdminDashboardPage() {
                 <thead>
                   <tr>
                     <th>Time</th>
+                    <th>User ID</th>
+                    <th>Conversation</th>
                     <th>Agent</th>
                     <th>Action</th>
+                    <th>Message</th>
+                    <th>Result</th>
                     <th>Latency</th>
                     <th>Tokens</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {aiTraces.slice(0, 50).map((trace, idx) => (
+                  {aiTraces.slice(0, 100).map((trace, idx) => (
                     <tr key={idx}>
-                      <td>{trace.createdAt ? new Date(trace.createdAt).toLocaleString() : '-'}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>{trace.createdAt ? new Date(trace.createdAt).toLocaleString('vi-VN') : '-'}</td>
+                      <td>{trace.userId || '-'}</td>
+                      <td style={{ maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={trace.conversationId || ''}>{trace.conversationId ? trace.conversationId.substring(0, 8) + '...' : '-'}</td>
                       <td>{trace.agentType || '-'}</td>
-                      <td>{trace.action || '-'}</td>
+                      <td style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={trace.action || ''}>{trace.action || '-'}</td>
+                      <td style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={trace.message || ''}>{trace.message ? trace.message.substring(0, 30) + '...' : '-'}</td>
+                      <td style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={trace.result || ''}>{trace.result ? trace.result.substring(0, 30) + '...' : '-'}</td>
                       <td>{trace.latencyMs ? `${trace.latencyMs}ms` : '-'}</td>
                       <td>{trace.inputTokens || 0} / {trace.outputTokens || 0}</td>
+                      <td>
+                        {trace.requiresMoreInfo ? (
+                          <span style={{ color: '#f59e0b', fontSize: '0.75rem' }}>⏳ Cần thêm info</span>
+                        ) : (
+                          <span style={{ color: '#10b981', fontSize: '0.75rem' }}>✓ OK</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
