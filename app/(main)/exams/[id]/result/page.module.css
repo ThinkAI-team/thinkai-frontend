@@ -241,6 +241,14 @@
   margin-bottom: 4px;
 }
 
+.questionText {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
 .correctBg {
   background: rgba(var(--success-soft-rgb), 0.22);
   border-color: rgba(var(--success-rgb), 0.24);
@@ -253,10 +261,22 @@
 
 .wrongAnswer {
   color: var(--error);
+  font-weight: 500;
+  margin-bottom: 4px;
 }
 
 .correctAnswer {
   color: var(--success);
+  font-weight: 500;
+}
+
+.explanation {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line-soft);
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 0.85rem;
 }
 
 @media (max-width: 900px) {

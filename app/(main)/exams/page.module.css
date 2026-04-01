@@ -133,6 +133,20 @@
   border-radius: 12px;
   padding: 10px;
   background: rgba(var(--surface-rgb), 0.92);
+  text-decoration: none;
+  color: inherit;
+  transition: all var(--transition-fast);
+}
+
+.historyItem {
+  cursor: pointer;
+}
+
+.historyItem:hover {
+  border-color: var(--accent);
+  background: rgba(var(--surface-rgb), 1);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-subtle);
 }
 
 .item h3,
