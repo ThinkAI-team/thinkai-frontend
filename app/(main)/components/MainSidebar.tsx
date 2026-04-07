@@ -6,10 +6,11 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { logout } from '@/services/auth';
 import Button from '@/components/ui/Button';
+import NotificationBell from '@/components/notifications/NotificationBell';
 import dashboardStyles from '../dashboard/page.module.css';
 import styles from './MainSidebar.module.css';
 
-type SidebarKey = 'dashboard' | 'courses' | 'exams' | 'ai-tutor' | 'my-courses' | 'payment' | 'profile' | 'settings';
+type SidebarKey = 'dashboard' | 'courses' | 'exams' | 'ai-tutor' | 'my-courses' | 'cart' | 'payment' | 'profile' | 'settings';
 
 interface SidebarUser {
   fullName: string;
@@ -92,10 +93,13 @@ export default function MainSidebar({ active }: MainSidebarProps) {
               Luyện thi
             </Link>
             <Link href="/ai-tutor" className={navClass(active, 'ai-tutor')} aria-current={active === 'ai-tutor' ? 'page' : undefined}>
-              Bò Trang
+              BiliBily
             </Link>
             <Link href="/my-courses" className={navClass(active, 'my-courses')} aria-current={active === 'my-courses' ? 'page' : undefined}>
               Khóa học của tôi
+            </Link>
+            <Link href="/cart" className={navClass(active, 'cart')} aria-current={active === 'cart' ? 'page' : undefined}>
+              Giỏ hàng
             </Link>
             <Link href="/profile" className={navClass(active, 'profile')} aria-current={active === 'profile' ? 'page' : undefined}>
               Hồ sơ
@@ -106,6 +110,9 @@ export default function MainSidebar({ active }: MainSidebarProps) {
           </nav>
 
           <div className={styles.userSection}>
+            <div style={{ marginBottom: '8px' }}>
+              <NotificationBell />
+            </div>
             <Link href="/profile" className={`${dashboardStyles.userProfile} ${styles.profileLink}`}>
               <div className={dashboardStyles.avatar}>
                 {user?.avatarUrl ? (
@@ -166,7 +173,7 @@ export default function MainSidebar({ active }: MainSidebarProps) {
           className={mobileNavClass('ai-tutor')}
           aria-current={active === 'ai-tutor' ? 'page' : undefined}
         >
-          Bò Trang
+          BiliBily
         </Link>
         <Link
           href="/profile"
@@ -174,6 +181,13 @@ export default function MainSidebar({ active }: MainSidebarProps) {
           aria-current={active === 'profile' ? 'page' : undefined}
         >
           Hồ sơ
+        </Link>
+        <Link
+          href="/cart"
+          className={mobileNavClass('cart')}
+          aria-current={active === 'cart' ? 'page' : undefined}
+        >
+          Giỏ hàng
         </Link>
         <Link
           href="/settings"

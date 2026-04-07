@@ -425,6 +425,62 @@
   font-size: 0.8rem;
 }
 
+.harnessNoticeOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  background: rgba(var(--auth-overlay-rgb), 0.62);
+  backdrop-filter: blur(4px);
+}
+
+.harnessNoticeBox {
+  width: min(760px, calc(100vw - 44px));
+  border-radius: 24px;
+  border: var(--line-width) solid var(--line-soft);
+  background: linear-gradient(
+    160deg,
+    rgba(var(--surface-rgb), 0.985) 0%,
+    rgba(var(--surface-cool-rgb), 0.96) 100%
+  );
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.34);
+  padding: 26px 26px 22px;
+}
+
+.harnessNoticeBox h3 {
+  font-size: clamp(1.3rem, 1.6vw, 1.6rem);
+  margin: 6px 0 12px;
+}
+
+.harnessNoticeDesc {
+  color: var(--text-secondary);
+  line-height: 1.66;
+  font-size: 1.04rem;
+  margin-bottom: 18px;
+}
+
+.harnessNoticeBadge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
+  border-radius: 999px;
+  padding: 4px 11px;
+  font-size: 0.78rem;
+  color: var(--accent);
+  background: rgba(var(--accent-mist-rgb), 0.68);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.harnessNoticeActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
 @media (max-width: 1040px) {
   .utilityGrid,
   .chatLayout {
@@ -449,5 +505,23 @@
 
   .settingGrid {
     grid-template-columns: 1fr;
+  }
+
+  .harnessNoticeOverlay {
+    padding: 14px;
+  }
+
+  .harnessNoticeBox {
+    width: min(96vw, 96vw);
+    border-radius: 18px;
+    padding: 18px 16px;
+  }
+
+  .harnessNoticeDesc {
+    font-size: 0.94rem;
+  }
+
+  .harnessNoticeActions {
+    flex-direction: column-reverse;
   }
 }

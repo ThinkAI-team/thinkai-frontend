@@ -98,6 +98,8 @@ export interface AISettings {
   language: string;
   responseLength: string;
   communicationStyle?: string;
+  correctionMode?: string;
+  answerFormat?: string;
 }
 
 export interface SummarizeRequest {
@@ -145,6 +147,9 @@ export async function updateAISettings(payload: AISettings): Promise<AISettings>
     body: JSON.stringify({
       language: payload.language,
       responseLength: payload.responseLength,
+      communicationStyle: payload.communicationStyle,
+      correctionMode: payload.correctionMode,
+      answerFormat: payload.answerFormat,
     }),
   });
 }

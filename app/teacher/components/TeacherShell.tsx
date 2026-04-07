@@ -87,7 +87,7 @@ export default function TeacherShell({
               Bài thi
             </Link>
             <Link href="/ai-tutor" className={dashboardStyles.navItem}>
-              Bò Trang
+              BiliBily
             </Link>
             <Link href="/settings" className={dashboardStyles.navItem}>
               Cài đặt

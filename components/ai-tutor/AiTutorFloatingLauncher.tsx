@@ -11,6 +11,7 @@ import {
   cancelPendingAction,
   type AgentType
 } from '@/services/ai-tutor';
+import { getUseHarness, setUseHarness, sendChatMessageHarness, streamChatMessage, type ThinkingStep, type StreamStep } from '@/services/ai-harness';
 import styles from './AiTutorFloatingLauncher.module.css';
 
 const AGENT_NAMES: Record<AgentType, string> = {
@@ -30,6 +31,7 @@ interface FloatingMessage {
   content: string;
   actions?: AiTutorUiAction[];
   agentType?: AgentType;
+  thinkingSteps?: ThinkingStep[];
 }
 
 export default function AiTutorFloatingLauncher() {
@@ -47,7 +49,7 @@ export default function AiTutorFloatingLauncher() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: 'Xin chào, mình là Bò Trang. Bạn cần mình hỗ trợ học TOEIC/IELTS gì ngay lúc này?',
+      content: 'Xin chào, mình là BiliBily. Bạn cần mình hỗ trợ học TOEIC/IELTS gì ngay lúc này?',
     },
   ]);
   const [currentAgent, setCurrentAgent] = useState<string>('TUTOR');
@@ -59,6 +61,14 @@ export default function AiTutorFloatingLauncher() {
   const [processingAction, setProcessingAction] = useState(false);
   const [missingField, setMissingField] = useState<string | null>(null);
   const [fieldInputValue, setFieldInputValue] = useState('');
+  const [useHarness, setUseHarnessState] = useState(true);
+  const [showThinkingSteps, setShowThinkingSteps] = useState<{ [key: string]: boolean }>({});
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [liveThinkingSteps, setLiveThinkingSteps] = useState<ThinkingStep[]>([]);
+
+  useEffect(() => {
+    setUseHarnessState(getUseHarness());
+  }, []);
 
   useEffect(() => {
     const syncAuth = () => {
@@ -132,9 +142,16 @@ export default function AiTutorFloatingLauncher() {
       {
         id: `welcome-${Date.now()}`,
         role: 'assistant',
-        content: 'Mình đã tạo đoạn chat mới. Bạn muốn Bò Trang giúp gì tiếp theo?',
+        content: 'Mình đã tạo đoạn chat mới. Bạn muốn BiliBily giúp gì tiếp theo?',
       },
     ]);
+  };
+
+  const handleToggleHarness = () => {
+    const newValue = !useHarness;
+    setUseHarnessState(newValue);
+    setUseHarness(newValue);
+    setNotice(newValue ? 'Đã bật AI Harness (mới)' : 'Đã bật AI Tutor (cũ)');
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -148,56 +165,100 @@ export default function AiTutorFloatingLauncher() {
     setError('');
     setSending(true);
     setInputValue('');
+    setLiveThinkingSteps([]);
+    
+    const userMsgId = `user-${Date.now()}`;
+    const assistantMsgId = `assistant-${Date.now()}`;
+    
     setMessages((prev) => [
       ...prev,
       {
-        id: `user-${Date.now()}`,
+        id: userMsgId,
         role: 'user',
         content: message,
       },
     ]);
 
+    // Add placeholder for assistant message
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: assistantMsgId,
+        role: 'assistant',
+        content: '',
+        thinkingSteps: [],
+      },
+    ]);
+    
+    // Auto-show thinking section
+    setShowThinkingSteps(prev => ({ ...prev, [assistantMsgId]: true }));
+    setIsStreaming(true);
+
     try {
-      const response = await sendChatMessage({
-        message,
-        conversationId: conversationId ?? undefined,
-        context: conversationId ? `Follow-up in conversation ${conversationId}` : undefined,
-      });
-      console.log('>>> RESPONSE received:', response);
-      
-      if (response.conversationId) {
-        setConversationId(response.conversationId);
+      if (useHarness) {
+        // Use AI Harness - use REST API instead of stream for now
+        const response = await sendChatMessageHarness({
+          message,
+          conversationId: conversationId ?? undefined,
+        });
+        
+        setIsStreaming(false);
+        
+        if (response.conversationId) {
+          setConversationId(response.conversationId);
+        }
+        setCurrentAgent(response.agentType || 'LEARNING');
+        
+        // Update the assistant message with full content and thinking steps
+        setMessages((prev) => prev.map(msg => 
+          msg.id === assistantMsgId 
+            ? { ...msg, content: response.reply, thinkingSteps: response.thinkingSteps || [] }
+            : msg
+        ));
+      } else {
+        // Use AI Tutor (backup) - non-streaming
+        const response = await sendChatMessage({
+          message,
+          conversationId: conversationId ?? undefined,
+          context: conversationId ? `Follow-up in conversation ${conversationId}` : undefined,
+        });
+        
+        console.log('>>> RESPONSE received:', response);
+        
+        if (response.conversationId) {
+          setConversationId(response.conversationId);
+        }
+        
+        const agent = response.agentType || 'TUTOR';
+        setCurrentAgent(agent);
+        
+        // Handle needsMoreInfo - show form input (only for ai-tutor)
+        if ('needsMoreInfo' in response && response.needsMoreInfo && response.missingField) {
+          setMissingField(response.missingField);
+          setMessages((prev) => prev.map(msg => 
+            msg.id === assistantMsgId 
+              ? { ...msg, content: (response as any).reply }
+              : msg
+          ));
+          setSending(false);
+          return;
+        }
+        
+        setMissingField(null);
+        setFieldInputValue('');
+        
+        const reply = (response as any).reply || (response as any).content || '';
+        
+        setMessages((prev) => prev.map(msg => 
+          msg.id === assistantMsgId 
+            ? { 
+                ...msg, 
+                content: reply,
+                actions: (response as any).actions || [],
+              }
+            : msg
+        ));
       }
-      
-      const agent = response.agentType || 'TUTOR';
-      setCurrentAgent(agent);
-      
-      // Handle needsMoreInfo - show form input
-      if (response.needsMoreInfo && response.missingField) {
-        setMissingField(response.missingField);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `assistant-${Date.now()}`,
-            role: 'assistant',
-            content: response.reply,
-          },
-        ]);
-        return;
-      }
-      
-      setMissingField(null);
-      setFieldInputValue('');
-      
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: response.messageId ? `assistant-${response.messageId}` : `assistant-${Date.now()}`,
-          role: 'assistant',
-          content: response.reply,
-          actions: response.actions || [],
-        },
-      ]);
     } catch (error: any) {
       console.error('>>> ERROR in handleSubmit:', error);
       setError(error?.message || 'Không thể gửi tin nhắn.');
@@ -209,6 +270,7 @@ export default function AiTutorFloatingLauncher() {
           content: error?.message || 'Mình chưa trả lời được lúc này, bạn thử lại giúp mình nhé.',
         },
       ]);
+      setIsStreaming(false);
     } finally {
       setSending(false);
     }
@@ -265,7 +327,7 @@ export default function AiTutorFloatingLauncher() {
   const handleCopyReply = async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
-      setNotice('Đã copy câu trả lời của Bò Trang.');
+      setNotice('Đã copy câu trả lời của BiliBily.');
       setError('');
     } catch {
       setError('Không thể copy. Trình duyệt chưa cấp quyền clipboard.');
@@ -334,16 +396,32 @@ export default function AiTutorFloatingLauncher() {
   return (
     <div className={styles.wrapper}>
       {isOpen && (
-        <section className={styles.panel} aria-label="Bò Trang chat widget">
+        <section className={styles.panel} aria-label="BiliBily chat widget">
           <header className={styles.panelHeader}>
             <div className={styles.panelTitle}>
-              <strong>Bò Trang</strong>
+              <strong>BiliBily</strong>
               <span>Gia sư TOEIC/IELTS</span>
               <span className={styles.agentBadge} style={{display: 'inline-block'}}>
                 Agent: {currentAgent}
               </span>
             </div>
             <div className={styles.panelActions}>
+              <button 
+                type="button" 
+                className={styles.headerBtn} 
+                onClick={handleToggleHarness}
+                title={useHarness ? 'Đang dùng AI Harness (mới)' : 'Đang dùng AI Tutor (cũ)'}
+                style={{ 
+                  fontSize: '10px', 
+                  padding: '4px 8px',
+                  background: useHarness ? '#4CAF50' : '#bbb',
+                  color: useHarness ? 'white' : '#333',
+                  borderRadius: '4px',
+                  border: 'none',
+                }}
+              >
+                {useHarness ? 'Harness' : 'Tutor'}
+              </button>
               <button type="button" className={styles.headerBtn} onClick={handleCreateNewChat}>
                 Mới
               </button>
@@ -386,6 +464,44 @@ export default function AiTutorFloatingLauncher() {
                           {action.label || 'Thực hiện'}
                         </button>
                       ))}
+                    </div>
+                  )}
+                  
+                  {/* Thinking Steps Toggle */}
+                  {message.role === 'assistant' && (message.thinkingSteps || liveThinkingSteps) && (
+                    <div className={styles.thinkingSection}>
+                      <button 
+                        type="button"
+                        className={styles.thinkingToggle}
+                        onClick={() => setShowThinkingSteps(prev => ({ ...prev, [message.id]: !prev[message.id] }))}
+                      >
+                        {isStreaming ? (
+                          <span className={styles.streamingIndicator}>⚡ Đang xử lý...</span>
+                        ) : (
+                          showThinkingSteps[message.id] ? '▲ Ẩn quá trình xử lý' : '▼ Xem quá trình xử lý'
+                        )}
+                      </button>
+                      
+                      {(showThinkingSteps[message.id] || isStreaming) && (
+                        <div className={styles.thinkingBox}>
+                          <div className={styles.thinkingHeader}>
+                            {isStreaming ? 'Dang xu li...' : 'Qua trinh xu li'}
+                          </div>
+                          {(message.thinkingSteps || liveThinkingSteps).map((step, index) => (
+                            <div 
+                              key={index} 
+                              className={`${styles.thinkingStep} ${index === (message.thinkingSteps?.length || liveThinkingSteps.length) - 1 && isStreaming ? styles.thinkingStepNew : ''}`}
+                            >
+                              <span className={step.success ? styles.stepSuccess : styles.stepError}>
+                                {step.success ? '1' : '0'}
+                              </span>
+                              <span className={styles.stepName}>{step.step}</span>
+                              <span className={styles.stepDesc}>{step.description}</span>
+                              <span className={styles.stepLatency}>{step.latencyMs}ms</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -465,7 +581,7 @@ export default function AiTutorFloatingLauncher() {
             <input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Nhắn Bò Trang..."
+              placeholder="Nhắn BiliBily..."
               disabled={sending}
             />
             <button type="submit" className={styles.sendBtn} disabled={sending || !inputValue.trim()}>
@@ -479,8 +595,8 @@ export default function AiTutorFloatingLauncher() {
         type="button"
         className={`${styles.button} ${isOpen ? styles.buttonActive : ''}`}
         onClick={() => setIsOpen((prev) => !prev)}
-        aria-label={isOpen ? 'Thu gọn Bò Trang' : 'Mở Bò Trang'}
-        title={isOpen ? 'Thu gọn Bò Trang' : 'Mở Bò Trang'}
+        aria-label={isOpen ? 'Thu gọn BiliBily' : 'Mở BiliBily'}
+        title={isOpen ? 'Thu gọn BiliBily' : 'Mở BiliBily'}
       >
         <span className={styles.pulse} aria-hidden="true" />
         <span className={styles.label}>Bò</span>

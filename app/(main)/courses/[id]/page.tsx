@@ -14,6 +14,7 @@ import {
   getMyCourses,
   unenrollCourse,
   enrollCourse,
+  addToCart,
   type CourseDetailResponse,
 } from '@/services/courses';
 import {
@@ -39,6 +40,7 @@ export default function CourseDetailPage() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [unenrolling, setUnenrolling] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
 
   const loadCourseData = useCallback(async () => {
     if (!Number.isFinite(courseId)) {
@@ -95,6 +97,20 @@ export default function CourseDetailPage() {
     }
     
     router.push(`/payment?courseId=${course.id}`);
+  };
+
+  const handleAddToCart = async () => {
+    if (!course) return;
+    setAddingToCart(true);
+    try {
+      await addToCart(course.id);
+      setMessage('Đã thêm vào giỏ hàng!');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err: any) {
+      setMessage(err.message || 'Không thể thêm vào giỏ.');
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   const handleSubmitReview = async (e: React.FormEvent) => {
@@ -330,15 +346,26 @@ export default function CourseDetailPage() {
               </div>
 
               {!isEnrolled ? (
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className={styles.enrollBtn}
-                  onClick={handleEnroll}
-                  disabled={enrolling}
-                >
-                  {enrolling ? 'Đang đăng ký...' : 'Đăng ký ngay'}
-                </Button>
+                <>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className={styles.enrollBtn}
+                    onClick={handleEnroll}
+                    disabled={enrolling}
+                  >
+                    {enrolling ? 'Đang đăng ký...' : 'Đăng ký ngay'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className={styles.enrollBtn}
+                    onClick={handleAddToCart}
+                    disabled={addingToCart}
+                  >
+                    {addingToCart ? 'Đang thêm...' : 'Thêm vào giỏ'}
+                  </Button>
+                </>
               ) : firstLessonId ? (
                 <>
                   <Link href={`/learn/${firstLessonId}`}>

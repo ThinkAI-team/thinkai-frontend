@@ -19,7 +19,7 @@ export default function Home() {
                   Học tập sâu, tập trung và có định hướng mỗi ngày
                 </h1>
                 <p className={styles.heroSubtitle}>
-                  ThinkAI gom toàn bộ khóa học, bài thi và Bò Trang vào một luồng làm việc duy nhất.
+                  ThinkAI gom toàn bộ khóa học, bài thi và BiliBily vào một luồng làm việc duy nhất.
                   Tối ưu cho học viên lẫn giảng viên với giao diện nhẹ, rõ và ít nhiễu.
                 </p>
 
@@ -35,7 +35,7 @@ export default function Home() {
                 <div className={styles.heroMeta}>
                   <span>Hỗ trợ học 24/7</span>
                   <span>Luồng học tập liền mạch</span>
-                  <span>Tích hợp Bò Trang</span>
+                  <span>Tích hợp BiliBily</span>
                 </div>
               </div>
 
@@ -54,7 +54,7 @@ export default function Home() {
                     <span>Dashboard</span>
                     <span>Courses</span>
                     <span>Exams</span>
-                    <span>Bò Trang</span>
+                    <span>BiliBily</span>
                   </aside>
 
                   <div className={styles.panelMain}>
@@ -77,7 +77,7 @@ export default function Home() {
                     </div>
 
                     <Link href="/ai-tutor" className={styles.panelAction}>
-                      Mở Bò Trang
+                      Mở BiliBily
                     </Link>
                   </div>
                 </div>
@@ -105,7 +105,7 @@ export default function Home() {
                 <p>Tạo đề luyện tập đúng định dạng, có chấm điểm và phân tích kết quả.</p>
               </article>
               <article className={styles.featureCard}>
-                <h3>Bò Trang theo ngữ cảnh</h3>
+                <h3>BiliBily theo ngữ cảnh</h3>
                 <p>Hỏi đáp ngay trong luồng học, giữ nguyên ngữ cảnh khóa học hiện tại.</p>
               </article>
               <article className={styles.featureCard}>
