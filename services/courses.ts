@@ -179,3 +179,46 @@ export async function createReview(courseId: number, rating: number, reviewText:
 export async function checkHasReviewed(courseId: number): Promise<{ hasReviewed: boolean }> {
   return apiRequest<{ hasReviewed: boolean }>(`/courses/${courseId}/reviews/check`);
 }
+
+// ===================== CART =====================
+
+export interface CartItem {
+  id: number;
+  courseId: number;
+  courseTitle: string;
+  thumbnailUrl: string;
+  instructorName: string;
+  price: number;
+  addedAt: string;
+}
+
+export interface CartResponse {
+  id: number;
+  userId: number;
+  items: CartItem[];
+  totalItems: number;
+  totalAmount: number;
+}
+
+export async function getCart(): Promise<CartResponse> {
+  return apiRequest<CartResponse>('/api/v1/cart');
+}
+
+export async function addToCart(courseId: number): Promise<CartResponse> {
+  return apiRequest<CartResponse>('/api/v1/cart/items', {
+    method: 'POST',
+    body: JSON.stringify({ courseId }),
+  } as RequestInit);
+}
+
+export async function removeFromCart(courseId: number): Promise<CartResponse> {
+  return apiRequest<CartResponse>(`/api/v1/cart/items/${courseId}`, {
+    method: 'DELETE',
+  } as RequestInit);
+}
+
+export async function clearCart(): Promise<void> {
+  return apiRequest<void>('/api/v1/cart', {
+    method: 'DELETE',
+  } as RequestInit);
+}

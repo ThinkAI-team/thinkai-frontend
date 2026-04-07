@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import styles from './Navbar.module.css';
 import Button from '../ui/Button';
 import { logout } from '@/services/auth';
+import NotificationBell from '@/components/notifications/NotificationBell';
 
 export default function Navbar() {
   const router = useRouter();
@@ -75,13 +76,14 @@ export default function Navbar() {
         <ul className={styles.navLinks}>
           <li><Link href="/courses">Khóa học</Link></li>
           <li><Link href="/exams">Luyện thi</Link></li>
-          <li><Link href="/ai-tutor">Bò Trang</Link></li>
+          <li><Link href="/ai-tutor">BiliBily</Link></li>
           <li><Link href="/payment">Bảng giá</Link></li>
         </ul>
 
         {/* Auth Section */}
         {user ? (
           <div className={styles.userSection} ref={dropdownRef}>
+            <NotificationBell />
             <Button
               variant="secondary"
               size="sm"

@@ -14,7 +14,7 @@ export default function Footer() {
             </div>
             <p className={styles.tagline}>
               Nền tảng học Tiếng Anh thông minh.<br/>
-              Luyện thi TOEIC/IELTS với Bò Trang 24/7.
+              Luyện thi TOEIC/IELTS với BiliBily 24/7.
             </p>
           </div>
 
@@ -25,7 +25,7 @@ export default function Footer() {
               <ul>
                 <li><Link href="/courses">Khóa học</Link></li>
                 <li><Link href="/exams">Luyện thi</Link></li>
-                <li><Link href="/ai-tutor">Bò Trang</Link></li>
+                <li><Link href="/ai-tutor">BiliBily</Link></li>
               </ul>
             </div>
             <div className={styles.linkColumn}>

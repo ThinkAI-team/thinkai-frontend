@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import PageState from '@/components/ui/PageState';
 import dashboardStyles from '../dashboard/page.module.css';
@@ -24,7 +25,7 @@ type MessageType = 'success' | 'error' | '';
 
 const tabs: Array<{ id: SettingsTab; label: string }> = [
   { id: 'profile', label: 'Hồ sơ' },
-  { id: 'ai', label: 'Bò Trang' },
+  { id: 'ai', label: 'BiliBily' },
   { id: 'notifications', label: 'Thông báo' },
   { id: 'security', label: 'Bảo mật' },
   { id: 'subscription', label: 'Gói đăng ký' },
@@ -37,6 +38,8 @@ const defaultAISettings: AISettings = {
 };
 
 export default function SettingsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [darkMode, setDarkMode] = useState(true);
 
@@ -106,6 +109,15 @@ export default function SettingsPage() {
     fetchData();
   }, [fetchData]);
 
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (!tab) return;
+    const supportedTabs: SettingsTab[] = ['profile', 'ai', 'notifications', 'security', 'subscription'];
+    if (supportedTabs.includes(tab as SettingsTab)) {
+      setActiveTab(tab as SettingsTab);
+    }
+  }, [searchParams]);
+
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setGlobalMessage({ text: '', type: '' });
@@ -151,9 +163,9 @@ export default function SettingsPage() {
     setSavingAISettings(true);
     try {
       await updateAISettings(aiSettings);
-      setGlobalMessage({ text: 'Đã cập nhật cài đặt Bò Trang thành công', type: 'success' });
+      setGlobalMessage({ text: 'Đã cập nhật cài đặt BiliBily thành công', type: 'success' });
     } catch (err: any) {
-      setGlobalMessage({ text: err.message || 'Lỗi cập nhật cài đặt Bò Trang', type: 'error' });
+      setGlobalMessage({ text: err.message || 'Lỗi cập nhật cài đặt BiliBily', type: 'error' });
     } finally {
       setSavingAISettings(false);
     }
@@ -171,7 +183,7 @@ export default function SettingsPage() {
           <PageState
             type="loading"
             title="Đang tải cài đặt"
-            message="Hệ thống đang đồng bộ hồ sơ, bảo mật và cấu hình Bò Trang."
+            message="Hệ thống đang đồng bộ hồ sơ, bảo mật và cấu hình BiliBily."
           />
         </main>
       </div>
@@ -382,7 +394,7 @@ export default function SettingsPage() {
               {activeTab === 'ai' && (
                 <div id="settings-panel-ai" role="tabpanel" aria-labelledby="settings-tab-ai">
                   <section className={styles.section}>
-                    <h2>Cấu hình Bò Trang</h2>
+                    <h2>Cấu hình BiliBily</h2>
                     <form onSubmit={handleAISettingsUpdate}>
                       <div className={styles.formRow}>
                         <div className={styles.formGroup}>
@@ -522,7 +534,9 @@ export default function SettingsPage() {
                         <span className={styles.planName}>Gói Miễn Phí</span>
                         <p>Truy cập giới hạn các khóa học và tính năng cơ bản</p>
                       </div>
-                      <Button variant="primary">Nâng cấp Premium</Button>
+                      <Button variant="primary" onClick={() => router.push('/subscription')}>
+                        Nâng cấp Premium
+                      </Button>
                     </div>
                   </section>
                 </div>

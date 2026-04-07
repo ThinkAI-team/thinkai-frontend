@@ -21,16 +21,22 @@ export default function PaymentPage() {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   useEffect(() => {
-    if (!courseIdParam) return;
+    if (!courseIdParam) {
+      router.replace('/cart');
+      return;
+    }
     const courseId = Number(courseIdParam);
-    if (!Number.isFinite(courseId)) return;
+    if (!Number.isFinite(courseId)) {
+      router.replace('/cart');
+      return;
+    }
 
     setLoadingCourse(true);
     getCourseDetail(courseId)
       .then(setCourse)
       .catch(() => setCourse(null))
       .finally(() => setLoadingCourse(false));
-  }, [courseIdParam]);
+  }, [courseIdParam, router]);
 
   const orderName = course?.title || 'Khóa học ThinkAI';
   const orderPrice = course && typeof course.price === 'number' ? course.price : 0;
@@ -194,6 +200,16 @@ export default function PaymentPage() {
                 </div>
               </>
             )}
+
+            <Button
+              variant="secondary"
+              size="lg"
+              className={styles.payBtn}
+              onClick={() => router.push('/cart')}
+              style={{ marginBottom: '12px' }}
+            >
+              ← Quay lại giỏ hàng
+            </Button>
 
             <Button
               variant="primary"

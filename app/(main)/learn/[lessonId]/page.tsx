@@ -10,6 +10,7 @@ import {
   completeLesson,
   getLearningRoomLayout,
   getLessonDetail,
+  markPdfOpened,
   updateVideoProgress,
   type LearningRoomLayout,
   type LessonDetail,
@@ -70,6 +71,7 @@ export default function LearningRoomPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const videoIdRef = useRef<string | null>(null);
   const hasAutoCompleted = useRef(false);
+  const hasPdfMarked = useRef(false);
   const lessonRef = useRef(lesson);
   lessonRef.current = lesson;
 
@@ -234,6 +236,50 @@ export default function LearningRoomPage() {
     // YouTube resume handled in YT.Player onReady
   }, [lesson?.id, lesson?.currentTimeSeconds]);
 
+  // === PDF Auto-Complete: đánh dấu hoàn thành khi mở bài PDF ===
+  useEffect(() => {
+    if (!lesson || lesson.type !== 'PDF') return;
+    if (lesson.isCompleted) return;
+    if (hasPdfMarked.current) return;
+    hasPdfMarked.current = true;
+
+    markPdfOpened(lesson.id)
+      .then((res) => {
+        if (res.isCompleted) {
+          setLesson((prev) => prev ? { ...prev, isCompleted: true } : prev);
+          setCourseProgress(res.courseProgressPercent);
+          setMessage('Đã mở tài liệu PDF. Bài học hoàn thành!');
+        }
+      })
+      .catch(() => {}); // silent fail
+  }, [lesson?.id, lesson?.type, lesson?.isCompleted]);
+
+  // === Video Fallback: gửi progress lần cuối khi đóng tab ===
+  useEffect(() => {
+    if (!lesson || lesson.type !== 'VIDEO') return;
+
+    const handleBeforeUnload = () => {
+      let currentTime = 0;
+      if (isYouTubeUrl(lesson.contentUrl || '')) {
+        if (playerRef.current?.getCurrentTime) {
+          currentTime = Math.floor(playerRef.current.getCurrentTime());
+        }
+      } else if (videoRef.current) {
+        currentTime = Math.floor(videoRef.current.currentTime);
+      }
+      if (currentTime > 0) {
+        const payload = JSON.stringify({ watchTimeSeconds: currentTime, currentTimeSeconds: currentTime });
+        navigator.sendBeacon(
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081'}/courses/lessons/${lesson.id}/progress`,
+          new Blob([payload], { type: 'application/json' })
+        );
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [lesson?.id, lesson?.type, lesson?.contentUrl]);
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -271,7 +317,7 @@ export default function LearningRoomPage() {
         <nav className={styles.nav}>
           <Link href="/courses" className={styles.navActive}>Khóa học</Link>
           <Link href="/exams">Bài thi</Link>
-          <Link href="/ai-tutor">Bò Trang</Link>
+          <Link href="/ai-tutor">BiliBily</Link>
         </nav>
 
         <div className={styles.headerRight}>
@@ -402,7 +448,7 @@ export default function LearningRoomPage() {
           <Link href="/ai-tutor" className={styles.aiTutorBtn}>
             <span className={styles.aiIcon}>AI</span>
             <div>
-              <span className={styles.aiLabel}>Hỏi Bò Trang</span>
+              <span className={styles.aiLabel}>Hỏi BiliBily</span>
               <span className={styles.aiStatus}>ONLINE</span>
             </div>
           </Link>

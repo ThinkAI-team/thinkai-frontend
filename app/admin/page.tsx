@@ -7,6 +7,7 @@ import PageState from '@/components/ui/PageState';
 import Button from '@/components/ui/Button';
 import { formatVnd } from '@/lib/utils/format';
 import {
+  blockAdminCourse,
   createAdminCourse,
   deleteAdminCourse,
   getAdminCourses,
@@ -22,15 +23,22 @@ import {
   getAiTraces,
   getAiStats,
   type AiTraceMetric,
+  getAdminAiRuntimeSettings,
+  getAdminAuditLogs,
+  updateAdminAiRuntimeSettings,
+  type AdminAuditLog,
+  type AdminAiRuntimeSettings,
 } from '@/services/admin';
 
-type TabId = 'overview' | 'users' | 'courses' | 'prompts' | 'ai-traces';
+type TabId = 'overview' | 'users' | 'courses' | 'prompts' | 'ai-traces' | 'ai-runtime' | 'audit-logs';
 
 const sidebarItems: Array<{ id: TabId; label: string }> = [
   { id: 'overview', label: 'Tổng quan' },
   { id: 'users', label: 'Người dùng' },
   { id: 'courses', label: 'Khóa học' },
   { id: 'ai-traces', label: 'AI Traces' },
+  { id: 'ai-runtime', label: 'AI Runtime' },
+  { id: 'audit-logs', label: 'Audit Logs' },
   { id: 'prompts', label: 'AI Prompts' },
 ];
 
@@ -69,6 +77,16 @@ export default function AdminDashboardPage() {
     totalOutputTokens: number;
     agentUsage: Record<string, number>;
   } | null>(null);
+  const [aiRuntimeForm, setAiRuntimeForm] = useState<AdminAiRuntimeSettings>({
+    tutorEnabled: true,
+    harnessEnabled: true,
+    tutorModel: '',
+    tutorFallbackModel: '',
+    harnessModels: [],
+    blockedModels: [],
+  });
+  const [savingAiRuntime, setSavingAiRuntime] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
 
   const fetchOverview = useCallback(async () => {
     const dashboardData = await getAdminDashboard();
@@ -99,6 +117,21 @@ export default function AdminDashboardPage() {
         ]);
         setAiTraces(tracesData);
         setAiStats(statsData);
+      }
+      if (tab === 'ai-runtime') {
+        const runtimeSettings = await getAdminAiRuntimeSettings();
+        setAiRuntimeForm({
+          tutorEnabled: runtimeSettings.tutorEnabled,
+          harnessEnabled: runtimeSettings.harnessEnabled,
+          tutorModel: runtimeSettings.tutorModel || '',
+          tutorFallbackModel: runtimeSettings.tutorFallbackModel || '',
+          harnessModels: runtimeSettings.harnessModels || [],
+          blockedModels: runtimeSettings.blockedModels || [],
+        });
+      }
+      if (tab === 'audit-logs') {
+        const logsData = await getAdminAuditLogs({ page: 0, size: 50 });
+        setAuditLogs(logsData.content || []);
       }
       if (tab === 'prompts') {
         // API docs chỉ có PUT, nên giữ form rỗng để admin chủ động nhập mới.
@@ -187,6 +220,28 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleToggleBlockCourse = async (course: AdminCourse) => {
+    try {
+      const currentlyBlocked = course.status === 'BLOCKED';
+      const result = await blockAdminCourse(
+        course.id,
+        !currentlyBlocked,
+        currentlyBlocked ? 'PENDING' : undefined
+      );
+      setCourses((prev) =>
+        prev.map((item) =>
+          item.id === course.id
+            ? { ...item, status: result.status as AdminCourse['status'], isPublished: result.isPublished }
+            : item
+        )
+      );
+      setNotice(currentlyBlocked ? 'Đã mở khóa khóa học.' : 'Đã khóa khóa học.');
+      setError('');
+    } catch (err: any) {
+      setError(err.message || 'Không thể cập nhật trạng thái block khóa học.');
+    }
+  };
+
   const handleSavePrompts = async (e: FormEvent) => {
     e.preventDefault();
     if (!aiPromptForm.tutorSystemPrompt.trim() || !aiPromptForm.examGeneratorPrompt.trim()) {
@@ -204,6 +259,43 @@ export default function AdminDashboardPage() {
       setError(err.message || 'Không thể cập nhật AI prompts.');
     } finally {
       setSavingPrompts(false);
+    }
+  };
+
+  const parseModelText = (raw: string): string[] =>
+    raw
+      .split(/\r?\n|,/g)
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+  const handleSaveAiRuntime = async (e: FormEvent) => {
+    e.preventDefault();
+    setSavingAiRuntime(true);
+    setError('');
+    setNotice('');
+    try {
+      const payload: AdminAiRuntimeSettings = {
+        tutorEnabled: aiRuntimeForm.tutorEnabled,
+        harnessEnabled: aiRuntimeForm.harnessEnabled,
+        tutorModel: aiRuntimeForm.tutorModel?.trim() || null,
+        tutorFallbackModel: aiRuntimeForm.tutorFallbackModel?.trim() || null,
+        harnessModels: parseModelText((aiRuntimeForm.harnessModels || []).join('\n')),
+        blockedModels: parseModelText((aiRuntimeForm.blockedModels || []).join('\n')),
+      };
+      const updated = await updateAdminAiRuntimeSettings(payload);
+      setAiRuntimeForm({
+        tutorEnabled: updated.tutorEnabled,
+        harnessEnabled: updated.harnessEnabled,
+        tutorModel: updated.tutorModel || '',
+        tutorFallbackModel: updated.tutorFallbackModel || '',
+        harnessModels: updated.harnessModels || [],
+        blockedModels: updated.blockedModels || [],
+      });
+      setNotice('Đã cập nhật AI runtime settings.');
+    } catch (err: any) {
+      setError(err.message || 'Không thể cập nhật AI runtime settings.');
+    } finally {
+      setSavingAiRuntime(false);
     }
   };
 
@@ -435,7 +527,7 @@ export default function AdminDashboardPage() {
                     onChange={(e) =>
                       setCourseForm((prev) => ({
                         ...prev,
-                        status: e.target.value as 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED',
+                        status: e.target.value as 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'BLOCKED',
                       }))
                     }
                   >
@@ -443,6 +535,7 @@ export default function AdminDashboardPage() {
                     <option value="PENDING">Pending</option>
                     <option value="APPROVED">Approved</option>
                     <option value="REJECTED">Rejected</option>
+                    <option value="BLOCKED">Blocked</option>
                   </select>
                   <label className={styles.radioLabel}>
                     <input
@@ -519,6 +612,15 @@ export default function AdminDashboardPage() {
                             onClick={() => handleEditCourse(course)}
                           >
                             Sửa
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            type="button"
+                            className={styles.tableActionBtn}
+                            onClick={() => handleToggleBlockCourse(course)}
+                          >
+                            {course.status === 'BLOCKED' ? 'Mở khóa' : 'Block'}
                           </Button>
                           <Button
                             variant="secondary"
@@ -615,6 +717,142 @@ export default function AdminDashboardPage() {
                         ) : (
                           <span style={{ color: '#10b981', fontSize: '0.75rem' }}>✓ OK</span>
                         )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </section>
+        )}
+
+        {!loading && activeTab === 'ai-runtime' && (
+          <section
+            id="admin-panel-ai-runtime"
+            role="tabpanel"
+            aria-labelledby="admin-tab-ai-runtime"
+            className={styles.tableSection}
+          >
+            <div className={styles.tableHeader}>
+              <h3>Cấu hình AI Runtime</h3>
+            </div>
+            <form onSubmit={handleSaveAiRuntime}>
+              <div className={styles.inputGridTwo}>
+                <label className={styles.radioLabel}>
+                  <input
+                    type="checkbox"
+                    checked={aiRuntimeForm.tutorEnabled}
+                    onChange={(e) =>
+                      setAiRuntimeForm((prev) => ({ ...prev, tutorEnabled: e.target.checked }))
+                    }
+                  />
+                  Bật AI Tutor
+                </label>
+                <label className={styles.radioLabel}>
+                  <input
+                    type="checkbox"
+                    checked={aiRuntimeForm.harnessEnabled}
+                    onChange={(e) =>
+                      setAiRuntimeForm((prev) => ({ ...prev, harnessEnabled: e.target.checked }))
+                    }
+                  />
+                  Bật AI Harness
+                </label>
+              </div>
+
+              <div className={styles.inputGridTwo}>
+                <input
+                  className={`${styles.searchBar} ${styles.formInput}`}
+                  placeholder="Tutor primary model (vd: qwen/qwen3.6-plus:free)"
+                  value={aiRuntimeForm.tutorModel || ''}
+                  onChange={(e) => setAiRuntimeForm((prev) => ({ ...prev, tutorModel: e.target.value }))}
+                />
+                <input
+                  className={`${styles.searchBar} ${styles.formInput}`}
+                  placeholder="Tutor fallback model"
+                  value={aiRuntimeForm.tutorFallbackModel || ''}
+                  onChange={(e) =>
+                    setAiRuntimeForm((prev) => ({ ...prev, tutorFallbackModel: e.target.value }))
+                  }
+                />
+              </div>
+
+              <textarea
+                className={`${styles.searchBar} ${styles.promptTextarea}`}
+                placeholder="Harness model pool (mỗi dòng 1 model hoặc phân tách bằng dấu phẩy)"
+                value={(aiRuntimeForm.harnessModels || []).join('\n')}
+                onChange={(e) =>
+                  setAiRuntimeForm((prev) => ({
+                    ...prev,
+                    harnessModels: parseModelText(e.target.value),
+                  }))
+                }
+              />
+
+              <textarea
+                className={`${styles.searchBar} ${styles.promptTextarea}`}
+                placeholder="Blocked models (mỗi dòng 1 model hoặc phân tách bằng dấu phẩy)"
+                value={(aiRuntimeForm.blockedModels || []).join('\n')}
+                onChange={(e) =>
+                  setAiRuntimeForm((prev) => ({
+                    ...prev,
+                    blockedModels: parseModelText(e.target.value),
+                  }))
+                }
+              />
+
+              <Button
+                variant="primary"
+                size="sm"
+                className={styles.downloadBtn}
+                type="submit"
+                disabled={savingAiRuntime}
+              >
+                {savingAiRuntime ? 'Đang lưu...' : 'Lưu AI runtime'}
+              </Button>
+            </form>
+          </section>
+        )}
+
+        {!loading && activeTab === 'audit-logs' && (
+          <section
+            id="admin-panel-audit-logs"
+            role="tabpanel"
+            aria-labelledby="admin-tab-audit-logs"
+            className={styles.tableSection}
+          >
+            <div className={styles.tableHeader}>
+              <h3>Admin Audit Logs</h3>
+            </div>
+            {auditLogs.length === 0 ? (
+              <PageState type="empty" message="Chưa có audit logs." />
+            ) : (
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Actor</th>
+                    <th>Action</th>
+                    <th>Resource</th>
+                    <th>Key</th>
+                    <th>Diff</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {auditLogs.map((log) => (
+                    <tr key={log.id}>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        {log.createdAt ? new Date(log.createdAt).toLocaleString('vi-VN') : '-'}
+                      </td>
+                      <td>{log.actor || '-'}</td>
+                      <td>{log.action || '-'}</td>
+                      <td>{log.resourceType || '-'}</td>
+                      <td>{log.resourceKey || '-'}</td>
+                      <td
+                        style={{ maxWidth: '420px', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                        title={log.diffSummary || ''}
+                      >
+                        {log.diffSummary || '-'}
                       </td>
                     </tr>
                   ))}

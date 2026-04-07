@@ -56,7 +56,7 @@ export default function MyCourseDetailPage() {
         return;
       }
       setCourse(data);
-      setReviews(reviewData);
+      setReviews(Array.isArray(reviewData) ? reviewData : []);
     } catch (err: any) {
       setError(err.message || 'Không thể tải chi tiết khóa học.');
     } finally {
@@ -179,7 +179,7 @@ export default function MyCourseDetailPage() {
               </div>
 
               <div className={styles.curriculum}>
-                {course.lessons.map((lesson) => (
+                {(course.lessons || []).map((lesson) => (
                   <div key={lesson.id} className={styles.curriculumSection}>
                     <div className={styles.sectionTitle}>
                       <span className={styles.expandIcon}>{lesson.isCompleted ? '✓' : '○'}</span>

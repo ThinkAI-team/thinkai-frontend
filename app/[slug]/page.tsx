@@ -71,7 +71,7 @@ const STATIC_PAGES: Record<string, InfoPage> = {
       },
     ],
     cards: [
-      { title: 'Student Workspace', description: 'Học khóa học, làm bài thi, hỏi Bò Trang trong một luồng duy nhất.' },
+      { title: 'Student Workspace', description: 'Học khóa học, làm bài thi, hỏi BiliBily trong một luồng duy nhất.' },
       { title: 'Teacher Workspace', description: 'Quản lý khóa học, bài thi và question bank với dashboard riêng.' },
       { title: 'Admin Control', description: 'Giám sát người dùng, khóa học và AI prompt từ một trung tâm quản trị.' },
     ],
@@ -117,7 +117,7 @@ const STATIC_PAGES: Record<string, InfoPage> = {
         meta: 'Sắp phát hành',
       },
       {
-        title: 'Tối ưu việc dùng Bò Trang',
+        title: 'Tối ưu việc dùng BiliBily',
         description: 'Framework đặt câu hỏi để nhận phản hồi ngắn, chính xác và dễ áp dụng ngay.',
         meta: 'Sắp phát hành',
       },
@@ -133,7 +133,7 @@ const STATIC_PAGES: Record<string, InfoPage> = {
       { label: 'Điều khoản sử dụng', href: '/terms' },
     ],
     primaryAction: { label: 'Vào dashboard', href: '/dashboard' },
-    secondaryAction: { label: 'Mở Bò Trang', href: '/ai-tutor' },
+    secondaryAction: { label: 'Mở BiliBily', href: '/ai-tutor' },
   },
   contact: {
     title: 'Liên hệ',
@@ -190,7 +190,7 @@ const STATIC_PAGES: Record<string, InfoPage> = {
   faq: {
     title: 'Câu hỏi thường gặp',
     summary:
-      'Các vấn đề phổ biến nhất khi đăng ký, truy cập dashboard, quản lý khóa học và sử dụng Bò Trang.',
+      'Các vấn đề phổ biến nhất khi đăng ký, truy cập dashboard, quản lý khóa học và sử dụng BiliBily.',
     tag: 'FAQ',
     updatedAt: 'Cập nhật: 22/03/2026',
     keyPoints: [
@@ -219,7 +219,7 @@ const STATIC_PAGES: Record<string, InfoPage> = {
           'Khóa học cần được publish và học viên phải có quyền truy cập phù hợp. Sau khi publish, nên refresh danh sách khóa học để đồng bộ dữ liệu mới.',
       },
       {
-        question: 'Bò Trang có lưu lịch sử hội thoại không?',
+        question: 'BiliBily có lưu lịch sử hội thoại không?',
         answer:
           'Hệ thống hỗ trợ lưu lịch sử theo tài khoản để theo dõi tiến trình hỏi đáp. Chính sách lưu trữ và quyền truy cập được nêu trong trang Privacy.',
       },
@@ -269,7 +269,7 @@ const STATIC_PAGES: Record<string, InfoPage> = {
       {
         title: 'Mục đích xử lý dữ liệu',
         body: [
-          'Dữ liệu được dùng để xác thực người dùng, cá nhân hóa nội dung học, cải thiện chất lượng phản hồi Bò Trang và đảm bảo ổn định hệ thống.',
+          'Dữ liệu được dùng để xác thực người dùng, cá nhân hóa nội dung học, cải thiện chất lượng phản hồi BiliBily và đảm bảo ổn định hệ thống.',
           'Chúng tôi không sử dụng dữ liệu người dùng cho các mục đích ngoài phạm vi vận hành sản phẩm nếu chưa có sự đồng ý rõ ràng.',
         ],
       },
