@@ -1,4 +1,4 @@
-import { apiRequest, normalizeMediaUrl } from './api';
+import { ApiException, apiRequest, normalizeMediaUrl } from './api';
 
 export interface CourseListQuery {
   page?: number;
@@ -121,7 +121,15 @@ export async function enrollCourse(courseId: number): Promise<EnrollmentResponse
 }
 
 export async function unenrollCourse(courseId: number): Promise<void> {
-  return apiRequest<void>(`/enrollments/${courseId}`, { method: 'DELETE' });
+  await requestCartWithFallback<void>(
+    [
+      `/enrollments/${courseId}`,
+      `/api/enrollments/${courseId}`,
+      `/courses/${courseId}/enroll`,
+      `/api/courses/${courseId}/enroll`,
+    ],
+    { method: 'DELETE' }
+  );
 }
 
 export async function getMyCourses(): Promise<MyCourseItem[]> {
@@ -211,11 +219,18 @@ export interface CartResponse {
   totalAmount: number;
 }
 
-export async function getCart(): Promise<CartResponse> {
-  const payload = await apiRequest<CartResponse>('/api/v1/cart', {
-    method: 'GET',
-    cache: 'no-store',
-  });
+function shouldFallbackEndpoint(error: unknown): boolean {
+  if (!(error instanceof ApiException)) return false;
+  const message = (error.message || '').toLowerCase();
+  return (
+    error.status === 404 ||
+    error.status === 405 ||
+    message.includes('no static resource') ||
+    message.includes('method') && message.includes('not supported')
+  );
+}
+
+function normalizeCart(payload: CartResponse): CartResponse {
   return {
     ...payload,
     items: (payload.items || []).map((item) => ({
@@ -223,37 +238,68 @@ export async function getCart(): Promise<CartResponse> {
       thumbnailUrl: normalizeMediaUrl(item.thumbnailUrl) || '',
     })),
   };
+}
+
+async function requestCartWithFallback<T>(
+  candidates: string[],
+  options: RequestInit
+): Promise<T> {
+  let lastError: unknown = null;
+  for (let i = 0; i < candidates.length; i += 1) {
+    const endpoint = candidates[i];
+    try {
+      return await apiRequest<T>(endpoint, options);
+    } catch (error) {
+      lastError = error;
+      const canRetry = shouldFallbackEndpoint(error);
+      const hasNext = i < candidates.length - 1;
+      if (!canRetry || !hasNext) {
+        throw error;
+      }
+    }
+  }
+  throw lastError;
+}
+
+export async function getCart(): Promise<CartResponse> {
+  const payload = await requestCartWithFallback<CartResponse>(
+    ['/api/v1/cart', '/v1/cart', '/cart', '/api/cart', '/api/api/v1/cart'],
+    { method: 'GET', cache: 'no-store' }
+  );
+  return normalizeCart(payload);
 }
 
 export async function addToCart(courseId: number): Promise<CartResponse> {
-  const payload = await apiRequest<CartResponse>('/api/v1/cart/items', {
-    method: 'POST',
-    body: JSON.stringify({ courseId }),
-  } as RequestInit);
-  return {
-    ...payload,
-    items: (payload.items || []).map((item) => ({
-      ...item,
-      thumbnailUrl: normalizeMediaUrl(item.thumbnailUrl) || '',
-    })),
-  };
+  const payload = await requestCartWithFallback<CartResponse>(
+    [
+      '/api/v1/cart/items',
+      '/v1/cart/items',
+      '/cart/items',
+      '/api/cart/items',
+      '/api/api/v1/cart/items',
+    ],
+    { method: 'POST', body: JSON.stringify({ courseId }) } as RequestInit
+  );
+  return normalizeCart(payload);
 }
 
 export async function removeFromCart(courseId: number): Promise<CartResponse> {
-  const payload = await apiRequest<CartResponse>(`/api/v1/cart/items/${courseId}`, {
-    method: 'DELETE',
-  } as RequestInit);
-  return {
-    ...payload,
-    items: (payload.items || []).map((item) => ({
-      ...item,
-      thumbnailUrl: normalizeMediaUrl(item.thumbnailUrl) || '',
-    })),
-  };
+  const payload = await requestCartWithFallback<CartResponse>(
+    [
+      `/api/v1/cart/items/${courseId}`,
+      `/v1/cart/items/${courseId}`,
+      `/cart/items/${courseId}`,
+      `/api/cart/items/${courseId}`,
+      `/api/api/v1/cart/items/${courseId}`,
+    ],
+    { method: 'DELETE' } as RequestInit
+  );
+  return normalizeCart(payload);
 }
 
 export async function clearCart(): Promise<void> {
-  return apiRequest<void>('/api/v1/cart', {
-    method: 'DELETE',
-  } as RequestInit);
+  await requestCartWithFallback<void>(
+    ['/api/v1/cart', '/v1/cart', '/cart', '/api/cart', '/api/api/v1/cart'],
+    { method: 'DELETE' } as RequestInit
+  );
 }

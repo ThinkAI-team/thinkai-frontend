@@ -106,6 +106,13 @@ export default function CartPage() {
       
       if (payment.checkoutUrl) {
         window.location.href = payment.checkoutUrl;
+        return;
+      }
+
+      if (payment.status === 'COMPLETED') {
+        await loadCart();
+        alert('Khóa học dưới 10.000đ đã được đăng ký trực tiếp.');
+        router.push(`/courses/${firstCourseId}`);
       }
     } catch (err: any) {
       console.error('Payment error:', err);
@@ -261,7 +268,9 @@ export default function CartPage() {
                     onClick={handleCheckout}
                     disabled={checkingOut || selectedItems.size === 0}
                   >
-                    {checkingOut ? 'Đang xử lý...' : `Thanh toán (${selectedItems.size} khóa học)`}
+                    {checkingOut
+                      ? 'Đang xử lý...'
+                      : `Tiếp tục (${selectedItems.size} khóa học)`}
                   </Button>
                 </div>
               </aside>

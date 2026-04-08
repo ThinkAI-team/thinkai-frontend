@@ -58,6 +58,7 @@ const loadYouTubeAPI = () => {
 };
 
 export default function LearningRoomPage() {
+  const VIDEO_COMPLETE_THRESHOLD = 90;
   const params = useParams<{ lessonId: string }>();
   const lessonId = Number(params.lessonId);
 
@@ -79,6 +80,11 @@ export default function LearningRoomPage() {
     const isAuto = e?.currentTarget?.dataset?.auto === 'true';
     const currentLesson = lessonRef.current;
     if (!currentLesson || currentLesson.isCompleted) return;
+    const currentPercent = currentLesson.lessonProgressPercent || 0;
+    if (currentLesson.type === 'VIDEO' && currentPercent < VIDEO_COMPLETE_THRESHOLD) {
+      setMessage('Bạn cần xem ít nhất 90% video trước khi đánh dấu hoàn thành.');
+      return;
+    }
     if (isAuto && hasAutoCompleted.current) return;
     try {
       const result = await completeLesson(currentLesson.id, {
@@ -207,8 +213,14 @@ export default function LearningRoomPage() {
       updateVideoProgress(lesson.id, { watchTimeSeconds: watchTime, currentTimeSeconds: currentTime })
         .then((res) => {
           setCourseProgress(res.courseProgressPercent);
+          setLesson((prev) => prev ? {
+            ...prev,
+            watchTimeSeconds: res.watchTimeSeconds,
+            currentTimeSeconds: res.currentTimeSeconds,
+            lessonProgressPercent: res.lessonProgressPercent,
+            isCompleted: res.isCompleted || prev.isCompleted,
+          } : prev);
           if (res.isCompleted && !lessonRef.current?.isCompleted) {
-            setLesson((prev) => prev ? { ...prev, isCompleted: true } : prev);
             setMessage(`Đã xem xong video. Bài học hoàn thành! Tiến độ: ${res.courseProgressPercent}%`);
           }
         })
@@ -306,6 +318,10 @@ export default function LearningRoomPage() {
   }
 
   const progress = courseProgress;
+  const videoPercent = lesson.lessonProgressPercent || 0;
+  const canMarkComplete = lesson.isCompleted
+    || lesson.type !== 'VIDEO'
+    || videoPercent >= VIDEO_COMPLETE_THRESHOLD;
 
   return (
     <div className={styles.container}>
@@ -387,6 +403,7 @@ export default function LearningRoomPage() {
                   className={styles.actionBtn}
                   data-auto="true"
                   onClick={handleComplete}
+                  disabled={!canMarkComplete}
                 >
                   {lesson.isCompleted ? 'Đã hoàn thành' : 'Đánh dấu hoàn thành'}
                 </Button>
@@ -396,6 +413,11 @@ export default function LearningRoomPage() {
               Loại bài học: {lesson.type}
               {lesson.durationSeconds ? ` • ${Math.round(lesson.durationSeconds / 60)} phút` : ''}
             </p>
+            {lesson.type === 'VIDEO' && !lesson.isCompleted && (
+              <p className={styles.note}>
+                Tiến độ video: {Math.round(videoPercent)}% (cần tối thiểu 90% để hoàn thành)
+              </p>
+            )}
             {message && <p className={styles.note}>{message}</p>}
           </div>
 
