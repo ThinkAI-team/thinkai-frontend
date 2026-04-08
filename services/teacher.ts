@@ -1,4 +1,4 @@
-  import { apiRequest, apiRequestFormData } from './api';
+  import { apiRequest, apiRequestFormData, normalizeMediaUrl } from './api';
 
 export interface TeacherDashboardStats {
   totalCourses: number;
@@ -109,25 +109,44 @@ export async function getTeacherDashboard(): Promise<TeacherDashboardStats> {
 }
 
 export async function createTeacherCourse(payload: TeacherCourseRequest): Promise<TeacherCourse> {
-  return apiRequest<TeacherCourse>('/teacher/courses', {
+  const course = await apiRequest<TeacherCourse>('/teacher/courses', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
+  return {
+    ...course,
+    thumbnailUrl: normalizeMediaUrl(course.thumbnailUrl),
+  };
 }
 
 export async function getTeacherCourses(page = 0, size = 10): Promise<TeacherCoursePage> {
-  return apiRequest<TeacherCoursePage>(buildPageQuery('/teacher/courses', page, size));
+  const payload = await apiRequest<TeacherCoursePage>(buildPageQuery('/teacher/courses', page, size));
+  return {
+    ...payload,
+    content: payload.content.map((course) => ({
+      ...course,
+      thumbnailUrl: normalizeMediaUrl(course.thumbnailUrl),
+    })),
+  };
 }
 
 export async function getTeacherCourse(courseId: number): Promise<TeacherCourse> {
-  return apiRequest<TeacherCourse>(`/teacher/courses/${courseId}`);
+  const course = await apiRequest<TeacherCourse>(`/teacher/courses/${courseId}`);
+  return {
+    ...course,
+    thumbnailUrl: normalizeMediaUrl(course.thumbnailUrl),
+  };
 }
 
 export async function updateTeacherCourse(courseId: number, payload: TeacherCourseRequest): Promise<TeacherCourse> {
-  return apiRequest<TeacherCourse>(`/teacher/courses/${courseId}`, {
+  const course = await apiRequest<TeacherCourse>(`/teacher/courses/${courseId}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   });
+  return {
+    ...course,
+    thumbnailUrl: normalizeMediaUrl(course.thumbnailUrl),
+  };
 }
 
 export async function deleteTeacherCourse(courseId: number): Promise<void> {
@@ -152,21 +171,27 @@ export async function createTeacherLesson(courseId: number, payload: LessonReque
 export async function uploadTeacherLessonFile(courseId: number, file: File): Promise<{ url: string }> {
   const formData = new FormData();
   formData.append('file', file);
-  return apiRequestFormData<{ url: string }>(
+  const payload = await apiRequestFormData<{ url: string }>(
     `/teacher/courses/${courseId}/lessons/upload`,
     formData,
     { method: 'POST' }
   );
+  return {
+    url: normalizeMediaUrl(payload.url) || payload.url,
+  };
 }
 
 export async function uploadTeacherCourseThumbnail(courseId: number, file: File): Promise<{ url: string }> {
   const formData = new FormData();
   formData.append('file', file);
-  return apiRequestFormData<{ url: string }>(
+  const payload = await apiRequestFormData<{ url: string }>(
     `/teacher/courses/${courseId}/thumbnail`,
     formData,
     { method: 'POST' }
   );
+  return {
+    url: normalizeMediaUrl(payload.url) || payload.url,
+  };
 }
 
 export async function reorderTeacherLessons(

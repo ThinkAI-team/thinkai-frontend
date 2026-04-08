@@ -1,4 +1,4 @@
-import { apiRequest } from './api';
+import { apiRequest, normalizeMediaUrl } from './api';
 
 export interface DashboardEnrolledCourse {
   courseId: number;
@@ -26,5 +26,12 @@ export interface DashboardData {
 }
 
 export async function getDashboard(): Promise<DashboardData> {
-  return apiRequest<DashboardData>('/users/me/dashboard');
+  const payload = await apiRequest<DashboardData>('/users/me/dashboard');
+  return {
+    ...payload,
+    enrolledCourses: payload.enrolledCourses.map((course) => ({
+      ...course,
+      thumbnailUrl: normalizeMediaUrl(course.thumbnailUrl),
+    })),
+  };
 }

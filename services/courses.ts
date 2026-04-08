@@ -1,4 +1,4 @@
-import { apiRequest } from './api';
+import { apiRequest, normalizeMediaUrl } from './api';
 
 export interface CourseListQuery {
   page?: number;
@@ -89,7 +89,14 @@ function buildCourseListQuery(query: CourseListQuery): string {
 }
 
 export async function getCourses(query: CourseListQuery = {}): Promise<CourseListResponse> {
-  return apiRequest<CourseListResponse>(buildCourseListQuery(query));
+  const payload = await apiRequest<CourseListResponse>(buildCourseListQuery(query));
+  return {
+    ...payload,
+    content: payload.content.map((course) => ({
+      ...course,
+      thumbnail: normalizeMediaUrl(course.thumbnail),
+    })),
+  };
 }
 
 export async function getCourseDetail(courseId: number): Promise<CourseDetailResponse> {
@@ -102,7 +109,7 @@ export async function getCourseDetail(courseId: number): Promise<CourseDetailRes
 
   return {
     ...payload,
-    thumbnailUrl: payload.thumbnailUrl || payload.thumbnail,
+    thumbnailUrl: normalizeMediaUrl(payload.thumbnailUrl || payload.thumbnail),
     instructorName: payload.instructorName || payload.instructor?.fullName,
     lessons: payload.lessons || [],
     isEnrolled: typeof payload.isEnrolled === 'boolean' ? payload.isEnrolled : false,
@@ -118,7 +125,11 @@ export async function unenrollCourse(courseId: number): Promise<void> {
 }
 
 export async function getMyCourses(): Promise<MyCourseItem[]> {
-  return apiRequest<MyCourseItem[]>('/users/me/courses');
+  const payload = await apiRequest<MyCourseItem[]>('/users/me/courses');
+  return payload.map((course) => ({
+    ...course,
+    thumbnail: normalizeMediaUrl(course.thumbnail),
+  }));
 }
 
 export interface PaymentResponse {
@@ -201,7 +212,14 @@ export interface CartResponse {
 }
 
 export async function getCart(): Promise<CartResponse> {
-  return apiRequest<CartResponse>('/api/v1/cart');
+  const payload = await apiRequest<CartResponse>('/api/v1/cart');
+  return {
+    ...payload,
+    items: payload.items.map((item) => ({
+      ...item,
+      thumbnailUrl: normalizeMediaUrl(item.thumbnailUrl) || '',
+    })),
+  };
 }
 
 export async function addToCart(courseId: number): Promise<CartResponse> {
