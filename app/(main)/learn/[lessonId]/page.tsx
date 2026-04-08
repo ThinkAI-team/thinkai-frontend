@@ -285,16 +285,66 @@ export default function LearningRoomPage() {
   const parseFlashcards = (raw: string): Array<{ front: string; back: string }> => {
     try {
       const json = extractJson(raw);
-      const data = JSON.parse(json) as { flashcards?: Array<{ front?: string; back?: string }> };
-      return (data.flashcards || [])
-        .map((c) => ({
-          front: (c.front || '').trim(),
-          back: (c.back || '').trim(),
+      const data = JSON.parse(json) as
+        | { flashcards?: Array<{ front?: string; back?: string; question?: string; answer?: string }> }
+        | { cards?: Array<{ front?: string; back?: string; question?: string; answer?: string }> }
+        | Array<{ front?: string; back?: string; question?: string; answer?: string }>;
+
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray((data as any).flashcards)
+          ? (data as any).flashcards
+          : Array.isArray((data as any).cards)
+            ? (data as any).cards
+            : [];
+
+      const normalized = (list as Array<{ front?: string; back?: string; question?: string; answer?: string }>)
+        .map((c: { front?: string; back?: string; question?: string; answer?: string }) => ({
+          front: (c.front || c.question || '').trim(),
+          back: (c.back || c.answer || '').trim(),
         }))
-        .filter((c) => c.front && c.back);
+        .filter((c: { front: string; back: string }) => c.front && c.back);
+
+      if (normalized.length > 0) {
+        return normalized.slice(0, 6);
+      }
     } catch {
-      return [];
+      // fallback parse for plain text format:
+      // Front: ...
+      // Back: ...
     }
+    return parseFlashcardsFromText(raw);
+  };
+
+  const parseFlashcardsFromText = (raw: string): Array<{ front: string; back: string }> => {
+    const lines = raw
+      .split('\n')
+      .map((x) => x.trim())
+      .filter(Boolean);
+
+    const cards: Array<{ front: string; back: string }> = [];
+    let front = '';
+    let back = '';
+
+    for (const line of lines) {
+      const f = line.match(/^(front|question|q)[:\-]\s*(.+)$/i);
+      if (f) {
+        front = (f[2] || '').trim();
+        continue;
+      }
+      const b = line.match(/^(back|answer|a)[:\-]\s*(.+)$/i);
+      if (b) {
+        back = (b[2] || '').trim();
+      }
+      if (front && back) {
+        cards.push({ front, back });
+        front = '';
+        back = '';
+        if (cards.length >= 6) break;
+      }
+    }
+
+    return cards;
   };
 
   const parseBulletPoints = (raw: string): string[] => {
