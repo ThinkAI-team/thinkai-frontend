@@ -29,6 +29,14 @@ export interface HarnessConversation {
   messageCount: number;
 }
 
+export interface HarnessQuota {
+  maxUses: number;
+  used: number;
+  remaining: number;
+  exhausted: boolean;
+  upgradeRecommended: boolean;
+}
+
 export function getUseHarness(): boolean {
   if (typeof window === 'undefined') return true;
   return localStorage.getItem(USE_AI_HARNESS_KEY) !== 'false';
@@ -145,6 +153,10 @@ export async function streamChatMessage(
 
 export async function getHarnessHistory(): Promise<HarnessConversation[]> {
   return apiRequest('/ai-harness/history');
+}
+
+export async function getHarnessQuota(): Promise<HarnessQuota> {
+  return apiRequest('/ai-harness/quota');
 }
 
 export async function getHarnessConversation(conversationId: string): Promise<HarnessConversation> {

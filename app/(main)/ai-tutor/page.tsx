@@ -26,7 +26,7 @@ import {
   type AiTutorUiAction,
   type SummarizeResponse,
 } from '@/services/ai-tutor';
-import { getUseHarness, setUseHarness, sendChatMessageHarness, getHarnessHistory, getUserMemory, updateUserMemory, type HarnessConversation, type ThinkingStep, type UserMemory } from '@/services/ai-harness';
+import { getUseHarness, setUseHarness, sendChatMessageHarness, getHarnessHistory, getHarnessQuota, getUserMemory, updateUserMemory, type HarnessConversation, type ThinkingStep, type UserMemory } from '@/services/ai-harness';
 
 interface Message {
   id: string;
@@ -110,6 +110,8 @@ export default function AITutorPage() {
   const [showThinkingSteps, setShowThinkingSteps] = useState<{ [key: string]: boolean }>({});
   const [showHarnessNotice, setShowHarnessNotice] = useState(false);
   const [entryNoticeShown, setEntryNoticeShown] = useState(false);
+  const [harnessRemainingUses, setHarnessRemainingUses] = useState<number | null>(null);
+  const [harnessMaxUses, setHarnessMaxUses] = useState<number | null>(null);
   
   const [userMemory, setUserMemory] = useState<UserMemory | null>(null);
   const [memoryLoading, setMemoryLoading] = useState(false);
@@ -200,6 +202,12 @@ export default function AITutorPage() {
   useEffect(() => {
     if (useHarness) {
       getUserMemory().then(setUserMemory).catch(() => {});
+      getHarnessQuota()
+        .then((quota) => {
+          setHarnessRemainingUses(quota.remaining);
+          setHarnessMaxUses(quota.maxUses);
+        })
+        .catch(() => {});
     }
   }, [useHarness]);
 
@@ -346,6 +354,8 @@ export default function AITutorPage() {
         }
 
         if (typeof response.harnessRemainingUses === 'number' && typeof response.harnessMaxUses === 'number') {
+          setHarnessRemainingUses(response.harnessRemainingUses);
+          setHarnessMaxUses(response.harnessMaxUses);
           if (response.harnessRemainingUses <= 1) {
             setNotice(
               `Bạn còn ${response.harnessRemainingUses}/${response.harnessMaxUses} lượt Harness. Vui lòng nâng cấp Pro để dùng không giới hạn.`
@@ -966,6 +976,24 @@ export default function AITutorPage() {
                 Tutor
               </button>
             </div>
+            {useHarness && harnessMaxUses !== null && harnessRemainingUses !== null && (
+              <div style={{ marginBottom: '12px' }}>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    padding: '4px 10px',
+                    borderRadius: '999px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    background: harnessRemainingUses <= 1 ? '#ffe4e6' : '#e0f2fe',
+                    color: harnessRemainingUses <= 1 ? '#b91c1c' : '#075985',
+                    border: `1px solid ${harnessRemainingUses <= 1 ? '#fecdd3' : '#bae6fd'}`,
+                  }}
+                >
+                  Lượt Harness còn lại: {harnessRemainingUses}/{harnessMaxUses}
+                </span>
+              </div>
+            )}
 
             {chatLoading ? (
               <PageState type="loading" message="Đang tải lịch sử hội thoại..." />
