@@ -212,10 +212,13 @@ export interface CartResponse {
 }
 
 export async function getCart(): Promise<CartResponse> {
-  const payload = await apiRequest<CartResponse>('/api/v1/cart');
+  const payload = await apiRequest<CartResponse>('/api/v1/cart', {
+    method: 'GET',
+    cache: 'no-store',
+  });
   return {
     ...payload,
-    items: payload.items.map((item) => ({
+    items: (payload.items || []).map((item) => ({
       ...item,
       thumbnailUrl: normalizeMediaUrl(item.thumbnailUrl) || '',
     })),
@@ -223,16 +226,30 @@ export async function getCart(): Promise<CartResponse> {
 }
 
 export async function addToCart(courseId: number): Promise<CartResponse> {
-  return apiRequest<CartResponse>('/api/v1/cart/items', {
+  const payload = await apiRequest<CartResponse>('/api/v1/cart/items', {
     method: 'POST',
     body: JSON.stringify({ courseId }),
   } as RequestInit);
+  return {
+    ...payload,
+    items: (payload.items || []).map((item) => ({
+      ...item,
+      thumbnailUrl: normalizeMediaUrl(item.thumbnailUrl) || '',
+    })),
+  };
 }
 
 export async function removeFromCart(courseId: number): Promise<CartResponse> {
-  return apiRequest<CartResponse>(`/api/v1/cart/items/${courseId}`, {
+  const payload = await apiRequest<CartResponse>(`/api/v1/cart/items/${courseId}`, {
     method: 'DELETE',
   } as RequestInit);
+  return {
+    ...payload,
+    items: (payload.items || []).map((item) => ({
+      ...item,
+      thumbnailUrl: normalizeMediaUrl(item.thumbnailUrl) || '',
+    })),
+  };
 }
 
 export async function clearCart(): Promise<void> {
