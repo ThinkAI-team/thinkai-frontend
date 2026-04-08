@@ -55,6 +55,9 @@ export async function sendChatMessageHarness(payload: {
   messageId?: number;
   agentType?: string;
   thinkingSteps?: ThinkingStep[];
+  harnessRemainingUses?: number;
+  harnessMaxUses?: number;
+  harnessUpgradeRecommended?: boolean;
 }> {
   return apiRequest('/ai-harness/chat', {
     method: 'POST',

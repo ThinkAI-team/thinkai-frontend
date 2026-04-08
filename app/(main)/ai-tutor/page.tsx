@@ -344,6 +344,17 @@ export default function AITutorPage() {
         if (response.conversationId) {
           setSelectedConversationId(response.conversationId);
         }
+
+        if (typeof response.harnessRemainingUses === 'number' && typeof response.harnessMaxUses === 'number') {
+          if (response.harnessRemainingUses <= 1) {
+            setNotice(
+              `Bạn còn ${response.harnessRemainingUses}/${response.harnessMaxUses} lượt Harness. Vui lòng nâng cấp Pro để dùng không giới hạn.`
+            );
+            setShowHarnessNotice(true);
+          } else {
+            setNotice(`Bạn còn ${response.harnessRemainingUses}/${response.harnessMaxUses} lượt Harness.`);
+          }
+        }
       } else {
         const response = await sendChatMessage({
           message,
