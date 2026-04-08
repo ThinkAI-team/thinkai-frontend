@@ -1,4 +1,11 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+const API_ORIGIN = (() => {
+  try {
+    return new URL(API_BASE_URL).origin;
+  } catch {
+    return 'http://localhost:8081';
+  }
+})();
 const AUTH_ENDPOINTS_NO_REDIRECT = new Set([
   '/auth/login',
   '/auth/register',
@@ -163,4 +170,24 @@ export async function apiRequestFormData<T>(
       body: formData,
     }
   );
+}
+
+export function normalizeMediaUrl(url?: string | null): string | undefined {
+  if (!url) return undefined;
+  const raw = url.trim();
+  if (!raw) return undefined;
+  if (raw.startsWith('data:') || raw.startsWith('blob:')) return raw;
+
+  try {
+    const parsed = new URL(raw);
+    if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+      return `${API_ORIGIN}${parsed.pathname}${parsed.search}${parsed.hash}`;
+    }
+    return raw;
+  } catch {
+    if (raw.startsWith('/')) {
+      return `${API_ORIGIN}${raw}`;
+    }
+    return `${API_ORIGIN}/${raw}`;
+  }
 }

@@ -1,4 +1,4 @@
-import { apiRequest, apiRequestFormData } from './api';
+import { apiRequest, apiRequestFormData, normalizeMediaUrl } from './api';
 
 export type AgentType = 'TUTOR' | 'LEARNING' | 'COURSE_OPS' | 'EXAM_OPS' | 'SAFETY_POLICY';
 
@@ -174,9 +174,12 @@ export async function summarizeLesson(payload: SummarizeRequest): Promise<Summar
 export async function uploadAiTutorFile(file: File): Promise<{ url: string }> {
   const formData = new FormData();
   formData.append('file', file);
-  return apiRequestFormData<{ url: string }>('/api/files/upload', formData, {
+  const payload = await apiRequestFormData<{ url: string }>('/api/files/upload', formData, {
     method: 'POST',
   });
+  return {
+    url: normalizeMediaUrl(payload.url) || payload.url,
+  };
 }
 
 export async function getPendingAction(conversationId: string): Promise<AiPendingAction | null> {
