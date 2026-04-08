@@ -17,6 +17,8 @@ import {
   type LearningRoomLayout,
   type LessonDetail,
 } from '@/services/learning';
+import { summarizeLesson } from '@/services/ai-tutor';
+import { ApiException } from '@/services/api';
 
 const isYouTubeUrl = (url: string): boolean => {
   if (!url) return false;
@@ -71,6 +73,10 @@ export default function LearningRoomPage() {
   const [message, setMessage] = useState('');
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryResult, setSummaryResult] = useState<LessonTutorSummaryResponse | null>(null);
+  const [flashcardLoading, setFlashcardLoading] = useState(false);
+  const [flashcards, setFlashcards] = useState<Array<{ front: string; back: string }>>([]);
+  const [bulletLoading, setBulletLoading] = useState(false);
+  const [bulletPoints, setBulletPoints] = useState<string[]>([]);
   const [courseProgress, setCourseProgress] = useState(0);
   const playerRef = useRef<any>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -98,6 +104,7 @@ export default function LearningRoomPage() {
       const result = await completeLesson(currentLesson.id, {
         watchTimeSeconds: currentLesson.watchTimeSeconds || currentLesson.durationSeconds || 0,
       });
+      setCourseProgress(result.courseProgress);
       setMessage(isAuto ? `Đã xem xong video. Bài học hoàn thành! Tiến độ: ${result.courseProgress}%` : `Đã đánh dấu hoàn thành. Tiến độ khóa học: ${result.courseProgress}%`);
       setLesson((prev) => (prev ? { ...prev, isCompleted: true } : prev));
       if (isAuto) hasAutoCompleted.current = true;
@@ -121,13 +128,140 @@ export default function LearningRoomPage() {
     setSummaryLoading(true);
     setMessage('');
     try {
-      const result = await getLessonTutorSummary(lesson.id);
-      setSummaryResult(result);
+      try {
+        const result = await getLessonTutorSummary(lesson.id);
+        setSummaryResult(result);
+      } catch (err) {
+        if (err instanceof ApiException && err.status === 404) {
+          const fallback = await summarizeLesson({
+            content: buildLessonSummarySource(lesson),
+          });
+          setSummaryResult({
+            lessonId: lesson.id,
+            summary: fallback.summary,
+            keyPoints: [],
+            transcriptUsed: false,
+            sourceType: 'frontend_fallback',
+          });
+        } else {
+          throw err;
+        }
+      }
     } catch (err: any) {
       setMessage(err?.message || 'Không thể tạo tóm tắt từ BiliBily.');
     } finally {
       setSummaryLoading(false);
     }
+  };
+
+  const handleTutorFlashcard = async () => {
+    if (!lesson || flashcardLoading) return;
+    setFlashcardLoading(true);
+    setMessage('');
+    try {
+      const prompt = [
+        'You are an English tutor. Create concise study flashcards from lesson content.',
+        'Return ONLY valid JSON, no markdown, no extra text.',
+        'Format: {"flashcards":[{"front":"...","back":"..."}]}',
+        'Rules:',
+        '- Output exactly 6 flashcards.',
+        '- front: short question or trigger phrase.',
+        '- back: concise explanation in Vietnamese.',
+        '- Focus on core grammar/vocab patterns that are easy to revise.',
+        '',
+        'Lesson content:',
+        buildLessonSummarySource(lesson),
+      ].join('\n');
+
+      const res = await summarizeLesson({ content: prompt });
+      const parsed = parseFlashcards(res.summary);
+      setFlashcards(parsed);
+      if (!parsed.length) {
+        setMessage('Không đọc được flashcard từ phản hồi AI. Vui lòng thử lại.');
+      }
+    } catch (err: any) {
+      setMessage(err?.message || 'Không thể tạo flashcard.');
+    } finally {
+      setFlashcardLoading(false);
+    }
+  };
+
+  const handleBulletPoints = async () => {
+    if (!lesson || bulletLoading) return;
+    setBulletLoading(true);
+    setMessage('');
+    try {
+      const prompt = [
+        'You are an English tutor. Extract the 3 most important learning points.',
+        'Return ONLY valid JSON, no markdown, no extra text.',
+        'Format: {"bulletPoints":["...","...","..."]}',
+        'Rules:',
+        '- Exactly 3 bullet points.',
+        '- Each point max 18 words.',
+        '- Use Vietnamese, practical and easy to remember.',
+        '',
+        'Lesson content:',
+        buildLessonSummarySource(lesson),
+      ].join('\n');
+
+      const res = await summarizeLesson({ content: prompt });
+      const parsed = parseBulletPoints(res.summary);
+      setBulletPoints(parsed);
+      if (!parsed.length) {
+        setMessage('Không đọc được bullet points từ phản hồi AI. Vui lòng thử lại.');
+      }
+    } catch (err: any) {
+      setMessage(err?.message || 'Không thể tạo bullet points.');
+    } finally {
+      setBulletLoading(false);
+    }
+  };
+
+  const buildLessonSummarySource = (item: LessonDetail) => {
+    const content = (item.contentText || '').trim();
+    if (content) {
+      return `Lesson title: ${item.title}\nLesson type: ${item.type}\n\n${content}`.slice(0, 12000);
+    }
+    return `Lesson title: ${item.title}\nLesson type: ${item.type}\nLesson url: ${item.contentUrl || 'N/A'}\nProvide useful study output based on available lesson signals.`;
+  };
+
+  const parseFlashcards = (raw: string): Array<{ front: string; back: string }> => {
+    try {
+      const json = extractJson(raw);
+      const data = JSON.parse(json) as { flashcards?: Array<{ front?: string; back?: string }> };
+      return (data.flashcards || [])
+        .map((c) => ({
+          front: (c.front || '').trim(),
+          back: (c.back || '').trim(),
+        }))
+        .filter((c) => c.front && c.back);
+    } catch {
+      return [];
+    }
+  };
+
+  const parseBulletPoints = (raw: string): string[] => {
+    try {
+      const json = extractJson(raw);
+      const data = JSON.parse(json) as { bulletPoints?: string[] };
+      return (data.bulletPoints || []).map((x) => x.trim()).filter(Boolean).slice(0, 3);
+    } catch {
+      const lines = raw
+        .split('\n')
+        .map((x) => x.replace(/^[-*\d.)\s]+/, '').trim())
+        .filter(Boolean);
+      return lines.slice(0, 3);
+    }
+  };
+
+  const extractJson = (raw: string): string => {
+    const text = raw.trim();
+    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    if (fenced?.[1]) return fenced[1].trim();
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start >= 0 && end > start) return text.slice(start, end + 1);
+    return text;
   };
 
   const loadLessonData = useCallback(async () => {
@@ -473,6 +607,26 @@ export default function LearningRoomPage() {
                 >
                   {summaryLoading ? 'Đang tóm tắt...' : 'Tutor Summary'}
                 </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  className={styles.actionBtn}
+                  onClick={handleTutorFlashcard}
+                  disabled={flashcardLoading}
+                >
+                  {flashcardLoading ? 'Đang tạo...' : 'Tutor Flashcard'}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  className={styles.actionBtn}
+                  onClick={handleBulletPoints}
+                  disabled={bulletLoading}
+                >
+                  {bulletLoading ? 'Đang tạo...' : 'Bullet Points'}
+                </Button>
               </div>
             </div>
             <p className={styles.lessonDesc}>
@@ -519,6 +673,29 @@ export default function LearningRoomPage() {
                     ))}
                   </ul>
                 )}
+              </div>
+            )}
+            {flashcards.length > 0 && (
+              <div className={styles.summaryBox}>
+                <p className={styles.summaryTitle}>Tutor Flashcards</p>
+                <div className={styles.flashcardList}>
+                  {flashcards.map((card, index) => (
+                    <div key={`${index}-${card.front}`} className={styles.flashcardItem}>
+                      <p><strong>Q:</strong> {card.front}</p>
+                      <p><strong>A:</strong> {card.back}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {bulletPoints.length > 0 && (
+              <div className={styles.summaryBox}>
+                <p className={styles.summaryTitle}>3 Điểm Chính Bài Học</p>
+                <ul className={styles.summaryList}>
+                  {bulletPoints.map((point, index) => (
+                    <li key={`${index}-${point}`}>{point}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </section>

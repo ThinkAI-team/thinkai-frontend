@@ -216,6 +216,7 @@
 .lessonActions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .actionBtn {
@@ -267,6 +268,20 @@
   padding-left: 18px;
   color: var(--text-secondary);
   font-size: 0.78rem;
+}
+
+.flashcardList {
+  display: grid;
+  gap: 8px;
+}
+
+.flashcardItem {
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 8px;
+  background: rgba(var(--surface-rgb), 0.96);
+  padding: 8px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
 }
 
 .resourceGrid {
