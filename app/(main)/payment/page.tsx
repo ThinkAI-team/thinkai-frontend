@@ -8,9 +8,10 @@ import MainSidebar from '../components/MainSidebar';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button';
 import { formatVnd } from '@/lib/utils/format';
-import { getCourseDetail, createPaymentLink, type CourseDetailResponse, type PaymentResponse } from '@/services/courses';
+import { enrollCourse, getCourseDetail, createPaymentLink, type CourseDetailResponse, type PaymentResponse } from '@/services/courses';
 
 export default function PaymentPage() {
+  const DIRECT_ENROLL_THRESHOLD = 10000;
   const searchParams = useSearchParams();
   const router = useRouter();
   const courseIdParam = searchParams.get('courseId');
@@ -49,10 +50,22 @@ export default function PaymentPage() {
     
     setPaying(true);
     try {
+      const price = typeof course.price === 'number' ? course.price : 0;
+      if (price < DIRECT_ENROLL_THRESHOLD) {
+        await enrollCourse(course.id);
+        router.push(`/courses/${course.id}`);
+        return;
+      }
+
       const payment = await createPaymentLink(course.id);
       
       if (payment.checkoutUrl) {
         window.location.href = payment.checkoutUrl;
+        return;
+      }
+
+      if (payment.status === 'COMPLETED') {
+        router.push(`/courses/${course.id}`);
       }
     } catch (error) {
       console.error('Payment error:', error);
@@ -150,9 +163,9 @@ export default function PaymentPage() {
                 <li>Bạn sẽ được chuyển sang trang thanh toán payOS</li>
                 <li>Chọn phương thức thanh toán phù hợp (QR VietQR, MoMo, ZaloPay, thẻ ATM/Visa)</li>
                 <li>Hoàn tất thanh toán theo hướng dẫn</li>
-                <li>Sau khi thanh toán thành công, bạn sẽ được tự động đăng ký khóa học</li>
-              </ol>
-            </div>
+              <li>Sau khi thanh toán thành công, bạn sẽ được tự động đăng ký khóa học</li>
+            </ol>
+          </div>
           </div>
 
           <aside className={styles.orderSummary}>
@@ -218,7 +231,11 @@ export default function PaymentPage() {
               onClick={handlePayment}
               disabled={paying || !course}
             >
-              {paying ? 'Đang xử lý...' : 'Thanh toán ngay →'}
+              {paying
+                ? 'Đang xử lý...'
+                : (course && typeof course.price === 'number' && course.price < DIRECT_ENROLL_THRESHOLD)
+                  ? 'Đăng ký ngay →'
+                  : 'Thanh toán ngay →'}
             </Button>
 
             <div className={styles.secureInfo}>

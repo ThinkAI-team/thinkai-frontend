@@ -24,6 +24,7 @@ import {
 } from '@/services/reviews';
 
 export default function CourseDetailPage() {
+  const DIRECT_ENROLL_THRESHOLD = 10000;
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const courseId = Number(params.id);
@@ -78,15 +79,15 @@ export default function CourseDetailPage() {
   const handleEnroll = async () => {
     if (!course) return;
     
-    const price = course.price;
-    const isFree = price === 0 || price === null || price === undefined;
+    const price = typeof course.price === 'number' ? course.price : 0;
+    const isDirectEnroll = price < DIRECT_ENROLL_THRESHOLD;
     
-    if (isFree) {
+    if (isDirectEnroll) {
       setEnrolling(true);
       try {
         await enrollCourse(course.id);
         setIsEnrolled(true);
-        setMessage('Đăng ký khóa học miễn phí thành công!');
+        setMessage('Đăng ký khóa học thành công!');
         loadCourseData();
       } catch (err: any) {
         setMessage(err.message || 'Không thể đăng ký.');
