@@ -284,15 +284,37 @@ export async function addToCart(courseId: number): Promise<CartResponse> {
 }
 
 export async function removeFromCart(courseId: number): Promise<CartResponse> {
+  const deleteCandidates = [
+    `/api/v1/cart/items/${courseId}`,
+    `/v1/cart/items/${courseId}`,
+    `/cart/items/${courseId}`,
+    `/api/cart/items/${courseId}`,
+    `/api/api/v1/cart/items/${courseId}`,
+  ];
+
+  try {
+    const payload = await requestCartWithFallback<CartResponse>(
+      deleteCandidates,
+      { method: 'DELETE' } as RequestInit
+    );
+    return normalizeCart(payload);
+  } catch (error) {
+    if (!(error instanceof ApiException) || (error.status !== 403 && error.status !== 405)) {
+      throw error;
+    }
+  }
+
+  const postFallbackCandidates = [
+    `/api/v1/cart/items/${courseId}/remove`,
+    `/v1/cart/items/${courseId}/remove`,
+    `/cart/items/${courseId}/remove`,
+    `/api/cart/items/${courseId}/remove`,
+    `/api/api/v1/cart/items/${courseId}/remove`,
+  ];
+
   const payload = await requestCartWithFallback<CartResponse>(
-    [
-      `/api/v1/cart/items/${courseId}`,
-      `/v1/cart/items/${courseId}`,
-      `/cart/items/${courseId}`,
-      `/api/cart/items/${courseId}`,
-      `/api/api/v1/cart/items/${courseId}`,
-    ],
-    { method: 'DELETE' } as RequestInit
+    postFallbackCandidates,
+    { method: 'POST' } as RequestInit
   );
   return normalizeCart(payload);
 }

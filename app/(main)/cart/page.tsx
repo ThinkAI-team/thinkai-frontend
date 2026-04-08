@@ -73,8 +73,10 @@ export default function CartPage() {
         newSet.delete(courseId);
         return newSet;
       });
+      await loadCart();
     } catch (err) {
       console.error('Error removing item:', err);
+      alert('Không thể xóa khóa học khỏi giỏ. Vui lòng thử lại.');
     } finally {
       setRemoving(null);
     }
