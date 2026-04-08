@@ -47,6 +47,23 @@
   font-weight: 600;
 }
 
+.navButton {
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--text-secondary);
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.navButton:hover {
+  border-color: var(--line-soft);
+  background: rgba(var(--surface-rgb), 0.92);
+  color: var(--text-primary);
+}
+
 .nav a:hover {
   border-color: var(--line-soft);
   background: rgba(var(--surface-rgb), 0.92);
@@ -225,6 +242,33 @@
   margin-bottom: 8px;
 }
 
+.summaryBox {
+  margin-top: 10px;
+  border: var(--line-width) solid rgba(var(--accent-rgb), 0.2);
+  border-radius: 10px;
+  background: rgba(var(--surface-rgb), 0.98);
+  padding: 10px;
+}
+
+.summaryTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.summaryText {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.summaryList {
+  margin-top: 8px;
+  padding-left: 18px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
 .resourceGrid {
   display: flex;
   gap: 8px;
@@ -363,6 +407,9 @@
   border: var(--line-width) solid var(--line-soft);
   background: rgba(var(--surface-rgb), 0.94);
   text-decoration: none;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
 }
 
 .aiIcon {
