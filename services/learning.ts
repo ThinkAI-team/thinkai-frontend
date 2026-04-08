@@ -83,6 +83,7 @@ export interface UpdateVideoProgressResponse {
 export interface LessonTutorSummaryResponse {
   lessonId: number;
   summary: string;
+  keyPoints?: string[];
   transcriptUsed: boolean;
   sourceType: string;
 }
