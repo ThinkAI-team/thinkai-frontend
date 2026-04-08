@@ -19,7 +19,7 @@ export interface GoogleLoginRequest {
 }
 
 export interface AuthResponse {
-  token: string;
+  token?: string;
   email: string;
   fullName: string;
   role: string;
@@ -34,7 +34,9 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
     body: JSON.stringify(data),
   });
   const normalized = normalizeAuthResponse(response);
-  saveAuth(normalized);
+  if (normalized.token) {
+    saveAuth(normalized);
+  }
   return normalized;
 }
 
@@ -127,6 +129,7 @@ export async function getCurrentUser(): Promise<AuthResponse> {
 }
 
 function saveAuth(response: AuthResponse): void {
+  if (!response.token) return;
   if (typeof window !== 'undefined') {
     localStorage.setItem('token', response.token);
     localStorage.setItem('thinkai_access_token', response.token);

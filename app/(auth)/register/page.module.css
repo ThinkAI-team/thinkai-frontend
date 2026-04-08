@@ -73,6 +73,16 @@
   font-size: 0.8rem;
 }
 
+.successAlert {
+  margin-bottom: 12px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--success-rgb), 0.3);
+  background: rgba(var(--success-soft-rgb), 0.2);
+  color: var(--success);
+  font-size: 0.8rem;
+}
+
 .form {
   display: flex;
   flex-direction: column;

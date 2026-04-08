@@ -3,6 +3,7 @@ import "./globals.css";
 import Script from "next/script";
 import { cookies } from "next/headers";
 import AiTutorFloatingLauncher from "@/components/ai-tutor/AiTutorFloatingLauncher";
+import RouteAccessGuard from "@/components/auth/RouteAccessGuard";
 
 export const metadata: Metadata = {
   title: "ThinkAI - Nền tảng Học Tiếng Anh Thông Minh",
@@ -35,7 +36,7 @@ export default async function RootLayout({
             })();
           `}
         </Script>
-        {children}
+        <RouteAccessGuard>{children}</RouteAccessGuard>
         <AiTutorFloatingLauncher />
         <Script src="https://accounts.google.com/gsi/client" strategy="beforeInteractive" />
       </body>

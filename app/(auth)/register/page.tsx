@@ -32,6 +32,7 @@ function RegisterForm() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [globalError, setGlobalError] = useState('');
+  const [globalSuccess, setGlobalSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
 
@@ -52,12 +53,21 @@ function RegisterForm() {
         callback: async (response: any) => {
           setLoading(true);
           setGlobalError('');
+          setGlobalSuccess('');
           try {
             const auth = await googleLogin(response.credential);
-            router.push(getRedirectPathByRole(auth.role));
+            if (auth.token) {
+              router.push(getRedirectPathByRole(auth.role));
+              return;
+            }
+            setGlobalSuccess('Đăng ký thành công. Tài khoản đang chờ admin duyệt trước khi đăng nhập.');
+            setTimeout(() => {
+              router.push('/login');
+            }, 2000);
           } catch (err: any) {
             console.error('Google register error:', err);
             setGlobalError(err.message || 'Đăng ký Google thất bại');
+          } finally {
             setLoading(false);
           }
         },
@@ -95,17 +105,20 @@ function RegisterForm() {
       });
     }
     if (globalError) setGlobalError('');
+    if (globalSuccess) setGlobalSuccess('');
   };
 
   const handleRoleSelect = (role: 'STUDENT' | 'TEACHER') => {
     setFormData(prev => ({ ...prev, role }));
     if (globalError) setGlobalError('');
+    if (globalSuccess) setGlobalSuccess('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
     setGlobalError('');
+    setGlobalSuccess('');
 
     if (!agreeTerms) {
       setGlobalError('Vui lòng đồng ý với Điều khoản sử dụng và Chính sách bảo mật.');
@@ -116,7 +129,14 @@ function RegisterForm() {
 
     try {
       const auth = await register(formData);
-      router.push(getRedirectPathByRole(auth.role));
+      if (auth.token) {
+        router.push(getRedirectPathByRole(auth.role));
+        return;
+      }
+      setGlobalSuccess('Đăng ký thành công. Tài khoản đang chờ admin duyệt trước khi đăng nhập.');
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
     } catch (err) {
       if (err instanceof ApiException) {
         if (err.fieldErrors) {
@@ -150,6 +170,9 @@ function RegisterForm() {
 
           {globalError && (
             <div className={styles.errorAlert}>{globalError}</div>
+          )}
+          {globalSuccess && (
+            <div className={styles.successAlert}>{globalSuccess}</div>
           )}
 
           <form className={styles.form} onSubmit={handleSubmit}>
