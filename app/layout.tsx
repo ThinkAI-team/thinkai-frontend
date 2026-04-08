@@ -4,6 +4,7 @@ import Script from "next/script";
 import { cookies } from "next/headers";
 import AiTutorFloatingLauncher from "@/components/ai-tutor/AiTutorFloatingLauncher";
 import RouteAccessGuard from "@/components/auth/RouteAccessGuard";
+import DevtoolGuard from "@/components/security/DevtoolGuard";
 
 export const metadata: Metadata = {
   title: "ThinkAI - Nền tảng Học Tiếng Anh Thông Minh",
@@ -25,6 +26,7 @@ export default async function RootLayout({
   return (
     <html lang="vi" data-theme={initialTheme}>
       <body>
+        <DevtoolGuard />
         <Script id="theme-init" strategy="beforeInteractive">
           {`
             (() => {
