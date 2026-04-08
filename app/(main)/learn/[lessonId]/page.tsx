@@ -9,9 +9,11 @@ import styles from './page.module.css';
 import {
   completeLesson,
   getLearningRoomLayout,
+  getLessonTutorSummary,
   getLessonDetail,
   markPdfOpened,
   updateVideoProgress,
+  type LessonTutorSummaryResponse,
   type LearningRoomLayout,
   type LessonDetail,
 } from '@/services/learning';
@@ -67,6 +69,8 @@ export default function LearningRoomPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryResult, setSummaryResult] = useState<LessonTutorSummaryResponse | null>(null);
   const [courseProgress, setCourseProgress] = useState(0);
   const playerRef = useRef<any>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -80,8 +84,12 @@ export default function LearningRoomPage() {
     const isAuto = e?.currentTarget?.dataset?.auto === 'true';
     const currentLesson = lessonRef.current;
     if (!currentLesson || currentLesson.isCompleted) return;
-    const currentPercent = currentLesson.lessonProgressPercent || 0;
-    if (currentLesson.type === 'VIDEO' && currentPercent < VIDEO_COMPLETE_THRESHOLD) {
+    const percentFromApi = currentLesson.lessonProgressPercent || 0;
+    const watchTime = currentLesson.watchTimeSeconds || 0;
+    const duration = currentLesson.durationSeconds || 0;
+    const percentFromWatch = duration > 0 ? Math.min(100, (watchTime / duration) * 100) : 0;
+    const effectivePercent = Math.max(percentFromApi, percentFromWatch);
+    if (currentLesson.type === 'VIDEO' && effectivePercent < VIDEO_COMPLETE_THRESHOLD) {
       setMessage('Bạn cần xem ít nhất 90% video trước khi đánh dấu hoàn thành.');
       return;
     }
@@ -95,6 +103,30 @@ export default function LearningRoomPage() {
       if (isAuto) hasAutoCompleted.current = true;
     } catch (err: any) {
       setMessage(err.message || 'Không thể cập nhật tiến độ.');
+    }
+  };
+
+  const openBiliBilyFloating = (prompt?: string) => {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(
+      new CustomEvent('thinkai:bilibily-open', {
+        detail: prompt ? { prompt } : {},
+      })
+    );
+  };
+
+  const handleTutorSummary = async () => {
+    if (!lesson || summaryLoading) return;
+
+    setSummaryLoading(true);
+    setMessage('');
+    try {
+      const result = await getLessonTutorSummary(lesson.id);
+      setSummaryResult(result);
+    } catch (err: any) {
+      setMessage(err?.message || 'Không thể tạo tóm tắt từ BiliBily.');
+    } finally {
+      setSummaryLoading(false);
     }
   };
 
@@ -163,6 +195,15 @@ export default function LearningRoomPage() {
           },
           onStateChange: (event: any) => {
             if (event.data === (window as any).YT.PlayerState.ENDED) {
+              const duration = lessonRef.current?.durationSeconds || 0;
+              if (duration > 0) {
+                setLesson((prev) => prev ? {
+                  ...prev,
+                  watchTimeSeconds: duration,
+                  currentTimeSeconds: duration,
+                  lessonProgressPercent: 100,
+                } : prev);
+              }
               const btn = document.querySelector('[data-auto="true"]') as HTMLButtonElement;
               if (btn) btn.click();
             }
@@ -333,7 +374,13 @@ export default function LearningRoomPage() {
         <nav className={styles.nav}>
           <Link href="/courses" className={styles.navActive}>Khóa học</Link>
           <Link href="/exams">Bài thi</Link>
-          <Link href="/ai-tutor">BiliBily</Link>
+          <button
+            type="button"
+            className={styles.navButton}
+            onClick={() => openBiliBilyFloating(`Mình đang học bài "${lesson?.title || ''}". Giúp mình nhé.`)}
+          >
+            BiliBily
+          </button>
         </nav>
 
         <div className={styles.headerRight}>
@@ -371,6 +418,15 @@ export default function LearningRoomPage() {
                   controlsList="nodownload"
                   style={{ width: '100%', height: '100%', backgroundColor: '#000' }}
                   onEnded={() => {
+                    const duration = lessonRef.current?.durationSeconds || 0;
+                    if (duration > 0) {
+                      setLesson((prev) => prev ? {
+                        ...prev,
+                        watchTimeSeconds: duration,
+                        currentTimeSeconds: duration,
+                        lessonProgressPercent: 100,
+                      } : prev);
+                    }
                     const btn = document.querySelector('[data-auto="true"]') as HTMLButtonElement;
                     if (btn) btn.click();
                   }}
@@ -407,6 +463,16 @@ export default function LearningRoomPage() {
                 >
                   {lesson.isCompleted ? 'Đã hoàn thành' : 'Đánh dấu hoàn thành'}
                 </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  className={styles.actionBtn}
+                  onClick={handleTutorSummary}
+                  disabled={summaryLoading}
+                >
+                  {summaryLoading ? 'Đang tóm tắt...' : 'Tutor Summary'}
+                </Button>
               </div>
             </div>
             <p className={styles.lessonDesc}>
@@ -442,6 +508,19 @@ export default function LearningRoomPage() {
                 </div>
               )}
             </div>
+            {summaryResult && (
+              <div className={styles.summaryBox}>
+                <p className={styles.summaryTitle}>Tóm tắt từ BiliBily</p>
+                <p className={styles.summaryText}>{summaryResult.summary}</p>
+                {Array.isArray(summaryResult.keyPoints) && summaryResult.keyPoints.length > 0 && (
+                  <ul className={styles.summaryList}>
+                    {summaryResult.keyPoints.map((point, index) => (
+                      <li key={`${index}-${point}`}>{point}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </section>
         </div>
 
@@ -467,13 +546,17 @@ export default function LearningRoomPage() {
             ))}
           </div>
 
-          <Link href="/ai-tutor" className={styles.aiTutorBtn}>
+          <button
+            type="button"
+            className={styles.aiTutorBtn}
+            onClick={() => openBiliBilyFloating(`Mình đang học bài "${lesson.title}". Hãy hỗ trợ mình tiếp nhé.`)}
+          >
             <span className={styles.aiIcon}>AI</span>
             <div>
               <span className={styles.aiLabel}>Hỏi BiliBily</span>
               <span className={styles.aiStatus}>ONLINE</span>
             </div>
-          </Link>
+          </button>
         </aside>
       </main>
     </div>

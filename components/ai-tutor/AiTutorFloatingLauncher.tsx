@@ -34,6 +34,10 @@ interface FloatingMessage {
   thinkingSteps?: ThinkingStep[];
 }
 
+type BiliBilyOpenEventDetail = {
+  prompt?: string;
+};
+
 export default function AiTutorFloatingLauncher() {
   const pathname = usePathname();
   const messageBoxRef = useRef<HTMLDivElement | null>(null);
@@ -121,6 +125,22 @@ export default function AiTutorFloatingLauncher() {
     if (!box) return;
     box.scrollTop = box.scrollHeight;
   }, [messages, sending, isOpen]);
+
+  useEffect(() => {
+    const handleOpenEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<BiliBilyOpenEventDetail>;
+      setIsOpen(true);
+      const prompt = customEvent.detail?.prompt?.trim();
+      if (prompt) {
+        setInputValue((prev) => (prev ? `${prev}\n${prompt}` : prompt));
+      }
+    };
+
+    window.addEventListener('thinkai:bilibily-open', handleOpenEvent as EventListener);
+    return () => {
+      window.removeEventListener('thinkai:bilibily-open', handleOpenEvent as EventListener);
+    };
+  }, []);
 
   if (!isReady || !isAuthenticated || !pathname) {
     return null;

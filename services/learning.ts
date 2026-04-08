@@ -80,6 +80,13 @@ export interface UpdateVideoProgressResponse {
   courseProgressPercent: number;
 }
 
+export interface LessonTutorSummaryResponse {
+  lessonId: number;
+  summary: string;
+  transcriptUsed: boolean;
+  sourceType: string;
+}
+
 export async function updateVideoProgress(
   lessonId: number,
   payload: UpdateVideoProgressRequest
@@ -97,5 +104,13 @@ export async function markPdfOpened(
 ): Promise<UpdateVideoProgressResponse> {
   return apiRequest<UpdateVideoProgressResponse>(`/courses/lessons/${lessonId}/pdf-opened`, {
     method: 'PUT',
+  });
+}
+
+export async function getLessonTutorSummary(
+  lessonId: number
+): Promise<LessonTutorSummaryResponse> {
+  return apiRequest<LessonTutorSummaryResponse>(`/courses/lessons/${lessonId}/tutor-summary`, {
+    method: 'POST',
   });
 }
