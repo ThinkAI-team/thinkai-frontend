@@ -187,11 +187,8 @@ export default function LearningRoomPage() {
     setMessage('');
     try {
       const summaryData = await fetchSummaryForHelpers(lesson);
-      const localCards = buildFlashcardsFromSummary(summaryData?.summary || '', summaryData?.keyPoints || []);
-      if (localCards.length > 0) {
-        setFlashcards(localCards);
-        return;
-      }
+      const summaryContext = summaryData?.summary?.trim() || '';
+      const keyPointsContext = (summaryData?.keyPoints || []).filter(Boolean).join('\n- ');
 
       const prompt = [
         'You are an English tutor. Create concise study flashcards from lesson content.',
@@ -201,7 +198,18 @@ export default function LearningRoomPage() {
         '- Output exactly 6 flashcards.',
         '- front: short question or trigger phrase.',
         '- back: concise explanation in Vietnamese.',
-        '- Focus on core grammar/vocab patterns that are easy to revise.',
+        '- Focus on core grammar/vocab patterns that are easy to revise and likely to appear in tests.',
+        '- Keep each front <= 12 words and each back <= 30 words.',
+        '',
+        'Lesson metadata:',
+        `- Title: ${lesson.title}`,
+        `- Type: ${lesson.type}`,
+        '',
+        'Primary summary context (already generated):',
+        summaryContext || 'N/A',
+        '',
+        'Existing key points:',
+        keyPointsContext ? `- ${keyPointsContext}` : 'N/A',
         '',
         'Lesson content:',
         buildLessonSummarySource(lesson),
@@ -226,11 +234,8 @@ export default function LearningRoomPage() {
     setMessage('');
     try {
       const summaryData = await fetchSummaryForHelpers(lesson);
-      const localBullets = buildBulletPointsFromSummary(summaryData?.summary || '', summaryData?.keyPoints || []);
-      if (localBullets.length > 0) {
-        setBulletPoints(localBullets);
-        return;
-      }
+      const summaryContext = summaryData?.summary?.trim() || '';
+      const keyPointsContext = (summaryData?.keyPoints || []).filter(Boolean).join('\n- ');
 
       const prompt = [
         'You are an English tutor. Extract the 3 most important learning points.',
@@ -238,8 +243,19 @@ export default function LearningRoomPage() {
         'Format: {"bulletPoints":["...","...","..."]}',
         'Rules:',
         '- Exactly 3 bullet points.',
-        '- Each point max 18 words.',
+        '- Each point max 18 words and action-oriented.',
         '- Use Vietnamese, practical and easy to remember.',
+        '- Prioritize exam-relevant grammar, vocabulary, and usage patterns.',
+        '',
+        'Lesson metadata:',
+        `- Title: ${lesson.title}`,
+        `- Type: ${lesson.type}`,
+        '',
+        'Primary summary context (already generated):',
+        summaryContext || 'N/A',
+        '',
+        'Existing key points:',
+        keyPointsContext ? `- ${keyPointsContext}` : 'N/A',
         '',
         'Lesson content:',
         buildLessonSummarySource(lesson),
@@ -279,55 +295,6 @@ export default function LearningRoomPage() {
     } catch {
       return [];
     }
-  };
-
-  const buildBulletPointsFromSummary = (summary: string, keyPoints: string[] = []): string[] => {
-    const fromKeyPoints = keyPoints.map((x) => x.trim()).filter(Boolean).slice(0, 3);
-    if (fromKeyPoints.length >= 3) {
-      return fromKeyPoints;
-    }
-
-    const source = `${summary}\n${keyPoints.join('\n')}`;
-    const lines = source
-      .split(/\n|[.!?]+\s+/)
-      .map((x) => x.replace(/^[-*\d.)\s]+/, '').trim())
-      .filter((x) => x.length >= 8);
-
-    const unique: string[] = [];
-    for (const line of lines) {
-      if (!unique.some((u) => u.toLowerCase() === line.toLowerCase())) {
-        unique.push(line);
-      }
-      if (unique.length === 3) break;
-    }
-    return unique;
-  };
-
-  const buildFlashcardsFromSummary = (
-    summary: string,
-    keyPoints: string[] = []
-  ): Array<{ front: string; back: string }> => {
-    const bullets = buildBulletPointsFromSummary(summary, keyPoints);
-    if (!bullets.length) {
-      return [];
-    }
-
-    const cards = bullets.flatMap((point, index) => {
-      const clean = point.replace(/\s+/g, ' ').trim();
-      if (!clean) return [];
-      return [
-        {
-          front: `Điểm chính ${index + 1}`,
-          back: clean,
-        },
-        {
-          front: `Ghi nhớ nhanh ${index + 1}`,
-          back: `Hãy tự giải thích lại ý này bằng lời của bạn: ${clean}`,
-        },
-      ];
-    });
-
-    return cards.slice(0, 6);
   };
 
   const parseBulletPoints = (raw: string): string[] => {
