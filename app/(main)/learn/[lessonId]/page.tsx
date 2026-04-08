@@ -154,11 +154,45 @@ export default function LearningRoomPage() {
     }
   };
 
+  const fetchSummaryForHelpers = async (item: LessonDetail): Promise<LessonTutorSummaryResponse | null> => {
+    if (summaryResult?.summary?.trim()) {
+      return summaryResult;
+    }
+    try {
+      const result = await getLessonTutorSummary(item.id);
+      setSummaryResult(result);
+      return result;
+    } catch (err) {
+      if (err instanceof ApiException && err.status === 404) {
+        const fallback = await summarizeLesson({
+          content: buildLessonSummarySource(item),
+        });
+        const normalized: LessonTutorSummaryResponse = {
+          lessonId: item.id,
+          summary: fallback.summary,
+          keyPoints: [],
+          transcriptUsed: false,
+          sourceType: 'frontend_fallback',
+        };
+        setSummaryResult(normalized);
+        return normalized;
+      }
+      return null;
+    }
+  };
+
   const handleTutorFlashcard = async () => {
     if (!lesson || flashcardLoading) return;
     setFlashcardLoading(true);
     setMessage('');
     try {
+      const summaryData = await fetchSummaryForHelpers(lesson);
+      const localCards = buildFlashcardsFromSummary(summaryData?.summary || '', summaryData?.keyPoints || []);
+      if (localCards.length > 0) {
+        setFlashcards(localCards);
+        return;
+      }
+
       const prompt = [
         'You are an English tutor. Create concise study flashcards from lesson content.',
         'Return ONLY valid JSON, no markdown, no extra text.',
@@ -191,6 +225,13 @@ export default function LearningRoomPage() {
     setBulletLoading(true);
     setMessage('');
     try {
+      const summaryData = await fetchSummaryForHelpers(lesson);
+      const localBullets = buildBulletPointsFromSummary(summaryData?.summary || '', summaryData?.keyPoints || []);
+      if (localBullets.length > 0) {
+        setBulletPoints(localBullets);
+        return;
+      }
+
       const prompt = [
         'You are an English tutor. Extract the 3 most important learning points.',
         'Return ONLY valid JSON, no markdown, no extra text.',
@@ -238,6 +279,55 @@ export default function LearningRoomPage() {
     } catch {
       return [];
     }
+  };
+
+  const buildBulletPointsFromSummary = (summary: string, keyPoints: string[] = []): string[] => {
+    const fromKeyPoints = keyPoints.map((x) => x.trim()).filter(Boolean).slice(0, 3);
+    if (fromKeyPoints.length >= 3) {
+      return fromKeyPoints;
+    }
+
+    const source = `${summary}\n${keyPoints.join('\n')}`;
+    const lines = source
+      .split(/\n|[.!?]+\s+/)
+      .map((x) => x.replace(/^[-*\d.)\s]+/, '').trim())
+      .filter((x) => x.length >= 8);
+
+    const unique: string[] = [];
+    for (const line of lines) {
+      if (!unique.some((u) => u.toLowerCase() === line.toLowerCase())) {
+        unique.push(line);
+      }
+      if (unique.length === 3) break;
+    }
+    return unique;
+  };
+
+  const buildFlashcardsFromSummary = (
+    summary: string,
+    keyPoints: string[] = []
+  ): Array<{ front: string; back: string }> => {
+    const bullets = buildBulletPointsFromSummary(summary, keyPoints);
+    if (!bullets.length) {
+      return [];
+    }
+
+    const cards = bullets.flatMap((point, index) => {
+      const clean = point.replace(/\s+/g, ' ').trim();
+      if (!clean) return [];
+      return [
+        {
+          front: `Điểm chính ${index + 1}`,
+          back: clean,
+        },
+        {
+          front: `Ghi nhớ nhanh ${index + 1}`,
+          back: `Hãy tự giải thích lại ý này bằng lời của bạn: ${clean}`,
+        },
+      ];
+    });
+
+    return cards.slice(0, 6);
   };
 
   const parseBulletPoints = (raw: string): string[] => {
