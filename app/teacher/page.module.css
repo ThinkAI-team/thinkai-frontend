@@ -247,6 +247,30 @@
   margin-top: 10px;
 }
 
+.summaryPanel {
+  margin-bottom: 10px;
+}
+
+.summaryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.summaryContent {
+  margin-top: 8px;
+  border: var(--line-width) solid var(--line-soft);
+  border-radius: 10px;
+  padding: 10px;
+  background: rgba(var(--surface-rgb), 0.92);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
 .listItem strong {
   color: var(--text-primary);
 }

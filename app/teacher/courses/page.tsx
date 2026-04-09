@@ -7,6 +7,7 @@ import PageState from '@/components/ui/PageState';
 import { formatVnd } from '@/lib/utils/format';
 import { ApiException } from '@/services/api';
 import { logout } from '@/services/auth';
+import { sendChatMessage } from '@/services/ai-tutor';
 import { getProfile, type ProfileResponse } from '@/services/user';
 import {
   createTeacherCourse,
@@ -43,6 +44,22 @@ const defaultLessonForm = {
   orderIndex: 1,
 };
 
+interface CourseTutorSuggestion {
+  course?: {
+    title?: string;
+    description?: string;
+    price?: number;
+    thumbnailUrl?: string;
+  };
+  lesson?: {
+    title?: string;
+    type?: LessonRequest['type'];
+    contentText?: string;
+    durationSeconds?: number;
+    orderIndex?: number;
+  };
+}
+
 export default function TeacherCoursesPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
@@ -61,7 +78,25 @@ export default function TeacherCoursesPage() {
   const [contentFile, setContentFile] = useState<File | null>(null);
   const [lessonOrderJson, setLessonOrderJson] = useState('[{"lessonId":1,"orderIndex":1}]');
   const [selectedCourseDetail, setSelectedCourseDetail] = useState<TeacherCourse | null>(null);
+  const [tutorSummary, setTutorSummary] = useState('');
+  const [tutorSummaryLoading, setTutorSummaryLoading] = useState(false);
+  const [tutorSummaryError, setTutorSummaryError] = useState('');
+  const [tutorSuggestion, setTutorSuggestion] = useState<CourseTutorSuggestion | null>(null);
   const showBlockingLoading = loading && courses.length === 0;
+
+  const tryParseTutorSuggestion = (raw: string): CourseTutorSuggestion | null => {
+    const jsonBlockMatch = raw.match(/```json\s*([\s\S]*?)```/i);
+    const candidate = jsonBlockMatch?.[1] || raw;
+    const start = candidate.indexOf('{');
+    const end = candidate.lastIndexOf('}');
+    if (start < 0 || end < 0 || end <= start) return null;
+    try {
+      const parsed = JSON.parse(candidate.slice(start, end + 1));
+      return parsed && typeof parsed === 'object' ? (parsed as CourseTutorSuggestion) : null;
+    } catch {
+      return null;
+    }
+  };
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -301,6 +336,78 @@ export default function TeacherCoursesPage() {
     }
   };
 
+  const handleGenerateTutorSummary = async () => {
+    setTutorSummaryLoading(true);
+    setTutorSummaryError('');
+    setTutorSuggestion(null);
+    try {
+      const contextPayload = {
+        page: 'teacher-courses',
+        courseForm,
+        editingCourseId,
+        lessonForm,
+        lessonOrderJson,
+        selectedCourseDetail: selectedCourseDetail
+          ? {
+              id: selectedCourseDetail.id,
+              title: selectedCourseDetail.title,
+              status: selectedCourseDetail.status,
+            }
+          : null,
+        courseListSample: courses.slice(0, 12).map((course) => ({
+          id: course.id,
+          title: course.title,
+          status: course.status,
+          published: course.isPublished,
+          price: course.price,
+        })),
+      };
+
+      const response = await sendChatMessage({
+        message:
+          'Hãy tóm tắt ngắn tình trạng trang quản lý khóa học giáo viên và đề xuất 8 câu hỏi kiểm tra chất lượng nội dung khóa học/lesson. Trả lời bằng tiếng Việt, có 3 phần: (1) Tóm tắt, (2) Rủi ro/chỗ thiếu dữ liệu, (3) Danh sách câu hỏi gợi ý. Cuối cùng thêm một khối ```json``` theo schema {"course":{"title":"","description":"","price":0,"thumbnailUrl":""},"lesson":{"title":"","type":"VIDEO","contentText":"","durationSeconds":0,"orderIndex":1}} để frontend tự điền.',
+        context: JSON.stringify(contextPayload),
+      });
+      const rawReply = response.reply || 'Chưa có phản hồi từ Tutor.';
+      setTutorSummary(rawReply);
+      setTutorSuggestion(tryParseTutorSuggestion(rawReply));
+    } catch (err: any) {
+      setTutorSummaryError(err.message || 'Không thể tạo Tutor Summary lúc này.');
+    } finally {
+      setTutorSummaryLoading(false);
+    }
+  };
+
+  const applyTutorSuggestion = () => {
+    if (!tutorSuggestion) return;
+    if (tutorSuggestion.course) {
+      setCourseForm((prev) => ({
+        ...prev,
+        title: tutorSuggestion.course?.title || prev.title,
+        description: tutorSuggestion.course?.description || prev.description,
+        price: Number.isFinite(Number(tutorSuggestion.course?.price))
+          ? Number(tutorSuggestion.course?.price)
+          : prev.price,
+        thumbnailUrl: tutorSuggestion.course?.thumbnailUrl || prev.thumbnailUrl,
+      }));
+    }
+    if (tutorSuggestion.lesson) {
+      setLessonForm((prev) => ({
+        ...prev,
+        title: tutorSuggestion.lesson?.title || prev.title,
+        type: tutorSuggestion.lesson?.type || prev.type,
+        contentText: tutorSuggestion.lesson?.contentText || prev.contentText,
+        durationSeconds: Number.isFinite(Number(tutorSuggestion.lesson?.durationSeconds))
+          ? Number(tutorSuggestion.lesson?.durationSeconds)
+          : prev.durationSeconds,
+        orderIndex: Number.isFinite(Number(tutorSuggestion.lesson?.orderIndex))
+          ? Number(tutorSuggestion.lesson?.orderIndex)
+          : prev.orderIndex,
+      }));
+    }
+    setNotice('Đã áp dụng gợi ý từ Tutor vào form.');
+  };
+
   return (
     <TeacherShell
       profile={profile}
@@ -350,8 +457,45 @@ export default function TeacherCoursesPage() {
           message="Hệ thống đang đồng bộ danh sách khóa học và lesson."
         />
       ) : (
-        <section className={styles.columns}>
-          <div className={styles.panel}>
+        <>
+          <div className={`${styles.panel} ${styles.summaryPanel}`}>
+            <div className={styles.summaryHeader}>
+              <h3>Tutor Summary</h3>
+              <div className={styles.row}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  className={styles.secondaryBtn}
+                  onClick={handleGenerateTutorSummary}
+                  disabled={tutorSummaryLoading}
+                >
+                  {tutorSummaryLoading ? 'Đang tổng hợp...' : 'Tạo summary'}
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  className={styles.primaryBtn}
+                  onClick={applyTutorSuggestion}
+                  disabled={!tutorSuggestion}
+                >
+                  Áp dụng gợi ý
+                </Button>
+              </div>
+            </div>
+            {tutorSummaryError ? (
+              <p className={styles.error}>{tutorSummaryError}</p>
+            ) : tutorSummary ? (
+              <div className={styles.summaryContent}>{tutorSummary}</div>
+            ) : (
+              <p className={styles.muted}>
+                Bấm "Tạo summary" để Tutor phân tích toàn bộ dữ liệu đang có trên trang và đề xuất bộ câu hỏi.
+              </p>
+            )}
+          </div>
+          <section className={styles.columns}>
+            <div className={styles.panel}>
             <h3>{editingCourseId ? `Sửa khóa học #${editingCourseId}` : 'Tạo khóa học mới'}</h3>
             <form onSubmit={handleSubmitCourse} className={styles.form}>
               <input
@@ -666,7 +810,8 @@ export default function TeacherCoursesPage() {
               </div>
             )}
           </div>
-        </section>
+          </section>
+        </>
       )}
     </TeacherShell>
   );

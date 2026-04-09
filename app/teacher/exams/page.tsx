@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import PageState from '@/components/ui/PageState';
 import { ApiException } from '@/services/api';
 import { logout } from '@/services/auth';
+import { sendChatMessage } from '@/services/ai-tutor';
 import { getProfile, type ProfileResponse } from '@/services/user';
 import {
   createTeacherExam,
@@ -30,6 +31,17 @@ const defaultExamForm = {
   partConfigJson: '{"PART_1":6,"PART_2":25,"PART_5":30}',
 };
 
+interface ExamTutorSuggestion {
+  title?: string;
+  examType?: string;
+  description?: string;
+  timeLimitMinutes?: number;
+  passingScore?: number;
+  isRandomOrder?: boolean;
+  partConfig?: Record<string, number>;
+  courseId?: number;
+}
+
 export default function TeacherExamsPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
@@ -39,7 +51,25 @@ export default function TeacherExamsPage() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [examForm, setExamForm] = useState(defaultExamForm);
+  const [tutorSummary, setTutorSummary] = useState('');
+  const [tutorSummaryLoading, setTutorSummaryLoading] = useState(false);
+  const [tutorSummaryError, setTutorSummaryError] = useState('');
+  const [tutorSuggestion, setTutorSuggestion] = useState<ExamTutorSuggestion | null>(null);
   const showBlockingLoading = loading && courses.length === 0 && exams.length === 0;
+
+  const tryParseTutorSuggestion = (raw: string): ExamTutorSuggestion | null => {
+    const jsonBlockMatch = raw.match(/```json\s*([\s\S]*?)```/i);
+    const candidate = jsonBlockMatch?.[1] || raw;
+    const start = candidate.indexOf('{');
+    const end = candidate.lastIndexOf('}');
+    if (start < 0 || end < 0 || end <= start) return null;
+    try {
+      const parsed = JSON.parse(candidate.slice(start, end + 1));
+      return parsed && typeof parsed === 'object' ? (parsed as ExamTutorSuggestion) : null;
+    } catch {
+      return null;
+    }
+  };
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -135,6 +165,65 @@ export default function TeacherExamsPage() {
     }
   };
 
+  const handleGenerateTutorSummary = async () => {
+    setTutorSummaryLoading(true);
+    setTutorSummaryError('');
+    setTutorSuggestion(null);
+    try {
+      const contextPayload = {
+        page: 'teacher-exams',
+        examForm,
+        courseOptions: courseOptions.slice(0, 15),
+        examListSample: exams.slice(0, 20).map((exam) => ({
+          id: exam.id,
+          title: exam.title,
+          examType: exam.examType,
+          courseId: exam.courseId,
+          passingScore: exam.passingScore,
+        })),
+      };
+
+      const response = await sendChatMessage({
+        message:
+          'Hãy tóm tắt trang quản lý bài thi của giáo viên và đề xuất 8 câu hỏi/đề mục cần bổ sung để nâng chất lượng ngân hàng đề. Trả lời tiếng Việt theo 3 phần: (1) Tóm tắt, (2) Điểm yếu/rủi ro, (3) Danh sách câu hỏi gợi ý. Cuối cùng thêm khối ```json``` theo schema {"courseId":0,"title":"","examType":"TOEIC","description":"","timeLimitMinutes":120,"passingScore":60,"isRandomOrder":true,"partConfig":{"PART_1":6,"PART_2":25}} để frontend tự điền form.',
+        context: JSON.stringify(contextPayload),
+      });
+      const rawReply = response.reply || 'Chưa có phản hồi từ Tutor.';
+      setTutorSummary(rawReply);
+      setTutorSuggestion(tryParseTutorSuggestion(rawReply));
+    } catch (err: any) {
+      setTutorSummaryError(err.message || 'Không thể tạo Tutor Summary lúc này.');
+    } finally {
+      setTutorSummaryLoading(false);
+    }
+  };
+
+  const applyTutorSuggestion = () => {
+    if (!tutorSuggestion) return;
+    setExamForm((prev) => ({
+      ...prev,
+      courseId: Number.isFinite(Number(tutorSuggestion.courseId)) && Number(tutorSuggestion.courseId) > 0
+        ? Number(tutorSuggestion.courseId)
+        : prev.courseId,
+      title: tutorSuggestion.title || prev.title,
+      examType: tutorSuggestion.examType || prev.examType,
+      description: tutorSuggestion.description || prev.description,
+      timeLimitMinutes: Number.isFinite(Number(tutorSuggestion.timeLimitMinutes))
+        ? Number(tutorSuggestion.timeLimitMinutes)
+        : prev.timeLimitMinutes,
+      passingScore: Number.isFinite(Number(tutorSuggestion.passingScore))
+        ? Number(tutorSuggestion.passingScore)
+        : prev.passingScore,
+      isRandomOrder: typeof tutorSuggestion.isRandomOrder === 'boolean'
+        ? tutorSuggestion.isRandomOrder
+        : prev.isRandomOrder,
+      partConfigJson: tutorSuggestion.partConfig
+        ? JSON.stringify(tutorSuggestion.partConfig)
+        : prev.partConfigJson,
+    }));
+    setNotice('Đã áp dụng gợi ý từ Tutor vào form bài thi.');
+  };
+
   return (
     <TeacherShell
       profile={profile}
@@ -169,8 +258,45 @@ export default function TeacherExamsPage() {
           message="Hệ thống đang đồng bộ danh sách khóa học và đề thi."
         />
       ) : (
-        <section className={styles.columns}>
-          <div className={styles.panel}>
+        <>
+          <div className={`${styles.panel} ${styles.summaryPanel}`}>
+            <div className={styles.summaryHeader}>
+              <h3>Tutor Summary</h3>
+              <div className={styles.row}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  className={styles.secondaryBtn}
+                  onClick={handleGenerateTutorSummary}
+                  disabled={tutorSummaryLoading}
+                >
+                  {tutorSummaryLoading ? 'Đang tổng hợp...' : 'Tạo summary'}
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  className={styles.primaryBtn}
+                  onClick={applyTutorSuggestion}
+                  disabled={!tutorSuggestion}
+                >
+                  Áp dụng gợi ý
+                </Button>
+              </div>
+            </div>
+            {tutorSummaryError ? (
+              <p className={styles.error}>{tutorSummaryError}</p>
+            ) : tutorSummary ? (
+              <div className={styles.summaryContent}>{tutorSummary}</div>
+            ) : (
+              <p className={styles.muted}>
+                Bấm "Tạo summary" để Tutor phân tích toàn bộ dữ liệu hiện có và gợi ý bộ câu hỏi cải thiện đề thi.
+              </p>
+            )}
+          </div>
+          <section className={styles.columns}>
+            <div className={styles.panel}>
             <h3>Tạo bài thi</h3>
             <form onSubmit={handleCreateExam} className={styles.form}>
               <select
@@ -265,7 +391,8 @@ export default function TeacherExamsPage() {
               </div>
             )}
           </div>
-        </section>
+          </section>
+        </>
       )}
     </TeacherShell>
   );
