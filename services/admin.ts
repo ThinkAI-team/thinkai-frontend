@@ -38,6 +38,7 @@ export interface AdminUser {
   email: string;
   role: 'STUDENT' | 'TEACHER' | 'ADMIN';
   isActive: boolean;
+  approvalStatus?: 'PENDING' | 'APPROVED' | 'BLOCKED';
 }
 
 export interface AdminUserPage {
@@ -54,6 +55,7 @@ export interface AdminUsersQuery {
   keyword?: string;
   role?: 'STUDENT' | 'TEACHER' | 'ADMIN';
   isActive?: boolean;
+  approvalStatus?: 'PENDING' | 'APPROVED' | 'BLOCKED';
 }
 
 export interface AdminCourse {
@@ -138,6 +140,7 @@ function buildAdminUsersQuery(query: AdminUsersQuery = {}): string {
   if (query.keyword) params.set('keyword', query.keyword);
   if (query.role) params.set('role', query.role);
   if (typeof query.isActive === 'boolean') params.set('isActive', String(query.isActive));
+  if (query.approvalStatus) params.set('approvalStatus', query.approvalStatus);
   const qs = params.toString();
   return qs ? `/admin/users?${qs}` : '/admin/users';
 }
@@ -165,6 +168,37 @@ export async function updateAdminUserStatus(userId: number, isActive: boolean): 
   return apiRequest<{ userId: number; isActive: boolean }>(`/admin/users/${userId}/status`, {
     method: 'PUT',
     body: JSON.stringify({ isActive }),
+  });
+}
+
+export async function updateAdminUsersBulkStatus(
+  userIds: number[],
+  isActive: boolean
+): Promise<{ updatedCount: number; isActive: boolean; userIds: number[] }> {
+  return apiRequest<{ updatedCount: number; isActive: boolean; userIds: number[] }>('/admin/users/bulk-status', {
+    method: 'PUT',
+    body: JSON.stringify({ userIds, isActive }),
+  });
+}
+
+export async function updateAdminUsersBulkStatusByFilter(payload: {
+  isActive: boolean;
+  keyword?: string;
+  role?: 'STUDENT' | 'TEACHER' | 'ADMIN';
+  currentIsActive?: boolean;
+  currentApprovalStatus?: 'PENDING' | 'APPROVED' | 'BLOCKED';
+}): Promise<{ updatedCount: number; isActive: boolean; userIds: number[] }> {
+  return apiRequest<{ updatedCount: number; isActive: boolean; userIds: number[] }>('/admin/users/bulk-status-filter', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function approveAdminUser(
+  userId: number
+): Promise<{ userId: number; isActive: boolean; approved: boolean }> {
+  return apiRequest<{ userId: number; isActive: boolean; approved: boolean }>(`/admin/users/${userId}/approve`, {
+    method: 'PUT',
   });
 }
 

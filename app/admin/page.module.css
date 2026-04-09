@@ -208,6 +208,34 @@
   font-weight: 700;
 }
 
+.userToolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.userCount {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.bulkActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.selectAllLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-right: 6px;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -343,6 +371,16 @@
 .tableActionCell {
   display: flex;
   gap: 6px;
+}
+
+.pagination {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
 }
 
 .errorBanner,

@@ -7,6 +7,7 @@ import PageState from '@/components/ui/PageState';
 import Button from '@/components/ui/Button';
 import { formatVnd } from '@/lib/utils/format';
 import {
+  approveAdminUser,
   blockAdminCourse,
   createAdminCourse,
   deleteAdminCourse,
@@ -15,6 +16,8 @@ import {
   getAdminUsers,
   updateAdminCourse,
   updateAdminUserStatus,
+  updateAdminUsersBulkStatus,
+  updateAdminUsersBulkStatusByFilter,
   updateAIPrompts,
   type AdminCourse,
   type AdminCourseRequest,
@@ -56,6 +59,11 @@ export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [usersPage, setUsersPage] = useState(0);
+  const [usersTotalPages, setUsersTotalPages] = useState(0);
+  const [usersTotalElements, setUsersTotalElements] = useState(0);
+  const [userStatusFilter, setUserStatusFilter] = useState<'all' | 'active' | 'inactive' | 'pending' | 'blocked' | 'approved'>('all');
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [courses, setCourses] = useState<AdminCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -94,9 +102,25 @@ export default function AdminDashboardPage() {
   }, []);
 
   const fetchUsers = useCallback(async () => {
-    const usersData = await getAdminUsers({ page: 0, size: 20 });
+    const usersData = await getAdminUsers({
+      page: usersPage,
+      size: 50,
+      isActive: userStatusFilter === 'active' ? true : userStatusFilter === 'inactive' ? false : undefined,
+      approvalStatus:
+        userStatusFilter === 'pending'
+          ? 'PENDING'
+          : userStatusFilter === 'blocked'
+            ? 'BLOCKED'
+            : userStatusFilter === 'approved'
+              ? 'APPROVED'
+              : undefined,
+    });
     setUsers(usersData.content);
-  }, []);
+    setUsersPage(usersData.page || 0);
+    setUsersTotalPages(usersData.totalPages || 0);
+    setUsersTotalElements(usersData.totalElements || 0);
+    setSelectedUserIds([]);
+  }, [userStatusFilter, usersPage]);
 
   const fetchCourses = useCallback(async () => {
     const coursesData = await getAdminCourses({ page: 0, size: 20 });
@@ -157,6 +181,79 @@ export default function AdminDashboardPage() {
       setError('');
     } catch (err: any) {
       setError(err.message || 'Không thể cập nhật trạng thái user.');
+    }
+  };
+
+  const handleApproveUser = async (user: AdminUser) => {
+    try {
+      await approveAdminUser(user.id);
+      setUsers((prev) =>
+        prev.map((item) => (item.id === user.id ? { ...item, isActive: true } : item))
+      );
+      setNotice('Đã duyệt tài khoản người dùng.');
+      setError('');
+    } catch (err: any) {
+      setError(err.message || 'Không thể duyệt tài khoản user.');
+    }
+  };
+
+  const toggleSelectUser = (userId: number) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    );
+  };
+
+  const toggleSelectAllUsersOnPage = () => {
+    const pageUserIds = users.map((user) => user.id);
+    const allSelected = pageUserIds.length > 0 && pageUserIds.every((id) => selectedUserIds.includes(id));
+    setSelectedUserIds(allSelected ? [] : pageUserIds);
+  };
+
+  const handleBulkUserStatus = async (isActive: boolean, modeLabel: string) => {
+    if (selectedUserIds.length === 0) {
+      setError('Vui lòng chọn ít nhất 1 người dùng.');
+      return;
+    }
+    try {
+      await updateAdminUsersBulkStatus(selectedUserIds, isActive);
+      setUsers((prev) =>
+        prev.map((item) => (selectedUserIds.includes(item.id) ? { ...item, isActive } : item))
+      );
+      setSelectedUserIds([]);
+      setNotice(`Đã ${modeLabel} ${selectedUserIds.length} tài khoản.`);
+      setError('');
+    } catch (err: any) {
+      setError(err.message || 'Không thể cập nhật trạng thái hàng loạt.');
+    }
+  };
+
+  const handleBulkUserStatusByFilter = async (isActive: boolean, modeLabel: string) => {
+    const ok = typeof window !== 'undefined'
+      ? window.confirm(`Bạn chắc chắn muốn ${modeLabel} toàn bộ tài khoản theo bộ lọc hiện tại?`)
+      : true;
+    if (!ok) return;
+    try {
+      const currentIsActive =
+        userStatusFilter === 'active' ? true : userStatusFilter === 'inactive' ? false : undefined;
+      const currentApprovalStatus =
+        userStatusFilter === 'pending'
+          ? 'PENDING'
+          : userStatusFilter === 'blocked'
+            ? 'BLOCKED'
+            : userStatusFilter === 'approved'
+              ? 'APPROVED'
+              : undefined;
+      const result = await updateAdminUsersBulkStatusByFilter({
+        isActive,
+        currentIsActive,
+        currentApprovalStatus,
+      });
+      setSelectedUserIds([]);
+      await fetchUsers();
+      setNotice(`Đã ${modeLabel} ${result.updatedCount} tài khoản theo bộ lọc.`);
+      setError('');
+    } catch (err: any) {
+      setError(err.message || 'Không thể cập nhật toàn bộ kết quả lọc.');
     }
   };
 
@@ -425,6 +522,103 @@ export default function AdminDashboardPage() {
           >
             <div className={styles.tableHeader}>
               <h3>Quản lý người dùng</h3>
+              <div className={styles.userToolbar}>
+                <select
+                  className={`${styles.searchBar} ${styles.formInput}`}
+                  value={userStatusFilter}
+                  onChange={(e) => {
+                    const next = e.target.value as 'all' | 'active' | 'inactive';
+                    setUsersPage(0);
+                    setUserStatusFilter(next as 'all' | 'active' | 'inactive' | 'pending' | 'blocked' | 'approved');
+                  }}
+                >
+                  <option value="all">Tất cả</option>
+                  <option value="pending">Chờ duyệt</option>
+                  <option value="blocked">Bị block</option>
+                  <option value="approved">Đã duyệt</option>
+                  <option value="inactive">Chờ duyệt/Đã khóa</option>
+                  <option value="active">Đang hoạt động</option>
+                </select>
+                <span className={styles.userCount}>Tổng: {usersTotalElements}</span>
+              </div>
+            </div>
+            <div className={styles.bulkActions}>
+              <label className={styles.selectAllLabel}>
+                <input
+                  type="checkbox"
+                  checked={users.length > 0 && users.every((user) => selectedUserIds.includes(user.id))}
+                  onChange={toggleSelectAllUsersOnPage}
+                />
+                Chọn tất cả trang hiện tại
+              </label>
+              <Button
+                variant="primary"
+                size="sm"
+                type="button"
+                className={styles.actionBtn}
+                onClick={() => handleBulkUserStatus(true, 'duyệt/mở')}
+              >
+                Accept hàng loạt
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                className={styles.actionBtn}
+                onClick={() => handleBulkUserStatus(true, 'mở')}
+              >
+                Unblock hàng loạt
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                className={styles.actionBtn}
+                onClick={() => handleBulkUserStatus(false, 'block')}
+              >
+                Block hàng loạt
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                type="button"
+                className={styles.actionBtn}
+                onClick={() =>
+                  handleBulkUserStatusByFilter(
+                    true,
+                    'duyệt PENDING'
+                  )
+                }
+              >
+                Accept pending only
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                type="button"
+                className={styles.actionBtn}
+                onClick={() => handleBulkUserStatusByFilter(true, 'duyệt/mở')}
+              >
+                Accept tất cả theo lọc
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                className={styles.actionBtn}
+                onClick={() => handleBulkUserStatusByFilter(true, 'mở')}
+              >
+                Unblock tất cả theo lọc
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                className={styles.actionBtn}
+                onClick={() => handleBulkUserStatusByFilter(false, 'block')}
+              >
+                Block tất cả theo lọc
+              </Button>
             </div>
             {users.length === 0 ? (
               <PageState type="empty" message="Chưa có người dùng để hiển thị." />
@@ -432,6 +626,7 @@ export default function AdminDashboardPage() {
               <table className={styles.table}>
                 <thead>
                   <tr>
+                    <th>CHỌN</th>
                     <th>TÊN NGƯỜI DÙNG</th>
                     <th>EMAIL</th>
                     <th>VAI TRÒ</th>
@@ -443,6 +638,13 @@ export default function AdminDashboardPage() {
                   {users.map((user) => (
                     <tr key={user.id}>
                       <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedUserIds.includes(user.id)}
+                          onChange={() => toggleSelectUser(user.id)}
+                        />
+                      </td>
+                      <td>
                         <div className={styles.userCell}>
                           <div className={styles.userAvatar}>{user.fullName.charAt(0)}</div>
                           <span>{user.fullName}</span>
@@ -452,10 +654,25 @@ export default function AdminDashboardPage() {
                       <td>{user.role}</td>
                       <td>
                         <span className={`${styles.status} ${user.isActive ? styles.active : styles.offline}`}>
-                          {user.isActive ? 'Hoạt động' : 'Đã khóa'}
+                          {user.approvalStatus === 'PENDING'
+                            ? 'Chờ duyệt'
+                            : user.approvalStatus === 'BLOCKED'
+                              ? 'Đã block'
+                              : 'Hoạt động'}
                         </span>
                       </td>
-                      <td>
+                      <td className={styles.tableActionCell}>
+                        {user.approvalStatus === 'PENDING' && (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            type="button"
+                            className={styles.actionBtn}
+                            onClick={() => handleApproveUser(user)}
+                          >
+                            Duyệt
+                          </Button>
+                        )}
                         <Button
                           variant="secondary"
                           size="sm"
@@ -463,7 +680,7 @@ export default function AdminDashboardPage() {
                           className={styles.actionBtn}
                           onClick={() => handleToggleUserStatus(user)}
                         >
-                          {user.isActive ? 'Khóa' : 'Mở'}
+                          {user.approvalStatus === 'BLOCKED' ? 'Unblock' : 'Block'}
                         </Button>
                       </td>
                     </tr>
@@ -471,6 +688,35 @@ export default function AdminDashboardPage() {
                 </tbody>
               </table>
             )}
+            <div className={styles.pagination}>
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                className={styles.actionBtn}
+                onClick={() => setUsersPage((prev) => Math.max(prev - 1, 0))}
+                disabled={usersPage <= 0}
+              >
+                Trước
+              </Button>
+              <span>
+                Trang {usersTotalPages === 0 ? 0 : usersPage + 1}/{usersTotalPages}
+              </span>
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                className={styles.actionBtn}
+                onClick={() =>
+                  setUsersPage((prev) =>
+                    usersTotalPages > 0 ? Math.min(prev + 1, usersTotalPages - 1) : prev + 1
+                  )
+                }
+                disabled={usersTotalPages === 0 || usersPage >= usersTotalPages - 1}
+              >
+                Sau
+              </Button>
+            </div>
           </section>
         )}
 
